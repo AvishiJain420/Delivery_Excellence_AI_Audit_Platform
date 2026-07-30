@@ -1,0 +1,170 @@
+[
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Agreement, Effective Date & Contract Reference Clarity",
+        "evaluation_pointer": "Verify whether effective date, governing agreement, contract references, amendment clauses, and legal applicability are clearly defined"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Project Objectives, Services & Scope Definition",
+        "evaluation_pointer": "Verify whether project objectives, operational expectations, services to be provided, and business scope are clearly documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Services to be Provided by Service Provider",
+        "evaluation_pointer": "Verify whether all operational, reporting, support, enhancement, refresh, QC, validation, and stakeholder support activities are clearly listed"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "In-Scope vs Out-of-Scope Coverage",
+        "evaluation_pointer": "Verify whether supported activities, exclusions, enhancement limitations, and operational boundaries are clearly separated"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Deliverables & Operational Expectations",
+        "evaluation_pointer": "Verify whether deliverables such as refreshed reports, extracts, QC checklists, validations, insights, and operational outputs are clearly defined"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Timeline, Milestones & Duration Management",
+        "evaluation_pointer": "Verify whether project duration, completion dates, milestone expectations, refresh schedules, and operational timelines are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Service Provider Contacts & Governance Structure",
+        "evaluation_pointer": "Verify whether project leaders, delivery managers, escalation contacts, invoicing contacts, and governance ownership are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Team Structure & Resource Allocation",
+        "evaluation_pointer": "Verify whether delivery hierarchy, team structure, operational ownership, and resource responsibilities are clearly defined"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Roles, Responsibilities & Operational Ownership",
+        "evaluation_pointer": "Verify whether client/vendor responsibilities, operational ownership, dependency handling, and support responsibilities are clearly assigned"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Compensation, Cost, Pricing & Billing Rate Structure",
+        "evaluation_pointer": "Verify whether pricing structure, blended billing rates, enhancement rates, compensation limits, pass-through costs, and commercial expectations are clearly documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Invoicing Schedule & Payment Milestones",
+        "evaluation_pointer": "Verify whether invoicing frequency, payment milestones, invoice conditions, billing cycles, and milestone-based payment schedules are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Travel, Reimbursement & Pass-through Cost Governance",
+        "evaluation_pointer": "Verify whether travel clauses, reimbursement handling, pass-through approval conditions, and additional cost governance are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Change Management & Enhancement Governance",
+        "evaluation_pointer": "Verify whether change requests, enhancement limits, additional billing conditions, and scope revision handling are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Acceptance Criteria & Sign-off Readiness",
+        "evaluation_pointer": "Verify whether milestone completion criteria, acceptance expectations, approval workflows, and sign-off conditions are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Operational Support, SLA & Service Expectations",
+        "evaluation_pointer": "Verify whether dashboard refresh support, discrepancy handling, stakeholder query support, QC expectations, and operational SLAs are clearly defined"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Risk, Dependency & Assumption Management",
+        "evaluation_pointer": "Verify whether assumptions, operational constraints, dependency handling, and risk conditions are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Strategic Context & Business Alignment",
+        "evaluation_pointer": "Verify whether strategic objectives, business alignment, and transformation goals are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Versioning, Documentation & Audit Governance",
+        "evaluation_pointer": "Verify whether revision logs, version tracking, documentation governance, and audit traceability are maintained"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Scope Visualization & Workflow Representation",
+        "evaluation_pointer": "Verify whether workflow diagrams, operational flows, and scope representations are visually documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Future Enhancement & Scalability Planning",
+        "evaluation_pointer": "Verify whether future enhancements, scalability expectations, and operational growth planning are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "SOW (Statement of Work)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Compliance, Confidentiality & Legal Governance",
+        "evaluation_pointer": "Verify whether confidentiality clauses, compliance obligations, IP ownership, and legal governance expectations are documented"
+    }
+]

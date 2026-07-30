@@ -1,0 +1,354 @@
+[
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Functional Requirement Completeness & Logic",
+        "evaluation_pointer": "Verify workflows, calculations, validations, transformations, dependencies, and implementation behavior are completely defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Data Source, Integration & Processing Requirements",
+        "evaluation_pointer": "Verify source systems, ingestion methods, APIs, refresh logic, integration behavior, and processing expectations"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Reporting & Analytics Requirements",
+        "evaluation_pointer": "Verify KPIs, dashboards, filters, drilldowns, exports, visualizations, aggregation logic, and reporting behavior"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Security, Access & Non-Functional Requirements",
+        "evaluation_pointer": "Verify RBAC, user visibility, scalability, performance, SLAs, latency, and operational expectations"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Validation, Reconciliation & Exception Handling",
+        "evaluation_pointer": "Verify DQ rules, reconciliation logic, duplicate handling, retry mechanisms, logging, and exception handling"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Technical Implementation Readiness",
+        "evaluation_pointer": "Assess whether engineering and QA teams can directly begin development/testing without ambiguity"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Business Alignment & User Context",
+        "evaluation_pointer": "Verify alignment with business objectives, user expectations, and operational use cases"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Dependency, Assumptions & Constraints Management",
+        "evaluation_pointer": "Verify upstream/downstream dependencies, assumptions, sequencing logic, and technical constraints"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Documentation, Glossary & Change Governance",
+        "evaluation_pointer": "Verify terminology consistency, version tracking, glossary definitions, and documentation standards"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Mockups, Wireframes & Process Flow Representation",
+        "evaluation_pointer": "Verify inclusion of visual flows, architecture diagrams, wireframes, or process representations"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Business Objectives, KPIs & Expected Outcomes",
+        "evaluation_pointer": "Verify business goals, KPIs, expected outcomes, business problems, and success criteria are clearly defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Scope & Business Requirements Coverage",
+        "evaluation_pointer": "Verify in-scope/out-of-scope processes, reporting expectations, operational needs, and business requirements are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Business Rules, Metrics & Data Expectations",
+        "evaluation_pointer": "Verify business rules, calculations, derivations, granularity expectations, and reporting measures are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Business Data Domain & Readiness",
+        "evaluation_pointer": "Verify subject areas, entities, reporting expectations, and analytical requirements are identified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Stakeholder, Governance & Acceptance Readiness",
+        "evaluation_pointer": "Verify ownership, SMEs, approvers, governance expectations, and business acceptance criteria are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Business Value Mapping & Future Enhancements",
+        "evaluation_pointer": "Verify ROI, operational benefits, roadmap items, and future-state expectations are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Rule Categorization & Business Organization",
+        "evaluation_pointer": "Verify business rules are logically grouped by business function/domain/module"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Historical, Compliance & Governance Expectations",
+        "evaluation_pointer": "Verify retention policies, compliance requirements, governance standards, and audit expectations"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "High-Level Data & Analytical Structure Readiness",
+        "evaluation_pointer": "Verify dimensions, hierarchies, data domains, and high-level source/target expectations are identified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Business Rule Document (BRD)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Documentation, Assumptions & Change Governance",
+        "evaluation_pointer": "Verify assumptions, dependencies, terminology consistency, versioning, and documentation standards"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Test Case Coverage",
+        "evaluation_pointer": "Verify whether all relevant test cases of data validation, UI/UX, functional, security and access testing.\nReporting/Dashboarding project: KPIs, reports, dashboards, charts, filters, modules etc. are covered in SIT scenarios\nDatawarehouse project: Medallion layer wise tables, column business rules, aggregated layers vs source layers, reporting and/or analytical layer vs source, data standardization & data type checks, Constraint checks, specific use case if part of requirements\nReport/Dashboard to Datawarehouse project: Frontend backend value match\nCustom App: UI/UX, Functionality, Frontend to Backend Data Validation"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Module-wise Test Categorization",
+        "evaluation_pointer": "Check whether test cases are grouped by dashboard/module/KPI"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Automated Validation Readiness",
+        "evaluation_pointer": "Check whether validation logic supports automation or reusable scripts"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "SQL Query Validation",
+        "evaluation_pointer": "Verify whether backend SQL/datamart queries are properly documented and executable"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Query Optimization Checks",
+        "evaluation_pointer": "Check whether validation queries are optimized and reusable"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Negative Testing Coverage",
+        "evaluation_pointer": "Check whether invalid or edge-case filter scenarios are tested"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Data Match Validation",
+        "evaluation_pointer": "Verify whether frontend and backend values match correctly"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Tolerance Threshold Definition",
+        "evaluation_pointer": "Check whether acceptable variance thresholds are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Pass/Fail Status Tracking",
+        "evaluation_pointer": "Verify whether each test case includes pass/fail indicators"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Defect Severity Classification",
+        "evaluation_pointer": "Check whether defects are categorized by severity/priority"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Exception Handling Validation",
+        "evaluation_pointer": "Verify whether exceptions and mismatches are captured properly"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Root Cause Analysis Tracking",
+        "evaluation_pointer": "Check whether RCA details are captured for failed scenarios"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Test Data Validation",
+        "evaluation_pointer": "Verify whether test data ranges, products, and dimensions are properly validated"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Historical Data Validation",
+        "evaluation_pointer": "Check whether historical periods and trend validations are tested"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Aggregation Validation",
+        "evaluation_pointer": "Verify whether aggregation logic like KPI, monthly, regional summaries, and charts are validated"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Drilldown Validation",
+        "evaluation_pointer": "Check whether drilldowns and hierarchical reporting are tested"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Report Visualization Validation",
+        "evaluation_pointer": "Verify whether charts, visuals, and dashboard outputs are validated correctly"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "UI/UX Consistency Validation",
+        "evaluation_pointer": "Check whether dashboard formatting and usability are validated"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Comments & Fix Tracking",
+        "evaluation_pointer": "Verify whether comments, fixes required, and issue tracking fields are maintained"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Defect Lifecycle Tracking",
+        "evaluation_pointer": "Check whether defect resolution lifecycle is tracked"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Time Period Validation",
+        "evaluation_pointer": "Verify whether date ranges and reporting periods are validated correctly"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Refresh & Scheduling Validation",
+        "evaluation_pointer": "Check whether report refresh timing and scheduling are validated"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "End-to-End Reconciliation Readiness",
+        "evaluation_pointer": "Verify whether source-to-report reconciliation is traceable and testable"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Audit & Execution Traceability",
+        "evaluation_pointer": "Check whether tester details, timestamps, and execution tracking are maintained"
+    }
+]

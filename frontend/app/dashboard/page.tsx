@@ -1,0 +1,112 @@
+'use client'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
+import { AppShell } from '@/components/layout/AppShell'
+import { StatCard } from '@/components/dashboard/StatCard'
+import { RecentAuditsTable } from '@/components/dashboard/RecentAuditsTable'
+import { StartAuditModal } from '@/components/dashboard/StartAuditModal'
+import { useUIStore } from '@/store'
+import { useDashboardStats, useRecentAudits } from '@/hooks'
+import { LayoutDashboard, CheckCircle2, Play, XCircle, FileText, Plus, RefreshCw } from 'lucide-react'
+import { useStartAudit } from '@/hooks'
+
+function DashboardInner() {
+  const params = useSearchParams()
+  const itemId = params.get('item_id')   // set when coming from Power Apps redirect
+  const { startAuditModalOpen, setStartAuditModal } = useUIStore()
+  const { powerAppMutation } = useStartAudit()
+
+  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useDashboardStats()
+  const { data: audits, isLoading: auditsLoading, refetch: refetchAudits } = useRecentAudits()
+
+  // If we came from Power Apps with item_id, auto-open modal pre-filled
+  useEffect(() => {
+    if (itemId) setStartAuditModal(true)
+  }, [itemId]) // eslint-disable-line
+
+  const displayStats = stats ?? { total: 0, completed: 0, running: 0, failed: 0, pending: 0 }
+
+  return (
+    <AppShell>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+            <LayoutDashboard size={12} />
+            <span>Dashboard</span>
+          </div>
+          <h1 className="text-xl font-bold text-slate-900">Audit Overview</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { refetchStats(); refetchAudits() }}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            <RefreshCw size={13} /> Refresh
+          </button>
+          <button
+            onClick={() => setStartAuditModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus size={14} /> Start New Audit
+          </button>
+        </div>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard label="Total Audits" value={displayStats.total} icon={FileText} color="slate"
+          loading={statsLoading} />
+        <StatCard label="Completed" value={displayStats.completed} icon={CheckCircle2} color="emerald"
+          subtitle={`${displayStats.total ? Math.round((displayStats.completed / displayStats.total) * 100) : 0}% success rate`}
+          loading={statsLoading} />
+        <StatCard label="Running" value={displayStats.running} icon={Play} color="blue"
+          subtitle="Currently active" loading={statsLoading} />
+        <StatCard label="Failed" value={displayStats.failed} icon={XCircle} color="red"
+          loading={statsLoading} />
+      </div>
+
+      {/* Recent audits */}
+      <RecentAuditsTable audits={audits ?? []} loading={auditsLoading} />
+
+      {/* Agent ecosystem placeholder */}
+      <div className="mt-5 bg-gradient-to-r from-blue-950 to-blue-800 rounded-xl p-5 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-sm">Agent Ecosystem — Coming Soon</h3>
+            <p className="text-blue-200/80 text-xs mt-1 max-w-lg">
+              Expanding beyond Document Audit: Code Audit Agent, Compliance Review, AI Assistant, and Knowledge Repository.
+            </p>
+          </div>
+          <div className="hidden md:flex gap-2 flex-wrap">
+            {['Code Audit', 'Compliance', 'AI Assistant', 'Knowledge Base'].map(label => (
+              <span key={label} className="px-2.5 py-1 rounded-full bg-white/10 text-[10px] font-medium text-blue-200 border border-white/10">
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Start Audit Modal */}
+      {startAuditModalOpen && (
+        <StartAuditModal
+          onClose={() => setStartAuditModal(false)}
+          defaultItemId={itemId ?? undefined}
+        />
+      )}
+    </AppShell>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>}>
+      <DashboardInner />
+    </Suspense>
+  )
+}

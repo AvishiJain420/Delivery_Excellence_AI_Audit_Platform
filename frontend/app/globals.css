@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS custom properties ──────────────────────────────────────────────────── */
+:root {
+  --sidebar-width: 240px;
+  --header-height :56px;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  @apply antialiased bg-slate-50 text-slate-900;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded; }
+
+/* ── Sidebar nav items ──────────────────────────────────────────────────────── */
+.sidebar-item {
+  @apply flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150;
+}
+.sidebar-item.active {
+  @apply bg-blue-500/20 text-white;
+}
+.sidebar-item.inactive {
+  @apply text-blue-200/70 hover:text-white hover:bg-white/10;
+}
+
+/* ── Chat message entry animation ────────────────────────────────────────────── */
+.chat-message {
+  animation: slideUp 0.2s ease-out;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Live log entry animation ───────────────────────────────────────────────── */
+@keyframes logFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.log-entry {
+  animation: logFadeIn 0.15s ease-out both;
+}
+/* ── Audit timeline ─────────────────────────────────────────────────────────── */
+.step-node {
+  @apply flex flex-col items-center flex-shrink-0;
+  min-width: 72px;
+}
+.step-connector {
+  height: 2px;
+  @apply rounded-full flex-shrink-0;
+}
+.step-connector.done    { @apply bg-emerald-400; }
+.step-connector.active  { @apply bg-blue-400; }
+.step-connector.pending { @apply bg-slate-200; }
+
+/* ── Loading dots ───────────────────────────────────────────────────────────── */
+.loading-dots span {
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  @apply bg-slate-400;
+  animation: dot-bounce 1.2s infinite ease-in-out;
+}
+.loading-dots span:nth-child(1) { animation-delay: 0s; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%            { transform: scale(1);   opacity: 1; }
+}
+
+/* ── Notification panel fade ─────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.15s ease-out; }
+
+/* ── Responsive audit page layout fix ──────────────────────────────────────── */
+/* Ensure audit page fills screen minus sidebar + header on all screen sizes  */
+@media (max-width: 768px) {
+  :root { --sidebar-w: 64px; }
+}

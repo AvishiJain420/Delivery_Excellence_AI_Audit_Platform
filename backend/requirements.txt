@@ -1,0 +1,62 @@
+# Core
+python-dotenv
+pydantic
+pydantic_settings
+
+# Data Processing
+pandas
+numpy
+openpyxl
+
+# Document Processing
+python-docx
+python-pptx
+pdfplumber
+unstructured
+
+# LangChain
+langchain
+langchain-core
+langchain-community
+langchain-openai
+
+# OpenAI / Azure OpenAI
+openai
+tiktoken
+token-analyzer
+
+# Embeddings & Vector Store
+chromadb
+
+# SharePoint / Graph API
+msal
+requests
+
+# Reporting
+xlsxwriter
+
+# Streamlit UI
+streamlit
+
+# Logging & Utilities
+tenacity
+
+#SSL trust store
+truststore
+
+# ── NEW: FastAPI + async server ────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart          # for OAuth2PasswordRequestForm
+ 
+# ── NEW: Database (Supabase / PostgreSQL) ─────────────────
+sqlalchemy[asyncio]>=2.0
+asyncpg                   # async PostgreSQL driver
+alembic                   # optional but recommended for migrations
+ 
+# ── NEW: Authentication ────────────────────────────────────
+python-jose[cryptography]  # JWT
+passlib[bcrypt]            # password hashing
+ 
+# ── NEW: WebSocket support (included in fastapi/uvicorn) ──
+websockets
