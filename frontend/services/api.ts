@@ -179,10 +179,63 @@ export const auditApi = {
     return res.json()
   },
 
+  async downloadReport(
+    sessionId: string
+  ): Promise<{
+    blob: Blob
+    fileName: string
+  }> {
+    const res = await apiFetch(
+      `/audit/sessions/${sessionId}/download`
+    )
+
+    if (!res.ok) {
+      let message = "Failed to download report"
+
+      try {
+        const error = await res.json()
+        message = (
+          error.detail
+          ?? message
+        )
+      } catch {
+        // Keep the default message if the
+        // response is not JSON.
+      }
+
+      throw new Error(message)
+    }
+
+    const blob = await res.blob()
+
+    const contentDisposition = (
+      res.headers.get(
+        "Content-Disposition"
+      )
+    )
+
+    const filenameMatch = (
+      contentDisposition?.match(
+        /filename="?([^"]+)"?/
+      )
+    )
+
+    const fileName = (
+      filenameMatch?.[1]
+      ?? "audit_report.xlsx"
+    )
+
+    return {
+      blob,
+      fileName,
+    }
+  },
+
   async deleteSession(sessionId: string): Promise<void> {
     await apiFetch(`/audit/sessions/${sessionId}`, { method: 'DELETE' })
   },
 }
+
 
 // ─── Dashboard API ─────────────────────────────────────────────────────────────
 // Derives stats from the sessions list — no separate backend endpoint needed

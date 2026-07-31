@@ -47,6 +47,7 @@ function AuditPageInner() {
 
   const [startError, setStartError] = useState<string | null>(null)
   const startedRef = useRef(false)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   useEffect(() => {
     if (startedRef.current) return
@@ -83,6 +84,64 @@ function AuditPageInner() {
   const overallProgress = session?.overallProgress ?? 0
   const isDone = session?.status === 'done'
   const isFailed = session?.status === 'failed'
+
+  const handleExportReport = async () => {
+    if (!sessionId || isDownloading) {
+      return
+    }
+
+    try {
+      setIsDownloading(true)
+
+      const {
+        blob,
+        fileName,
+      } = await auditApi.downloadReport(
+        sessionId
+      )
+
+      const objectUrl = (
+        window.URL.createObjectURL(
+          blob
+        )
+      )
+
+      const downloadLink = (
+        document.createElement("a")
+      )
+
+      downloadLink.href = objectUrl
+
+      downloadLink.download = fileName
+
+      document.body.appendChild(
+        downloadLink
+      )
+
+      downloadLink.click()
+
+      downloadLink.remove()
+
+      window.URL.revokeObjectURL(
+        objectUrl
+      )
+
+    } catch (error) {
+      console.error(
+        "Failed to export report:",
+        error
+      )
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to download report"
+      )
+
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   if (!sessionId) {
 
@@ -181,19 +240,19 @@ function AuditPageInner() {
               </a>
             )}
             {isDone && (
-              <button
-                onClick={() =>
-                  window.open(
-                    `/api/reports/${sessionId}/download`,
-                    "_blank"
-                  )
-                }
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-600"
-              >
-                <Download size={11} />
-                Export Report
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleExportReport}
+              disabled={isDownloading}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Download size={11} />
+
+              {isDownloading
+                ? 'Downloading...'
+                : 'Export Report'}
+            </button>
+          )}
           </div>
         </div>
       </div>

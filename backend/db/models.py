@@ -198,4 +198,8 @@ class AuditReport(Base):
     completion_time = Column(DateTime(timezone=True), default=_now)
  
     session = relationship("AuditSession", back_populates="report", lazy="select")
+    drive_item_id = Column(
+    String,
+    nullable=True,
+        )
 

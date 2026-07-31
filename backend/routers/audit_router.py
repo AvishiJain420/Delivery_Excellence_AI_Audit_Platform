@@ -7,6 +7,8 @@ Both create the same AuditSession row + Project row, then connect to WS to run p
 The rest of the code (WebSocket, listing, deletion) is unchanged.
 """
 from __future__ import annotations
+from io import BytesIO
+from fastapi.responses import StreamingResponse
 import asyncio
 import json
 import uuid as _uuid
@@ -196,6 +198,7 @@ async def _persist_report(db: AsyncSession, session_id: str, upload: dict) -> No
         session_id=session_id,
         sharepoint_url=upload.get("report_url"),
         report_name=upload.get("report_name"),
+        drive_item_id=upload.get("drive_item_id"),
     )
     db.add(r)
     await db.flush()
@@ -541,9 +544,128 @@ async def get_session(
             "report_id":      session.report.report_id,
             "sharepoint_url": session.report.sharepoint_url,
             "report_name":    session.report.report_name,
+            "drive_item_id":  session.report.drive_item_id,
         } if session.report else None,
     }
 
+#--------------- download session----------------------
+@router.get("/sessions/{session_id}/download")
+async def download_audit_report(
+    session_id: str,
+    current_user: User = Depends(
+        get_current_user
+    ),
+    db: AsyncSession = Depends(
+        get_db
+    ),
+):
+    """
+    Download the completed Excel audit report.
+
+    The report is permanently stored in SharePoint.
+    This endpoint retrieves the file from SharePoint
+    and sends it to the browser as an attachment.
+    """
+
+    result = await db.execute(
+        select(AuditSession)
+        .options(
+            selectinload(
+                AuditSession.report
+            )
+        )
+        .where(
+            AuditSession.session_id
+            == session_id,
+
+            AuditSession.user_id
+            == current_user.user_id,
+        )
+    )
+
+    session = (
+        result.scalar_one_or_none()
+    )
+
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Audit session not found",
+        )
+
+    if not session.report:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Audit report has not "
+                "been generated yet"
+            ),
+        )
+
+    if not session.report.drive_item_id:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Audit report download ID "
+                "is not available"
+            ),
+        )
+
+    from sharepoint.sharepoint_service import (
+        SharePointService
+    )
+
+    sharepoint = SharePointService()
+
+    try:
+        (
+            file_content,
+            report_name,
+            content_type,
+        ) = await (
+            asyncio.get_running_loop()
+            .run_in_executor(
+                None,
+                lambda: (
+                    sharepoint
+                    .document_library_service
+                    .download_audit_report(
+                        session.report.drive_item_id
+                    )
+                ),
+            )
+        )
+
+    except Exception as exc:
+        print(
+            "Failed to download audit report "
+            f"from SharePoint: {exc}"
+        )
+
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Could not download the audit "
+                "report from SharePoint"
+            ),
+        )
+
+    return StreamingResponse(
+        BytesIO(file_content),
+
+        media_type=content_type,
+
+        headers={
+            "Content-Disposition": (
+                "attachment; "
+                f'filename="{report_name}"'
+            ),
+
+            "Content-Length": str(
+                len(file_content)
+            ),
+        },
+    )
 
 @router.delete("/sessions/{session_id}", status_code=204)
 async def delete_session(

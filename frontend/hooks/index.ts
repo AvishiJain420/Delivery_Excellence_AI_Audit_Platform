@@ -42,7 +42,7 @@ export function useRecentAudits(limit = 10) {
   return useQuery({
     queryKey: ['dashboard', 'recent', limit],
     queryFn: () => dashboardApi.getRecentAudits(limit),
-    // refetchInterval: 15_000,
+    refetchInterval: 15_000,
     enabled: authApi.isLoggedIn(),
   })
 }

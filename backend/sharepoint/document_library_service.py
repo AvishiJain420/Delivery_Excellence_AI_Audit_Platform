@@ -585,3 +585,67 @@ class DocumentLibraryService:
         )
 
         return result["report_url"]
+
+    def download_audit_report(
+        self,
+        drive_item_id: str,
+    ) -> tuple[bytes, str, str]:
+        """
+        Download an audit report from the SharePoint
+        document library using its Microsoft Graph DriveItem ID.
+
+        Returns:
+            file_content,
+            report_name,
+            content_type
+        """
+
+        if not drive_item_id:
+            raise ValueError(
+                "drive_item_id is required to download the audit report."
+            )
+
+        # Reuse the same document-library drive ID
+        # already used during report upload.
+        drive_id = self._get_drive_id()
+
+        # Get report metadata first so we can return
+        # the original filename and MIME type.
+        metadata_url = (
+            f"https://graph.microsoft.com/v1.0/"
+            f"drives/{drive_id}/items/{drive_item_id}"
+        )
+
+        metadata = self.graph.get(metadata_url)
+
+        report_name = (
+            metadata.get("name")
+            or "audit_report.xlsx"
+        )
+
+        content_type = (
+            metadata.get("file", {}).get("mimeType")
+            or (
+                "application/"
+                "vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            )
+        )
+
+        # Microsoft Graph redirects this endpoint to the
+        # actual file download URL. requests follows the
+        # redirect automatically.
+        content_url = (
+            f"https://graph.microsoft.com/v1.0/"
+            f"drives/{drive_id}/items/{drive_item_id}/content"
+        )
+
+        file_content = self.graph.get_bytes(
+            content_url
+        )
+
+        return (
+            file_content,
+            report_name,
+            content_type,
+        )

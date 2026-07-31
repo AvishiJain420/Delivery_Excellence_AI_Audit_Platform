@@ -338,22 +338,72 @@ class AuditPipeline:
         return report_path
  
 
+    # def upload_audit_report(self) -> dict:
+
+    #     print(f"\n{'='*60}")
+    #     print("Uploading Audit Report to SharePoint")
+    #     print(f"{'='*60}")
+    #     if not self._audit_report_path:
+    #         raise RuntimeError("Excel report not generated yet.")
+        
+    #     upload_result = self.sharepoint.upload_audit_report(
+    #         item_id=self._project_overview["item_id"],
+    #         local_report_path=self._audit_report_path,
+    #         project_name=self._project_overview["project_name"],
+    #         audit_type=self._project_overview["audit_type"],
+    #     )
+    #     self._audit_report_metadata = upload_result
+    #     self._audit_report_url = upload_result["report_url"]
+    #     self._audit_report_name = upload_result["report_name"]
+    #     print(f"✓ Uploaded: {self._audit_report_url}")
+    #     return upload_result
+
     def upload_audit_report(self) -> dict:
+
+        import os
+
         print(f"\n{'='*60}")
         print("Uploading Audit Report to SharePoint")
         print(f"{'='*60}")
+
         if not self._audit_report_path:
-            raise RuntimeError("Excel report not generated yet.")
+            raise RuntimeError(
+                "Excel report not generated yet."
+            )
+
+        # Keep the path in a local variable because
+        # the temporary file will be deleted after upload.
+        local_report_path = self._audit_report_path
+
+        # Upload the Excel file to SharePoint.
+        # If this fails, an exception is raised and the
+        # local file is NOT deleted.
         upload_result = self.sharepoint.upload_audit_report(
             item_id=self._project_overview["item_id"],
-            local_report_path=self._audit_report_path,
+            local_report_path=local_report_path,
             project_name=self._project_overview["project_name"],
             audit_type=self._project_overview["audit_type"],
         )
+
+        # The upload succeeded, so the temporary local
+        # Excel file is no longer needed.
+        if os.path.isfile(local_report_path):
+            os.remove(local_report_path)
+
+            print(
+                "✓ Temporary local audit report deleted: "
+                f"{local_report_path}"
+            )
+
+        # Save the SharePoint report metadata in memory.
         self._audit_report_metadata = upload_result
         self._audit_report_url = upload_result["report_url"]
         self._audit_report_name = upload_result["report_name"]
-        print(f"✓ Uploaded: {self._audit_report_url}")
+
+        print(
+            f"✓ Uploaded: "
+            f"{self._audit_report_url}"
+        )
         return upload_result
  
 #--------------Final function to run all above functions
