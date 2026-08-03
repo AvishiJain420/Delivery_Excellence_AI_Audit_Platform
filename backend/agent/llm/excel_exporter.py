@@ -417,388 +417,85 @@ def _create_workbook():
 # INDIVIDUAL AUDIT
 # ============================================================
 
-
 def _create_individual_audit_sheet(
-
     wb: Workbook,
-
     project_overview: Dict[str, Any],
-
     individual_audits: List[Dict[str, Any]],
-
 ):
-
-    """
-    Creates Individual Audit sheet.
-
-    One row per audit_results evaluation.
-    """
-
-
-    ws = wb.create_sheet(
-
-        "Individual Audit"
-
-    )
-
-
+    ws = wb.create_sheet("Individual Audit")
     ws["A1"] = "AI DELIVERY AUDIT REPORT"
-
     ws["A1"].font = TITLE_FONT
 
-
-
     headers = [
-
+        "#",                    # criterion_number
         "Project",
-
         "Audit Type",
-
         "Document",
-
         "Document Category",
-
-        "Project Phase",
-
         "Evaluation Category",
-
         "Evaluation Metric",
-
         "Evaluation Pointer",
-
         "Score",
-
         "Finding",
-
         "Evidence",
-
         "Recommendation",
-
     ]
 
-
-
-    _write_header(
-
-        ws,
-
-        3,
-
-        headers,
-
-    )
-
-
-
+    _write_header(ws, 3, headers)
     current_row = 4
 
-
-
-    project_name = project_overview.get(
-
-        "project_name",
-
-        "",
-
-    )
-
-
-
-    audit_type = project_overview.get(
-
-        "audit_type",
-
-        "",
-
-    )
-
-
+    project_name = project_overview.get("project_name", "")
+    audit_type   = project_overview.get("audit_type", "")
 
     for audit in individual_audits:
-
-
-        filename = audit.get(
-
-            "filename",
-
-            "",
-
-        )
-
-
-        category = audit.get(
-
-            "matched_category",
-
-            "",
-
-        )
-
-
-
-        audit_results = audit.get(
-
-            "audit_results",
-
-            [],
-
-        )
-
-
-
-        # ----------------------------------------------------
-        # Handle failed document audit
-        # ----------------------------------------------------
+        filename      = audit.get("filename", "")
+        category      = audit.get("matched_category", "")
+        audit_results = audit.get("audit_results", [])
 
         if not audit_results:
-
-
             values = [
-
-                project_name,
-
-                audit_type,
-
-                filename,
-
-                category,
-
-                "-",
-
-                "-",
-
-                "Audit Failed",
-
-                "-",
-
-                0,
-
-                audit.get(
-
-                    "summary",
-
-                    "",
-
-                ),
-
-                "",
-
-                "",
-
+                "-", project_name, audit_type, filename, category,
+                "-", "Audit Failed", "-", 0,
+                audit.get("summary", ""), "", "",
             ]
-
-
-
-            for col, value in enumerate(
-
-                values,
-
-                start=1,
-
-            ):
-
-
-                ws.cell(
-
-                    row=current_row,
-
-                    column=col,
-
-                    value=value,
-
-                )
-
-
-
-            ws.cell(
-
-                row=current_row,
-
-                column=9,
-
-            ).fill = SCORE_FILLS[1]
-
-
-
-            _style_row(
-
-                ws,
-
-                current_row,
-
-            )
-
-
-
+            for col, value in enumerate(values, start=1):
+                ws.cell(row=current_row, column=col, value=value)
+            ws.cell(row=current_row, column=9).fill = SCORE_FILLS[1]
+            _style_row(ws, current_row)
             current_row += 1
-
-
             continue
 
-
-
-
-        # ----------------------------------------------------
-        # Normal evaluation rows
-        # ----------------------------------------------------
-
-
         for result in audit_results:
-
-
             values = [
-
+                result.get("criterion_number", ""),   # # column
                 project_name,
-
                 audit_type,
-
                 filename,
-
                 category,
-
-                result.get(
-
-                    "project_phase",
-
-                    "",
-
-                ),
-
-                result.get(
-
-                    "evaluation_category",
-
-                    "",
-
-                ),
-
-                result.get(
-
-                    "evaluation_metric",
-
-                    "",
-
-                ),
-
-                result.get(
-
-                    "evaluation_pointer",
-
-                    "",
-
-                ),
-
-                result.get(
-
-                    "score",
-
-                    0,
-
-                ),
-
-                result.get(
-
-                    "finding",
-
-                    "",
-
-                ),
-
-                result.get(
-
-                    "evidence",
-
-                    "",
-
-                ),
-
-                result.get(
-
-                    "recommendation",
-
-                    "",
-
-                ),
-
+                result.get("evaluation_category", ""),
+                result.get("evaluation_metric", ""),
+                result.get("evaluation_pointer", ""),
+                result.get("score", 0),
+                result.get("finding", ""),
+                result.get("evidence", ""),
+                result.get("recommendation", ""),
             ]
+            for col, value in enumerate(values, start=1):
+                ws.cell(row=current_row, column=col, value=value)
 
-
-
-            for col, value in enumerate(
-
-                values,
-
-                start=1,
-
-            ):
-
-
-                ws.cell(
-
-                    row=current_row,
-
-                    column=col,
-
-                    value=value,
-
-                )
-
-
-
-            score_cell = ws.cell(
-
-                row=current_row,
-
-                column=9,
-
-            )
-
-
-            score = score_cell.value
-
-
-
-            score_cell.fill = SCORE_FILLS.get(
-
-                score,
-
-                PatternFill(),
-
-            )
-
-
-
-            _style_row(
-
-                ws,
-
-                current_row,
-
-            )
-
-
-
+            score_cell = ws.cell(row=current_row, column=9)
+            score_cell.fill = SCORE_FILLS.get(score_cell.value, PatternFill())
+            _style_row(ws, current_row)
             current_row += 1
 
-
-
     ws.freeze_panes = "A4"
-
-
-
     ws.auto_filter.ref = ws.dimensions
 
-
-
+    # Narrow the # column, wider columns for text fields
+    ws.column_dimensions["A"].width = 5
+    ws.column_dimensions["I"].width = 8
     _autofit_columns(ws)
-
-
-
     return ws
-
-
-
-
 
 
 # ============================================================
@@ -806,324 +503,130 @@ def _create_individual_audit_sheet(
 # COMBINED SUMMARY
 # ============================================================
 
-
 def _create_combined_summary_sheet(
-
     wb: Workbook,
-
     project_overview: Dict[str, Any],
-
     combined_summary: Dict[str, Any],
-
 ):
-
-
-    """
-    Creates Combined Summary sheet.
-    """
-
-
-    ws = wb.create_sheet(
-
-        "Combined Summary"
-
-    )
-
-
-
+    ws = wb.create_sheet("Combined Summary")
     ws["A1"] = "AI AUDIT EXECUTIVE SUMMARY"
-
     ws["A1"].font = TITLE_FONT
-
-
 
     row = 3
 
+    # ── Project metadata ─────────────────────────────────────────────
+    ws.cell(row=row, column=1, value="Project Details").font = SECTION_FONT
+    row += 1
 
+    overall_score = combined_summary.get("overall_project_score")
+    score_display = (
+        f"{round(overall_score * 20)}%  ({round(overall_score, 2)}/5)"
+        if overall_score is not None else "N/A"
+    )
 
-    # --------------------------------------------------------
-    # Project Metadata
-    # --------------------------------------------------------
+    metadata = [
+        ("Project Name",        project_overview.get("project_name", "")),
+        ("Client",              project_overview.get("client_name", "")),
+        ("Audit Type",          project_overview.get("audit_type", "")),
+        ("Overall Project Score", score_display),
+        ("Documents Audited",   combined_summary.get("documents_audited", "")),
+        ("Generated",           datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    ]
 
+    for key, value in metadata:
+        label_cell = ws.cell(row=row, column=1, value=key)
+        label_cell.font = Font(bold=True)
+        value_cell = ws.cell(row=row, column=2, value=value)
 
-    ws.cell(
+        # Highlight the score row
+        if key == "Overall Project Score" and overall_score is not None:
+            score_int = min(5, max(1, round(overall_score)))
+            label_cell.fill = SCORE_FILLS.get(score_int, PatternFill())
+            value_cell.fill = SCORE_FILLS.get(score_int, PatternFill())
+            value_cell.font = Font(bold=True, size=12)
 
-        row=row,
-
-        column=1,
-
-        value="Project Details",
-
-    ).font = SECTION_FONT
-
-
+        _style_row(ws, row)
+        row += 1
 
     row += 1
 
-
-
-    metadata = [
-
-        (
-
-            "Project Name",
-
-            project_overview.get(
-
-                "project_name",
-
-                "",
-
-            ),
-
-        ),
-
-        (
-
-            "Audit Type",
-
-            project_overview.get(
-
-                "audit_type",
-
-                "",
-
-            ),
-
-        ),
-
-        (
-
-            "Generated Timestamp",
-
-            datetime.now().strftime(
-
-                "%Y-%m-%d %H:%M:%S"
-
-            ),
-
-        ),
-
-        (
-
-            "Documents Audited",
-
-            combined_summary.get(
-
-                "documents_audited",
-
-                "",
-
-            ),
-
-        ),
-
-    ]
-
-
-
-    for key, value in metadata:
-
-
-        ws.cell(
-
-            row=row,
-
-            column=1,
-
-            value=key,
-
-        )
-
-
-        ws.cell(
-
-            row=row,
-
-            column=2,
-
-            value=value,
-
-        )
-
-
-        ws.cell(
-
-            row=row,
-
-            column=1,
-
-        ).font = Font(
-
-            bold=True
-
-        )
-
-
-        _style_row(
-
-            ws,
-
-            row,
-
-        )
-
-
+    # ── Executive summary (text block) ───────────────────────────────
+    exec_summary = combined_summary.get("executive_summary", "")
+    if exec_summary:
+        ws.cell(row=row, column=1, value="Executive Summary").font = SECTION_FONT
         row += 1
+        ws.merge_cells(
+            start_row=row, start_column=1,
+            end_row=row,   end_column=4,
+        )
+        cell = ws.cell(row=row, column=1, value=exec_summary)
+        cell.alignment = LEFT
+        cell.border = THIN_BORDER
+        _style_row(ws, row)
+        row += 2
 
-
-
-    row += 2
-
-
-
+    # ── Sections ─────────────────────────────────────────────────────
     def add_section(title, content):
-
         nonlocal row
-
-        ws.cell(
-            row=row,
-            column=1,
-            value=title,
-        ).font = SECTION_FONT
-
+        ws.cell(row=row, column=1, value=title).font = SECTION_FONT
         row += 1
 
         if isinstance(content, list):
-
             if not content:
                 ws.cell(row=row, column=2, value="None")
                 row += 1
-
             else:
-
                 for item in content:
-
                     ws.cell(row=row, column=1, value="•")
 
-                    # -----------------------------
-                    # String item
-                    # -----------------------------
                     if isinstance(item, str):
-
                         text = item
-
-                    # -----------------------------
-                    # Recommendation
-                    # -----------------------------
                     elif isinstance(item, dict) and "recommendation" in item:
-
                         text = (
                             f"Recommendation : {item.get('recommendation','')}\n"
                             f"Priority        : {item.get('priority','')}\n"
                             f"Documents       : {', '.join(item.get('related_documents', []))}"
                         )
-
-                    # -----------------------------
-                    # Cross Document Finding
-                    # -----------------------------
                     elif isinstance(item, dict) and "finding" in item:
-
                         text = (
                             f"Finding   : {item.get('finding','')}\n"
                             f"Severity  : {item.get('severity','')}\n"
                             f"Documents : {', '.join(item.get('documents_involved', []))}"
                         )
-
-                    # -----------------------------
-                    # Gap / Risk
-                    # -----------------------------
                     elif isinstance(item, dict) and "gap" in item:
-
                         text = (
                             f"Gap       : {item.get('gap','')}\n"
                             f"Impact    : {item.get('impact','')}\n"
                             f"Documents : {', '.join(item.get('source_documents', []))}"
                         )
-
                     else:
-
                         text = str(item)
 
-                    ws.cell(
-                        row=row,
-                        column=2,
-                        value=text,
-                    )
-
+                    cell = ws.cell(row=row, column=2, value=text)
                     _style_row(ws, row)
-
                     row += 1
-
         else:
-
             ws.merge_cells(
-                start_row=row,
-                start_column=1,
-                end_row=row,
-                end_column=4,
+                start_row=row, start_column=1,
+                end_row=row,   end_column=4,
             )
-
-            ws.cell(
-                row=row,
-                column=1,
-                value=content,
-            )
-
-            ws.cell(
-                row=row,
-                column=1,
-            ).alignment = LEFT
-
-            ws.cell(
-                row=row,
-                column=1,
-            ).border = THIN_BORDER
-
+            cell = ws.cell(row=row, column=1, value=content)
+            cell.alignment = LEFT
+            cell.border = THIN_BORDER
             row += 1
 
-        row += 2
+        row += 1
 
-
-    add_section(
-    "Cross Document Findings",
-    combined_summary.get(
-        "cross_document_findings",
-            [],
-        ),
-    )
-
-    add_section(
-        "Gaps & Risks",
-        combined_summary.get(
-            "gaps_and_risks",
-            [],
-        ),
-    )
-
-    add_section(
-        "Strengths",
-        combined_summary.get(
-            "strengths",
-            [],
-        ),
-    )
-
-    add_section(
-        "Recommendations",
-        combined_summary.get(
-            "recommendations",
-            [],
-        ),
-    )
+    add_section("Cross Document Findings", combined_summary.get("cross_document_findings", []))
+    add_section("Gaps & Risks",            combined_summary.get("gaps_and_risks", []))
+    add_section("Strengths",               combined_summary.get("strengths", []))
+    add_section("Recommendations",         combined_summary.get("recommendations") or combined_summary.get("recommendation", []))
 
     ws.freeze_panes = "A3"
-
     ws.column_dimensions["A"].width = 35
-
     ws.column_dimensions["B"].width = 90
-
     return ws
+
 
 # ============================================================
 # PUBLIC EXPORT FUNCTION

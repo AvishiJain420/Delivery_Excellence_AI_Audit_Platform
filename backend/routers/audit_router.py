@@ -157,6 +157,47 @@ async def _update_document_status(
 
     await db.flush()
 
+async def _update_document_parse_stats(
+    db: AsyncSession,
+    document_id: str,
+    text_char_count: int,
+    table_count: int,
+    image_count: int,
+    sequence_length: int,
+) -> None:
+    """Store parsing stats per document for cost debugging."""
+    result = await db.execute(
+        select(Document).where(Document.document_id == document_id)
+    )
+    document = result.scalar_one_or_none()
+    if not document:
+        return
+    document.text_char_count = text_char_count
+    document.table_count      = table_count
+    document.image_count      = image_count
+    document.sequence_length  = sequence_length
+    await db.flush()
+
+
+async def _update_document_token_usage(
+    db: AsyncSession,
+    document_id: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    total_tokens: int,
+) -> None:
+    """Store LLM token usage per document after auditing."""
+    result = await db.execute(
+        select(Document).where(Document.document_id == document_id)
+    )
+    document = result.scalar_one_or_none()
+    if not document:
+        return
+    document.prompt_tokens     = prompt_tokens
+    document.completion_tokens = completion_tokens
+    document.total_tokens      = total_tokens
+    await db.flush()
+
 
 async def _persist_audit_results(
     db: AsyncSession,
@@ -372,18 +413,6 @@ async def start_session_manual(
 # SHARED REST ENDPOINTS (unchanged from before)
 # ─────────────────────────────────────────────
 
-# @router.get("/sessions")
-# async def list_sessions(
-#     current_user: User = Depends(get_current_user),
-#     db: AsyncSession = Depends(get_db),
-# ):
-#     result = await db.execute(
-#         select(AuditSession)
-#         .where(AuditSession.user_id == current_user.user_id)
-#         .order_by(desc(AuditSession.completion_time))
-#     )
-#     return [SessionOut.model_validate(s) for s in result.scalars().all()]
-
 @router.get("/sessions")
 async def list_sessions(
     current_user: User = Depends(get_current_user),
@@ -396,6 +425,7 @@ async def list_sessions(
             selectinload(AuditSession.project),
             selectinload(AuditSession.documents),
             selectinload(AuditSession.summary),
+            selectinload(AuditSession.report),
         )
         .where(
             AuditSession.user_id == current_user.user_id
@@ -455,6 +485,13 @@ async def list_sessions(
                 and s.summary.overall_project_score is not None
                 else None
             ),
+            # ADDED: report information for the Reports page
+            "report": {
+                "report_id": s.report.report_id,
+                "sharepoint_url": s.report.sharepoint_url,
+                "report_name": s.report.report_name,
+                "drive_item_id": s.report.drive_item_id,
+            } if s.report else None,
         }
         for s in sessions
     ]
@@ -860,9 +897,7 @@ async def run_audit_ws(
             )
 
             for doc in parsed_documents:
-                document_id = doc_id_map.get(
-                    doc.filename
-                )
+                document_id = doc_id_map.get(doc.filename)
                 if document_id:
                     await _update_document_status(
                         db,
@@ -870,7 +905,15 @@ async def run_audit_ws(
                         "processing",
                         "parsed"
                     )
-                    
+                    # Store parse stats for cost debugging
+                    await _update_document_parse_stats(
+                        db,
+                        document_id,
+                        text_char_count=len(doc.text) if doc.text else 0,
+                        table_count=len(doc.tables) if doc.tables else 0,
+                        image_count=len(doc.images) if doc.images else 0,
+                        sequence_length=len(doc.content_sequence) if doc.content_sequence else 0,
+                    )
                     await send(
                         "document_update",
                         data={
@@ -932,6 +975,14 @@ async def run_audit_ws(
                     "audited"
                 )
 
+                usage = audit.get("token_usage", {})
+                await _update_document_token_usage(
+                    db,
+                    document_id,
+                    prompt_tokens=usage.get("prompt_tokens", 0),
+                    completion_tokens=usage.get("completion_tokens", 0),
+                    total_tokens=usage.get("total_tokens", 0),
+                )
 
                 await send(
                     "document_update",
@@ -967,14 +1018,39 @@ async def run_audit_ws(
         )
         await _persist_report(db, session_id, upload_result)
 
+        # Aggregate token usage across all documents in this session
+        session_token_usage = {
+            "total_prompt_tokens":     sum(
+                a.get("token_usage", {}).get("prompt_tokens", 0)
+                for a in individual_audits
+            ),
+            "total_completion_tokens": sum(
+                a.get("token_usage", {}).get("completion_tokens", 0)
+                for a in individual_audits
+            ),
+            "total_tokens":            sum(
+                a.get("token_usage", {}).get("total_tokens", 0)
+                for a in individual_audits
+            ),
+            "per_document": {
+                a["filename"]: a.get("token_usage", {})
+                for a in individual_audits
+            },
+        }
+        session.token_usage = session_token_usage
+        print(f"\nSession token usage: {session_token_usage['total_tokens']} total tokens")
+        print(f"  Prompt: {session_token_usage['total_prompt_tokens']}")
+        print(f"  Completion: {session_token_usage['total_completion_tokens']}")
+
         await _set_status(db, session, "done")
+        await db.commit()
         await send("done", data={
             "session_id":      session_id,
             "overall_score":   summary.get("overall_project_score"),
             "report_url":      upload_result.get("report_url"),
             "report_name":     upload_result.get("report_name"),
         })
-        await db.commit()
+        await asyncio.sleep(0.5)
 
     except WebSocketDisconnect:
         await _set_status(db, session, "failed", error="Client disconnected")

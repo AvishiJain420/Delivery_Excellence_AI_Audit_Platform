@@ -47,6 +47,15 @@ export function useRecentAudits(limit = 10) {
   })
 }
 
+// ─── Reports ─────────────────────────────────────────────────────────────
+export function useReports() {
+  return useQuery({
+    queryKey: ['reports'],
+    queryFn: auditApi.getReports,
+    refetchInterval: 60_000,
+  })
+}
+
 // ─── Start audit mutations ────────────────────────────────────────────────────
 export function useStartAudit() {
   const router = useRouter()
@@ -93,6 +102,7 @@ export function useStartAudit() {
 }
 
 // ─── Main audit session hook ──────────────────────────────────────────────────
+
 export function useAuditSession(sessionId: string | null) {
   const {
     handleStage,
@@ -104,6 +114,7 @@ export function useAuditSession(sessionId: string | null) {
   } = useAuditStore()
 
   const connectedRef = useRef(false)
+  const sessionStatusRef = useRef<string | null>(null)   // ← add this line here
 
   // Hydrate store from DB on mount (covers page refresh)
   useEffect(() => {
@@ -120,8 +131,22 @@ export function useAuditSession(sessionId: string | null) {
       })
   }, [sessionId]) // eslint-disable-line
 
+  // Keep sessionStatusRef in sync without triggering WS reconnects
+  useEffect(() => {
+    if (session?.status) {
+      sessionStatusRef.current = session.status
+    }
+  }, [session?.status])
+
+  // ← WS effect goes here — unchanged except dependency array fix
   useEffect(() => {
     if (!sessionId || connectedRef.current) return
+
+    const currentStatus = sessionStatusRef.current
+    if (currentStatus && ['done', 'failed', 'cancelled'].includes(currentStatus)) {
+      console.log("Skipping WebSocket — session already terminal:", currentStatus)
+      return
+    }
 
     connectedRef.current = true
 
@@ -156,7 +181,6 @@ export function useAuditSession(sessionId: string | null) {
   return { pendingValidation, handleValidationConfirm }
 }
 
-
 // ─── Fetch completed session (for history/results view) ───────────────────────
 export function useSessionDetail(sessionId: string) {
   return useQuery({
@@ -176,3 +200,5 @@ export function useTimeAgo(date: string | Date): string {
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`
   return d.toLocaleDateString()
 }
+
+

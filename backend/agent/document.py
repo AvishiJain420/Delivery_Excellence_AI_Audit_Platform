@@ -106,18 +106,7 @@ class Document:
 
             # if content is an image
             elif item["type"] == "image":
-                raw_bytes = item["value"]
-                if raw_bytes:
-                    b64 = base64.b64encode(raw_bytes).decode("utf-8")
-                    # Use media_type from entry if present, default to png
-                    media_type = item.get("media_type", "image/png")
-                    content.append({
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{media_type};base64,{b64}",
-                            "detail": "high"
-                        }
-                    })
+               pass
 
         return content    
 

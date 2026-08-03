@@ -182,13 +182,27 @@ export const useAuditStore = create<AuditState>((set, get) => ({
         break
 
       case 'validation_required':
-        // Pipeline is PAUSED waiting for user approval
         set(s => ({
           pendingValidation: identified_docs ?? [],
+
           session: s.session
             ? {
                 ...s.session,
-                steps: setStepActive(s.session.steps, 's4'),
+                steps: s.session.steps.map(step =>
+                  step.id === 's3'
+                    ? {
+                        ...step,
+                        status: 'completed' as StepStatus,
+                        completedAt: step.completedAt ?? new Date().toISOString(),
+                      }
+                    : step.id === 's4'
+                    ? {
+                        ...step,
+                        status: 'active' as StepStatus,
+                        startedAt: step.startedAt ?? new Date().toISOString(),
+                      }
+                    : step
+                ),
               }
             : null,
 
@@ -198,22 +212,15 @@ export const useAuditStore = create<AuditState>((set, get) => ({
             content: `AI has identified ${identified_docs?.length ?? 0} document(s). Please review the categories below and approve or correct before the audit continues.`,
             identifiedDocs: identified_docs,
           }),
-          ...addLog(s as AuditState, 'warning', `Validation required — ${identified_docs?.length} documents identified`),
+
+          ...addLog(
+            s as AuditState,
+            'warning',
+            `Validation required — ${identified_docs?.length} documents identified`
+          ),
         }))
         break
 
-      // case 'identified':
-      //   set(s => ({
-      //     pendingValidation: null,
-      //     session: s.session ? {
-      //       ...s.session,
-      //       status : 'identified',
-      //       steps: setStepDone(s.session.steps, 's4'),
-      //       documents: [], // will be populated as auditing progresses
-      //     } : null,
-      //     ...addLog(s as AuditState, 'success', `${data?.count ?? 0} documents confirmed`),
-      //   }))
-      //   break
 
       case 'identified':
         set(s => ({
@@ -222,8 +229,11 @@ export const useAuditStore = create<AuditState>((set, get) => ({
             ? {
                 ...s.session,
                 status: 'identified',
-                steps: setStepDone(setStepDone(s.session.steps, 's3'), 's4'),
-                // Documents are populated by document_update events — do not create them here
+                steps: s.session.steps.map(step =>
+                  ['s3', 's4'].includes(step.id)
+                    ? { ...step, status: 'completed' as StepStatus, completedAt: step.completedAt ?? new Date().toISOString() }
+                    : step
+                ),
               }
             : null,
           ...addLog(s as AuditState, 'success', `${data?.count ?? 0} documents confirmed`),
@@ -315,20 +325,24 @@ export const useAuditStore = create<AuditState>((set, get) => ({
         // Keep-alive ping — no UI update needed
         break
 
-      case 'parsing':
+      case 'parsing': {
         set(s => ({
-          session: s.session ? { ...s.session, status: 'parsing', steps: setStepActive(s.session.steps, 's5') } : null,
+          session: s.session ? {
+            ...s.session,
+            status: 'parsing',
+            steps: setStepActive(
+              // Explicitly complete s3 and s4 first so identifying/validation
+              // dots are never left active when parsing starts
+              setStepDone(setStepDone(s.session.steps, 's3'), 's4'),
+              's5'
+            ),
+          } : null,
           ...addChat(s as AuditState, { type: 'info', title: 'Parsing Documents', content: 'Extracting text, tables, and images from all documents…' }),
           ...addLog(s as AuditState, 'info', 'Parsing documents…'),
         }))
         break
+      }
 
-      // case 'parsed':
-      //   set(s => ({
-      //     session: s.session ? { ...s.session, steps: setStepDone(s.session.steps, 's5') } : null,
-      //     ...addLog(s as AuditState, 'success', `${data?.count ?? 0} documents parsed`),
-      //   }))
-      //   break
 
       case 'parsed':
         set(s => ({
@@ -341,18 +355,6 @@ export const useAuditStore = create<AuditState>((set, get) => ({
           ...addLog(s as AuditState, 'success', `${data?.count ?? 0} documents parsed`),
         }))
         break
-
-      // case 'auditing':
-      //   set(s => ({
-      //     session: s.session ? { 
-      //       ...s.session, 
-      //       status: 'auditing', 
-      //       steps: setStepActive(s.session.steps, 's6'), 
-      //       overallProgress: 45 } : null,
-      //     ...addChat(s as AuditState, { type: 'progress', title: 'AI Evaluation Running', content: 'Evaluating each document against the audit framework criteria…', progress: 45 }),
-      //     ...addLog(s as AuditState, 'info', 'AI evaluation started'),
-      //   }))
-      //   break
 
       case 'auditing':
         set(s => ({
@@ -408,7 +410,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
           session: s.session ? {
             ...s.session,
             status: 'summarised',
-            steps: setStepDone(s.session.steps, 's7'),
+            steps: setStepDone(setStepActive(s.session.steps, 's7'), 's7'),
             overallProgress: 85,
             overallScore: data?.overall_project_score
               ? Math.round((data.overall_project_score as number) * 20)
@@ -418,22 +420,20 @@ export const useAuditStore = create<AuditState>((set, get) => ({
         }))
         break
 
+
       case 'exporting':
+        set(s => ({
+          session: s.session ? { ...s.session, status: 'exporting', steps: setStepActive(s.session.steps, 's8'), overallProgress: 90 } : null,
+          ...addChat(s as AuditState, { type: 'loading', title: 'Exporting Report', content: 'Creating Excel report with audit results...', progress: 90 }),
+          ...addLog(s as AuditState, 'info', 'Exporting Excel report…'),
+        }))
+        break
+
       case 'uploading':
         set(s => ({
-          session: s.session ? { ...s.session, status: 'uploading', steps: setStepActive(s.session.steps, 's8'), overallProgress: 92 } : null,
-          ...addChat(s as AuditState, {
-          type: 'loading',
-          title: stage === 'exporting'
-            ? 'Exporting Report'
-            : 'Uploading Report',
-          content:
-            stage === 'exporting'
-              ? 'Creating Excel report with audit results...'
-              : 'Uploading report to SharePoint...',
-          progress: 92,
-           }),
-          ...addLog(s as AuditState, 'info', stage === 'exporting' ? 'Exporting Excel report…' : 'Uploading report to SharePoint…'),
+          session: s.session ? { ...s.session, status: 'uploading', steps: setStepActive(s.session.steps, 's8'), overallProgress: 95 } : null,
+          ...addChat(s as AuditState, { type: 'loading', title: 'Uploading Report', content: 'Uploading report to SharePoint...', progress: 95 }),
+          ...addLog(s as AuditState, 'info', 'Uploading report to SharePoint…'),
         }))
         break
 
@@ -467,20 +467,30 @@ export const useAuditStore = create<AuditState>((set, get) => ({
         }))
         break
 
-      case 'error':
-        set(s => ({
-          session: s.session ? {
-            ...s.session,
-            status: 'failed',
-            steps: s.session.steps.map(st =>
-              st.status === 'active' ? { ...st, status: 'failed' as StepStatus } : st
-            ),
-          } : null,
-          ...addChat(s as AuditState, { type: 'error', title: 'Pipeline Error', content: message ?? 'An unexpected error occurred.' }),
-          ...addLog(s as AuditState, 'error', message ?? 'Pipeline failed'),
-        }))
-        break
+      case 'error': {
+                  // The backend sends "Session already done" when a WebSocket tries to
+                  // reconnect to a completed session. This is not a real failure —
+                  // do not overwrite the correctly loaded DB state.
+                  if (message === 'Session already done' || message === 'Session already failed') {
+                    console.log("Ignoring stale WS reconnect message:", message)
+                    break
+                  }
+
+                  set(s => ({
+                    session: s.session ? {
+                      ...s.session,
+                      status: 'failed',
+                      steps: s.session.steps.map(st =>
+                        st.status === 'active' ? { ...st, status: 'failed' as StepStatus } : st
+                      ),
+                    } : null,
+                    ...addChat(s as AuditState, { type: 'error', title: 'Pipeline Error', content: message ?? 'An unexpected error occurred.' }),
+                    ...addLog(s as AuditState, 'error', message ?? 'Pipeline failed'),
+                  }))
+                  break
+                }
     }
+
   },
 
   setConnected: (v) => set(s => ({

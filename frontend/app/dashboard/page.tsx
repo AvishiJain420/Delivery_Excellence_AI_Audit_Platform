@@ -8,7 +8,7 @@ import { RecentAuditsTable } from '@/components/dashboard/RecentAuditsTable'
 import { StartAuditModal } from '@/components/dashboard/StartAuditModal'
 import { useUIStore } from '@/store'
 import { useDashboardStats, useRecentAudits } from '@/hooks'
-import { LayoutDashboard, CheckCircle2, Play, XCircle, FileText, Plus, RefreshCw } from 'lucide-react'
+import { LayoutDashboard, CheckCircle2, Play, XCircle, FileText, Plus  } from 'lucide-react'
 import { useStartAudit } from '@/hooks'
 
 function DashboardInner() {
@@ -43,12 +43,6 @@ function DashboardInner() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => { refetchStats(); refetchAudits() }}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <RefreshCw size={13} /> Refresh
-          </button>
-          <button
             onClick={() => setStartAuditModal(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
           >
@@ -74,17 +68,37 @@ function DashboardInner() {
       <RecentAuditsTable audits={audits ?? []} loading={auditsLoading} />
 
       {/* Agent ecosystem placeholder */}
-      <div className="mt-5 bg-gradient-to-r from-blue-950 to-blue-800 rounded-xl p-5 text-white">
+      <div className="mt-5 bg-slate-100 rounded-xl p-5 border border-slate-200">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-sm">Agent Ecosystem — Coming Soon</h3>
-            <p className="text-blue-200/80 text-xs mt-1 max-w-lg">
-              Expanding beyond Document Audit: Code Audit Agent, Compliance Review, AI Assistant, and Knowledge Repository.
+            <h3 className="font-semibold text-sm text-slate-700">
+              Agent Ecosystem — Coming Soon
+            </h3>
+
+            <p className="text-slate-500 text-xs mt-1 max-w-lg">
+              Expanding beyond Document Audit: Code Audit Agent, Compliance Review,
+              AI Assistant, and Knowledge Repository.
             </p>
           </div>
+
           <div className="hidden md:flex gap-2 flex-wrap">
-            {['Code Audit', 'Compliance', 'AI Assistant', 'Knowledge Base'].map(label => (
-              <span key={label} className="px-2.5 py-1 rounded-full bg-white/10 text-[10px] font-medium text-blue-200 border border-white/10">
+            {[
+              'Code Audit',
+              'Compliance',
+              'AI Assistant',
+              'Knowledge Base'
+            ].map(label => (
+              <span
+                key={label}
+                className="
+                  px-2.5 py-1 rounded-full
+                  bg-white
+                  text-[10px]
+                  font-medium
+                  text-slate-600
+                  border border-slate-300
+                "
+              >
                 {label}
               </span>
             ))}

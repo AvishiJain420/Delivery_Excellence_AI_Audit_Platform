@@ -4,7 +4,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { useRecentAudits } from '@/hooks'
 import { Badge } from '@/components/ui/Badge'
 import { formatRelativeTime, scoreColor, statusLabel } from '@/lib/utils'
-import { History, Search, Filter, FileText, ExternalLink, Trash2, RefreshCw } from 'lucide-react'
+import { History, Search, Filter, FileText, ExternalLink, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { auditApi } from '@/services/api'
 import { useQueryClient } from '@tanstack/react-query'
@@ -38,9 +38,6 @@ export default function HistoryPage() {
           <h1 className="text-xl font-bold text-slate-900">All Audits</h1>
           <p className="text-sm text-slate-500 mt-0.5">{audits.length} total sessions</p>
         </div>
-        <button onClick={() => refetch()} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-600">
-          <RefreshCw size={13} /> Refresh
-        </button>
       </div>
 
       {/* Filters */}

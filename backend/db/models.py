@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
  
-from sqlalchemy import Column, String, Float, ForeignKey, DateTime, Text
+from sqlalchemy import Column, String, Float, ForeignKey, DateTime, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
  
@@ -66,6 +66,8 @@ class AuditSession(Base):
     audit_status       = Column(String, default="pending")
     completion_time    = Column(DateTime(timezone=True), nullable=True)
     error_message      = Column(Text, nullable=True)
+
+    token_usage        = Column(JSONB, default=dict)
  
     project       = relationship("Project",        back_populates="sessions",    lazy="select")
     user          = relationship("User",           back_populates="sessions",    lazy="select")
@@ -75,20 +77,7 @@ class AuditSession(Base):
     report        = relationship("AuditReport",    back_populates="session",    lazy="select", uselist=False, cascade="all, delete-orphan")
  
  
-# ─────────────────────────────────────────────
-# DOCUMENT
-# ─────────────────────────────────────────────
-# class Document(Base):
-#     __tablename__ = "documents"
- 
-#     document_id        = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-#     session_id         = Column(String, ForeignKey("audit_sessions.session_id"), nullable=False)
-#     file_name          = Column(String, nullable=False)
-#     framework_category = Column(String)
-#     document_metadata  = Column(JSONB, default=dict)
- 
-#     session      = relationship("AuditSession", back_populates="documents",  lazy="select")
-#     audit_result = relationship("AuditResult",  back_populates="document",   lazy="select", uselist=False)
+
 class Document(Base):
     __tablename__ = "documents"
  
@@ -134,6 +123,14 @@ class Document(Base):
         nullable=True
     )
 
+    text_char_count   = Column(Integer, nullable=True)
+    table_count       = Column(Integer, nullable=True)
+    image_count       = Column(Integer, nullable=True)
+    sequence_length   = Column(Integer, nullable=True)
+    prompt_tokens     = Column(Integer, nullable=True)
+    completion_tokens = Column(Integer, nullable=True)
+    total_tokens      = Column(Integer, nullable=True)
+    
     session = relationship(
         "AuditSession",
         back_populates="documents",

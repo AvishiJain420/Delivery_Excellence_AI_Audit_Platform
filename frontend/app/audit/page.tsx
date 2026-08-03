@@ -61,7 +61,17 @@ function AuditPageInner() {
       try {
         const response = await auditApi.startFromPowerApp(powerAppItemId)
 
-        // Continue with the remaining logic...
+        initSession(
+          response.session_id,
+          response.project_name
+            ? `${response.project_name} — ${response.audit_type ?? 'Audit'}`
+            : 'Loading audit…',
+          response.project_name ?? '',
+          response.client_name ?? '',
+          response.audit_type ?? '',
+        )
+
+        setSessionId(response.session_id)
       } catch (error) {
         console.error('Failed to start Power Apps audit:', error)
         setStartError(
@@ -295,7 +305,98 @@ function AuditPageInner() {
 
           {/* Chat messages */}
           <div className="flex-1 overflow-y-auto px-4 md:px-5 py-4 space-y-3">
-            {chatMessages.length === 0 && (
+          
+
+            {chatMessages.length === 0 && !session && (
+              <div className="flex flex-col items-center justify-center h-full text-center py-16">
+                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-3">
+                  <LoadingDots />
+                </div>
+                <p className="text-sm text-slate-500">Loading session…</p>
+              </div>
+            )}
+
+            {chatMessages.length === 0 && session && isDone && (
+              <div className="flex flex-col gap-4 p-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 size={20} className="text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Audit Completed</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {session.completedAt
+                        ? `Finished ${formatRelativeTime(session.completedAt)}`
+                        : 'Audit finished successfully'}
+                    </p>
+                  </div>
+                </div>
+
+                {session.overallScore !== undefined && (
+                  <div className="bg-emerald-50 rounded-xl p-4 text-center">
+                    <p className="text-3xl font-bold text-emerald-600">
+                      {session.overallScore}%
+                    </p>
+                    <p className="text-xs text-emerald-700 mt-1 font-medium">
+                      Overall Audit Score
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Project
+                    </p>
+                    <p className="text-xs font-semibold text-slate-700 mt-0.5 truncate">
+                      {session.projectName || '—'}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Client
+                    </p>
+                    <p className="text-xs font-semibold text-slate-700 mt-0.5 truncate">
+                      {session.clientName || '—'}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Documents
+                    </p>
+                    <p className="text-xs font-semibold text-slate-700 mt-0.5">
+                      {session.documents.length} audited
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Audit Type
+                    </p>
+                    <p className="text-xs font-semibold text-slate-700 mt-0.5 uppercase">
+                      {session.auditType || '—'}
+                    </p>
+                  </div>
+                </div>
+
+                {session.reportUrl && (
+                  <a
+                    href={session.reportUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+                  >
+                    <ExternalLink size={12} />
+                    View Report on SharePoint
+                  </a>
+                )}
+
+                <p className="text-[10px] text-slate-400 text-center">
+                  Live activity log is only available during an active audit session.
+                </p>
+              </div>
+            )}
+
+            {chatMessages.length === 0 && session && !isDone && !isFailed && (
               <div className="flex flex-col items-center justify-center h-full text-center py-16">
                 <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-3">
                   <LoadingDots />
@@ -303,6 +404,7 @@ function AuditPageInner() {
                 <p className="text-sm text-slate-500">Connecting to audit pipeline…</p>
               </div>
             )}
+
             {chatMessages.map(msg => (
               <ChatMessageCard key={msg.id} message={msg} />
             ))}

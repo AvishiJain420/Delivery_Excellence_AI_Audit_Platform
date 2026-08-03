@@ -3,6 +3,7 @@
 //   | 'pending' | 'fetching' | 'identifying' | 'parsing'
 //   | 'auditing' | 'summarising' | 'exporting' | 'uploading'
 //   | 'done' | 'failed' | 'running' | 'completed' | 'cancelled'
+
 export type AuditStatus =
   | 'pending'
   | 'fetching'

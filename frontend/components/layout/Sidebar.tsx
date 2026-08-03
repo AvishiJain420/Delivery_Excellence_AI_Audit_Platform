@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, FileSearch, History, BarChart3, Settings,
+  LayoutDashboard, FileSearch, History, BarChart3,
   ChevronLeft, ChevronRight, Bot, Code2, Shield, BookOpen, Sparkles,
 } from 'lucide-react'
 import { useUIStore } from '@/store'
@@ -13,8 +13,7 @@ const NAV_ITEMS = [
   { href: '/audit',     label: 'Live Audit',     icon: FileSearch },
   { href: '/history',   label: 'Audit History',  icon: History },
   { href: '/reports',   label: 'Reports',        icon: BarChart3 },
-  { href: '/settings',  label: 'Settings',       icon: Settings },
-]
+] as const
 
 const AGENT_ITEMS = [
   { label: 'Document Audit',    icon: FileSearch, active: true },
@@ -75,13 +74,33 @@ export function Sidebar() {
               Agent Ecosystem
             </p>
             {AGENT_ITEMS.map(({ label, icon: Icon, active }) => (
-              <button key={label} disabled={!active} title={!active ? 'Coming soon' : undefined}
-                className={cn('sidebar-item w-full text-left', active ? 'inactive' : 'opacity-40 cursor-not-allowed')}>
-                <Icon size={15} className="flex-shrink-0" />
-                <span className="truncate">{label}</span>
-                {!active && <span className="ml-auto text-[9px] text-blue-400/60 font-medium">SOON</span>}
-              </button>
-            ))}
+            <button
+              key={label}
+              disabled={!active}
+              title={!active ? 'Coming soon' : undefined}
+              className={cn(
+                'sidebar-item w-full text-left',
+                active
+                  ? 'inactive'
+                  : 'inactive opacity-80 cursor-not-allowed'
+              )}
+            >
+              <Icon
+                size={17}
+                className="flex-shrink-0 text-slate-300"
+              />
+
+              <span className="truncate text-slate-300">
+                {label}
+              </span>
+
+              {!active && (
+                <span className="ml-auto text-[9px] text-slate-400 font-medium">
+                  SOON
+                </span>
+              )}
+            </button>
+          ))}
           </>
         )}
       </nav>

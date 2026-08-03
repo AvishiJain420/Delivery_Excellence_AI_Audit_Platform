@@ -1,6 +1,6 @@
 'use client'
-import { Bell, Search, ChevronDown, LogOut } from 'lucide-react'
-import { useUIStore, useAuditStore } from '@/store'
+import { ChevronDown, LogOut } from 'lucide-react'
+import { useUIStore } from '@/store'
 import { useCurrentUser } from '@/hooks'
 import { authApi } from '@/services/api'
 import { cn } from '@/lib/utils'
@@ -8,7 +8,7 @@ import { useState } from 'react'
 
 export function Header() {
   const { sidebarCollapsed } = useUIStore()
-  const { isConnected } = useAuditStore()
+  // const { isConnected } = useAuditStore()
   const { data: user } = useCurrentUser()
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -20,26 +20,8 @@ export function Header() {
       'bg-white border-b border-slate-200 shadow-sm transition-all duration-300',
       sidebarCollapsed ? 'left-16' : 'left-60',
     )}>
-      {/* Search */}
-      <div className="flex-1 max-w-xs md:max-w-sm">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
-          <input type="text" placeholder="Search audits…"
-            className="w-full pl-8 pr-4 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-      </div>
-
+      
       <div className="flex items-center gap-2 ml-auto">
-        {/* WS connection indicator */}
-        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200">
-          <span className={cn('w-1.5 h-1.5 rounded-full', isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300')} />
-          <span className="text-xs text-slate-500 font-medium">{isConnected ? 'Live' : 'Offline'}</span>
-        </div>
-
-        {/* Notifications placeholder */}
-        <button className="relative p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors">
-          <Bell size={17} />
-        </button>
 
         {/* Profile */}
         <div className="relative">

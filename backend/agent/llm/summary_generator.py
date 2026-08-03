@@ -19,6 +19,7 @@ truststore.inject_into_ssl()
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
+from tenacity import retry, wait_exponential, stop_after_attempt
 
 from config.settings import settings
 
@@ -193,6 +194,16 @@ def build_llm():
     )
     return SUMMARY_PROMPT | llm | JsonOutputParser()
 
+@retry(
+    wait=wait_exponential(
+        multiplier=2,
+        min=5,
+        max=60,
+    ),
+    stop=stop_after_attempt(5),
+)
+def invoke_summary(chain, payload: dict) -> dict:
+    return chain.invoke(payload)
 
 def generate_combined_summary(
     individual_audits: list[dict],
@@ -208,17 +219,62 @@ def generate_combined_summary(
         return summary
     # ──────────────────────────────────────────────────────────────────────────
 
-    chain       = build_llm()
     slim_payload = _slim_audit_payload(individual_audits)
 
-    print(f"Correlating {len(slim_payload)} document audit(s) — "
-          f"{sum(len(a['audit_results']) for a in slim_payload)} criteria rows")
+    criteria_count = sum(
+        len(a.get("audit_results", []))
+        for a in slim_payload
+    )
+
+    print(
+        f"Correlating {len(slim_payload)} document audit(s) — "
+        f"{criteria_count} criteria rows"
+    )
+
+    # Do not call the summary LLM when every individual audit failed
+    # or returned no criterion results.
+    if criteria_count == 0:
+        print(
+            "No audit criteria available. "
+            "Skipping combined summary LLM call."
+        )
+
+        summary = {
+            "overall_project_score": 0,
+            "executive_summary": (
+                "No audit results were available for combined analysis. "
+                "Check the individual document audit errors."
+            ),
+            "cross_document_findings": [],
+            "gaps_and_risks": [],
+            "strengths": [],
+            "recommendations": [],
+            "document_scores": {
+                a.get("matched_category", "Unknown"): (
+                    a.get("overall_score", 0)
+                )
+                for a in individual_audits
+            },
+        }
+
+        _print_summary(summary)
+        return summary
+
+    chain = build_llm()
 
     try:
-        summary = chain.invoke({
-            "audit_type":             audit_type,
-            "individual_audits_json": json.dumps(slim_payload, indent=2),
-        })
+        payload = {
+            "audit_type": audit_type,
+            "individual_audits_json": json.dumps(
+                slim_payload,
+                indent=2,
+            ),
+        }
+
+        summary = invoke_summary(
+            chain,
+            payload,
+        )
 
         _print_summary(summary)
         return summary

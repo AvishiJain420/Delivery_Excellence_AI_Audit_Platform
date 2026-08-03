@@ -48,7 +48,7 @@ class PdfParser(BaseParser):
                                 img["x0"], img["top"],
                                 img["x1"], img["bottom"]
                             )
-                            cropped = page.within_bbox(bbox).to_image(resolution=150)
+                            cropped = page.within_bbox(bbox).to_image(resolution=100)
                             buf = io.BytesIO()
                             cropped.save(buf, format="PNG")
                             img_bytes = buf.getvalue()
