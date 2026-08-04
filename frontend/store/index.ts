@@ -13,7 +13,7 @@
  */
 import { create } from 'zustand'
 import type {
-  AuditSession, AuditStep, AuditDocument, ChatMessage,
+  AuditSession, AuditStep, AuditDocument, ChatMessage,ChatMessageType,
   LiveLogEntry, WSStageMessage, IdentifiedDoc, StepStatus,DocumentStatus
 } from '@/types'
 import { PIPELINE_STEPS, STAGE_TO_STEP } from '@/lib/utils'
@@ -36,9 +36,19 @@ interface AuditState {
 
 const makeSteps = (): AuditStep[] => PIPELINE_STEPS.map(s => ({ ...s, status: 'pending' }))
 
-function addChat(state: AuditState, msg: Omit<ChatMessage, 'id' | 'timestamp'>): Partial<AuditState> {
-  const entry: ChatMessage = { ...msg, id: `cm-${Date.now()}-${Math.random()}`, timestamp: new Date().toISOString() }
-  return { chatMessages: [...state.chatMessages, entry] }
+function addChat(
+  state: AuditState, 
+  msg: Omit<ChatMessage, 'id' | 'timestamp'>
+): Partial<AuditState> {
+  const entry: ChatMessage = {
+    ...msg, 
+    id: `cm-${Date.now()}-${Math.random()}`, 
+    timestamp: new Date().toISOString() 
+  }
+  return { 
+    chatMessages: [
+      ...state.chatMessages, 
+      entry] }
 }
 
 function addLog(state: AuditState, level: LiveLogEntry['level'], message: string): Partial<AuditState> {
@@ -46,6 +56,25 @@ function addLog(state: AuditState, level: LiveLogEntry['level'], message: string
   return { liveLog: [...state.liveLog, entry] }
 }
 
+/* adding new function */
+function updateStageChat(
+  messages: ChatMessage[],
+  title: string,
+  progress: number,
+  type: ChatMessageType = 'progress',
+  content?: string,
+): ChatMessage[] {
+  return messages.map(message =>
+    message.title === title
+      ? {
+          ...message,
+          type,
+          progress,
+          content: content ?? message.content,
+        }
+      : message
+  )
+}
 // function setStepActive(steps: AuditStep[], stepId: string): AuditStep[] {
 //   return steps.map(s => {
 //     if (s.id === stepId) return { ...s, status: 'active', startedAt: new Date().toISOString() }
@@ -173,52 +202,148 @@ export const useAuditStore = create<AuditState>((set, get) => ({
         }))
         break
 
+      // case 'identifying':
+      //   set(s => ({
+      //     session: s.session ? { ...s.session, status: 'identifying', steps: setStepActive(s.session.steps, 's3') } : null,
+      //     ...addLog(s as AuditState, 'info', 'AI identifying and categorising documents…'),
+      //     ...addChat(s as AuditState, { type: 'loading', title: 'Identifying Documents', content: 'AI is analysing document names and categorising them against the audit framework…' }),
+      //   }))
+      //   break
+
       case 'identifying':
         set(s => ({
-          session: s.session ? { ...s.session, status: 'identifying', steps: setStepActive(s.session.steps, 's3') } : null,
-          ...addLog(s as AuditState, 'info', 'AI identifying and categorising documents…'),
-          ...addChat(s as AuditState, { type: 'loading', title: 'Identifying Documents', content: 'AI is analysing document names and categorising them against the audit framework…' }),
-        }))
-        break
-
-      case 'validation_required':
-        set(s => ({
-          pendingValidation: identified_docs ?? [],
-
           session: s.session
             ? {
                 ...s.session,
-                steps: s.session.steps.map(step =>
-                  step.id === 's3'
-                    ? {
-                        ...step,
-                        status: 'completed' as StepStatus,
-                        completedAt: step.completedAt ?? new Date().toISOString(),
-                      }
-                    : step.id === 's4'
-                    ? {
-                        ...step,
-                        status: 'active' as StepStatus,
-                        startedAt: step.startedAt ?? new Date().toISOString(),
-                      }
-                    : step
+                status: 'identifying',
+                steps: setStepActive(
+                  s.session.steps,
+                  's3'
                 ),
+                overallProgress: 20,
               }
             : null,
 
           ...addChat(s as AuditState, {
-            type: 'confirm',
-            title: 'Document Identification — Please Review',
-            content: `AI has identified ${identified_docs?.length ?? 0} document(s). Please review the categories below and approve or correct before the audit continues.`,
-            identifiedDocs: identified_docs,
+            type: 'loading',
+            title: 'Identifying Documents',
+            content:
+              'AI is analysing document names and categorising them against the audit framework…',
+            progress: 20,
           }),
 
           ...addLog(
             s as AuditState,
-            'warning',
-            `Validation required — ${identified_docs?.length} documents identified`
+            'info',
+            'AI identifying and categorising documents…'
           ),
         }))
+        break
+
+      // case 'validation_required':
+      //   set(s => ({
+      //     pendingValidation: identified_docs ?? [],
+
+      //     session: s.session
+      //       ? {
+      //           ...s.session,
+      //           steps: s.session.steps.map(step =>
+      //             step.id === 's3'
+      //               ? {
+      //                   ...step,
+      //                   status: 'completed' as StepStatus,
+      //                   completedAt: step.completedAt ?? new Date().toISOString(),
+      //                 }
+      //               : step.id === 's4'
+      //               ? {
+      //                   ...step,
+      //                   status: 'active' as StepStatus,
+      //                   startedAt: step.startedAt ?? new Date().toISOString(),
+      //                 }
+      //               : step
+      //           ),
+      //         }
+      //       : null,
+
+      //     ...addChat(s as AuditState, {
+      //       type: 'confirm',
+      //       title: 'Document Identification — Please Review',
+      //       content: `AI has identified ${identified_docs?.length ?? 0} document(s). Please review the categories below and approve or correct before the audit continues.`,
+      //       identifiedDocs: identified_docs,
+      //     }),
+
+      //     ...addLog(
+      //       s as AuditState,
+      //       'warning',
+      //       `Validation required — ${identified_docs?.length} documents identified`
+      //     ),
+      //   }))
+      //   break
+
+      case 'validation_required':
+        set(s => {
+          const updatedChats = updateStageChat(
+            s.chatMessages,
+            'Identifying Documents',
+            100,
+            'success',
+            `AI identified ${identified_docs?.length ?? 0} document(s) successfully.`
+          )
+
+          const confirmationMessage: ChatMessage = {
+            id: `cm-${Date.now()}-${Math.random()}`,
+            timestamp: new Date().toISOString(),
+            type: 'confirm',
+            title: 'Document Identification — Please Review',
+            content: `AI has identified ${identified_docs?.length ?? 0} document(s). Please review the categories below and approve or correct before the audit continues.`,
+            identifiedDocs: identified_docs,
+          }
+
+          return {
+            pendingValidation: identified_docs ?? [],
+
+            session: s.session
+              ? {
+                  ...s.session,
+                  overallProgress: 30,
+                  steps: s.session.steps.map(step =>
+                    step.id === 's3'
+                      ? {
+                          ...step,
+                          status: 'completed' as StepStatus,
+                          completedAt:
+                            step.completedAt ??
+                            new Date().toISOString(),
+                        }
+                      : step.id === 's4'
+                      ? {
+                          ...step,
+                          status: 'active' as StepStatus,
+                          startedAt:
+                            step.startedAt ??
+                            new Date().toISOString(),
+                        }
+                      : step
+                  ),
+                }
+              : null,
+
+            chatMessages: [
+              ...updatedChats,
+              confirmationMessage,
+            ],
+
+            liveLog: [
+              ...s.liveLog,
+              {
+                id: `l-${Date.now()}`,
+                level: 'warning',
+                message: `Validation required — ${identified_docs?.length ?? 0} documents identified`,
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          }
+        })
         break
 
 
@@ -377,25 +502,54 @@ export const useAuditStore = create<AuditState>((set, get) => ({
         }))
         break
       
+      // case 'audited': {
+      //   set(s => ({
+      //     session: s.session ? {
+      //       ...s.session,
+      //       status: 'audited',
+      //       steps: setStepDone(s.session.steps, 's6'),
+      //       overallProgress: 65,
+      //       currentDocumentId: undefined,
+      //       // Documents already updated by document_update events — do not replace array
+      //     } : null,
+      //     ...addChat(s as AuditState, {
+      //       type: 'success',
+      //       title: `${data?.count ?? 0} Documents Evaluated`,
+      //       content: 'All documents have been audited against the framework criteria.',
+      //     }),
+      //     ...addLog(s as AuditState, 'success', `${data?.count ?? 0} documents audited`),
+      //   }))
+      //   break
+      // }
+
       case 'audited': {
         set(s => ({
-          session: s.session ? {
-            ...s.session,
-            status: 'audited',
-            steps: setStepDone(s.session.steps, 's6'),
-            overallProgress: 65,
-            currentDocumentId: undefined,
-            // Documents already updated by document_update events — do not replace array
-          } : null,
-          ...addChat(s as AuditState, {
-            type: 'success',
-            title: `${data?.count ?? 0} Documents Evaluated`,
-            content: 'All documents have been audited against the framework criteria.',
-          }),
-          ...addLog(s as AuditState, 'success', `${data?.count ?? 0} documents audited`),
+          session: s.session
+            ? {
+                ...s.session,
+                status: 'audited',
+                steps: setStepDone(s.session.steps, 's6'),
+                overallProgress: 65,
+                currentDocumentId: undefined,
+              }
+            : null,
+
+          chatMessages: updateStageChat(
+            s.chatMessages,
+            'AI Evaluation Running',
+            100,
+            'success',
+            'All documents have been audited against the framework criteria.'
+          ),
+
+          ...addLog(
+            s as AuditState,
+            'success',
+            `${data?.count ?? 0} documents audited`
+          ),
         }))
         break
-      }
+      }  
 
       case 'summarising':
         set(s => ({
@@ -405,65 +559,263 @@ export const useAuditStore = create<AuditState>((set, get) => ({
         }))
         break
 
+      // case 'summarised':
+      //   set(s => ({
+      //     session: s.session ? {
+      //       ...s.session,
+      //       status: 'summarised',
+      //       steps: setStepDone(setStepActive(s.session.steps, 's7'), 's7'),
+      //       overallProgress: 85,
+      //       overallScore: data?.overall_project_score
+      //         ? Math.round((data.overall_project_score as number) * 20)
+      //         : undefined,
+      //     } : null,
+      //     ...addLog(s as AuditState, 'success', `Overall score: ${data?.overall_project_score}/5`),
+      //   }))
+      //   break
+
       case 'summarised':
         set(s => ({
-          session: s.session ? {
-            ...s.session,
-            status: 'summarised',
-            steps: setStepDone(setStepActive(s.session.steps, 's7'), 's7'),
-            overallProgress: 85,
-            overallScore: data?.overall_project_score
-              ? Math.round((data.overall_project_score as number) * 20)
-              : undefined,
-          } : null,
-          ...addLog(s as AuditState, 'success', `Overall score: ${data?.overall_project_score}/5`),
+          session: s.session
+            ? {
+                ...s.session,
+                status: 'summarised',
+                steps: setStepDone(
+                  setStepActive(
+                    s.session.steps,
+                    's7'
+                  ),
+                  's7'
+                ),
+                overallProgress: 85,
+                overallScore:
+                  data?.overall_project_score
+                    ? Math.round(
+                        (data.overall_project_score as number) * 20
+                      )
+                    : undefined,
+              }
+            : null,
+
+          chatMessages: updateStageChat(
+            s.chatMessages,
+            'Generating Summary',
+            100,
+            'success',
+            'Combined audit summary generated successfully.'
+          ),
+
+          ...addLog(
+            s as AuditState,
+            'success',
+            `Overall score: ${data?.overall_project_score}/5`
+          ),
         }))
         break
 
+
+      // case 'exporting':
+      //   set(s => ({
+      //     session: s.session ? { ...s.session, status: 'exporting', steps: setStepActive(s.session.steps, 's8'), overallProgress: 90 } : null,
+      //     ...addChat(s as AuditState, { type: 'loading', title: 'Exporting Report', content: 'Creating Excel report with audit results...', progress: 90 }),
+      //     ...addLog(s as AuditState, 'info', 'Exporting Excel report…'),
+      //   }))
+      //   break
 
       case 'exporting':
         set(s => ({
-          session: s.session ? { ...s.session, status: 'exporting', steps: setStepActive(s.session.steps, 's8'), overallProgress: 90 } : null,
-          ...addChat(s as AuditState, { type: 'loading', title: 'Exporting Report', content: 'Creating Excel report with audit results...', progress: 90 }),
-          ...addLog(s as AuditState, 'info', 'Exporting Excel report…'),
+          session: s.session
+            ? {
+                ...s.session,
+                status: 'exporting',
+                steps: setStepActive(
+                  s.session.steps,
+                  's8'
+                ),
+                overallProgress: 90,
+              }
+            : null,
+
+          chatMessages: updateStageChat(
+            s.chatMessages,
+            'Generating Summary',
+            100,
+            'success',
+            'Combined audit summary generated successfully.'
+          ),
+
+          ...addChat(s as AuditState, {
+            type: 'loading',
+            title: 'Exporting Report',
+            content:
+              'Creating Excel report with audit results...',
+            progress: 90,
+          }),
+
+          ...addLog(
+            s as AuditState,
+            'info',
+            'Exporting Excel report…'
+          ),
         }))
         break
 
+      // case 'uploading':
+      //   set(s => ({
+      //     session: s.session ? { ...s.session, status: 'uploading', steps: setStepActive(s.session.steps, 's8'), overallProgress: 95 } : null,
+      //     ...addChat(s as AuditState, { type: 'loading', title: 'Uploading Report', content: 'Uploading report to SharePoint...', progress: 95 }),
+      //     ...addLog(s as AuditState, 'info', 'Uploading report to SharePoint…'),
+      //   }))
+      //   break
+
       case 'uploading':
-        set(s => ({
-          session: s.session ? { ...s.session, status: 'uploading', steps: setStepActive(s.session.steps, 's8'), overallProgress: 95 } : null,
-          ...addChat(s as AuditState, { type: 'loading', title: 'Uploading Report', content: 'Uploading report to SharePoint...', progress: 95 }),
-          ...addLog(s as AuditState, 'info', 'Uploading report to SharePoint…'),
-        }))
+        set(s => {
+          const cleanedMessages = s.chatMessages.filter(
+            msg => msg.title !== 'Exporting Report'
+          )
+
+          return {
+            session: s.session
+              ? {
+                  ...s.session,
+                  status: 'uploading',
+                  steps: setStepActive(
+                    s.session.steps,
+                    's8'
+                  ),
+                  overallProgress: 95,
+                }
+              : null,
+
+            chatMessages: [
+              ...cleanedMessages,
+
+              {
+                id: `cm-${Date.now()}-${Math.random()}`,
+                timestamp: new Date().toISOString(),
+                type: 'success',
+                title: 'Exporting Report',
+                content:
+                  'Excel audit report created successfully.',
+                progress: 100,
+              },
+
+              {
+                id: `cm-${Date.now()}-${Math.random()}`,
+                timestamp: new Date().toISOString(),
+                type: 'loading',
+                title: 'Uploading Report',
+                content:
+                  'Uploading report to SharePoint...',
+                progress: 95,
+              },
+            ],
+
+            ...addLog(
+              s as AuditState,
+              'info',
+              'Uploading report to SharePoint…'
+            ),
+          }
+        })
         break
+      // case 'done':
+      //   set(s => ({
+      //     session: s.session ? {
+      //       ...s.session,
+      //       status: 'done',
+      //       overallProgress: 100,
+      //       completedAt: new Date().toISOString(),
+      //       reportUrl: data?.report_url as string ?? undefined,
+      //       reportName: data?.report_name as string ?? undefined,
+      //       overallScore: data?.overall_score
+      //         ? Math.round((data.overall_score as number) * 20)
+      //         : s.session.overallScore,
+      //       steps: s.session.steps.map(step => ({
+      //         ...step,
+      //         status: 'completed' as StepStatus,
+      //         completedAt: step.completedAt ?? new Date().toISOString(),
+      //       })),
+      //     } : null,
+      //     ...addChat(s as AuditState, {
+      //       type: 'summary', title: '✅ Audit Complete',
+      //       content: `Audit finished with an overall score of ${data?.overall_score ? Math.round((data.overall_score as number)*20) : '—'}%.`,
+      //       details: [
+      //         `Report: ${data?.report_name ?? '—'}`,
+      //         `Your audit report is ready. Click the "Export Report" button at the top-right to download the Excel report.`,
+      //       ],
+      //     }),
+      //     ...addLog(s as AuditState, 'success', 'Audit pipeline completed successfully'),
+      //   }))
+      //   break
 
       case 'done':
         set(s => ({
-          session: s.session ? {
-            ...s.session,
-            status: 'done',
-            overallProgress: 100,
-            completedAt: new Date().toISOString(),
-            reportUrl: data?.report_url as string ?? undefined,
-            reportName: data?.report_name as string ?? undefined,
-            overallScore: data?.overall_score
-              ? Math.round((data.overall_score as number) * 20)
-              : s.session.overallScore,
-            steps: s.session.steps.map(step => ({
-              ...step,
-              status: 'completed' as StepStatus,
-              completedAt: step.completedAt ?? new Date().toISOString(),
-            })),
-          } : null,
-          ...addChat(s as AuditState, {
-            type: 'summary', title: '✅ Audit Complete',
-            content: `Audit finished with an overall score of ${data?.overall_score ? Math.round((data.overall_score as number)*20) : '—'}%.`,
-            details: [
-              `Report: ${data?.report_name ?? '—'}`,
-              `Your audit report is ready. Click the "Export Report" button at the top-right to download the Excel report.`,
-            ],
-          }),
-          ...addLog(s as AuditState, 'success', 'Audit pipeline completed successfully'),
+          session: s.session
+            ? {
+                ...s.session,
+                status: 'done',
+                overallProgress: 100,
+                completedAt: new Date().toISOString(),
+                reportUrl:
+                  data?.report_url as string ??
+                  undefined,
+                reportName:
+                  data?.report_name as string ??
+                  undefined,
+                overallScore:
+                  data?.overall_score
+                    ? Math.round(
+                        (data.overall_score as number) * 20
+                      )
+                    : s.session.overallScore,
+                steps: s.session.steps.map(step => ({
+                  ...step,
+                  status:
+                    'completed' as StepStatus,
+                  completedAt:
+                    step.completedAt ??
+                    new Date().toISOString(),
+                })),
+              }
+            : null,
+
+          chatMessages: [
+            ...updateStageChat(
+              s.chatMessages,
+              'Uploading Report',
+              100,
+              'success',
+              'Audit report uploaded successfully.'
+            ),
+            {
+              id: `cm-${Date.now()}-${Math.random()}`,
+              timestamp:
+                new Date().toISOString(),
+              type: 'summary',
+              title: '✅ Audit Complete',
+              content:
+                `Audit finished with an overall score of ${
+                  data?.overall_score
+                    ? Math.round(
+                        (data.overall_score as number) * 20
+                      )
+                    : '—'
+                }%.`,
+              details: [
+                `Report: ${
+                  data?.report_name ?? '—'
+                }`,
+                'Your audit report is ready. Click the "Export Report" button at the top-right to download the Excel report.',
+              ],
+            },
+          ],
+
+          ...addLog(
+            s as AuditState,
+            'success',
+            'Audit pipeline completed successfully'
+          ),
         }))
         break
 

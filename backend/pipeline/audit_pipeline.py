@@ -131,7 +131,11 @@ class AuditPipeline:
  
         if validation.corrections:
             print("\nApplying user corrections:")
-            identified = apply_corrections(identified, validation.corrections)
+            identified = apply_corrections(
+                identified, 
+                validation.corrections,
+                self._framework_documents_list
+                )
  
         self._identified_documents = identified
         return identified

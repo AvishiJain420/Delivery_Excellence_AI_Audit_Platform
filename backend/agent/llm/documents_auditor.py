@@ -148,8 +148,19 @@ def _resize_image_bytes(img_bytes: bytes) -> bytes:
     """
     try:
         from PIL import Image
+
+        Image.MAX_IMAGE_PIXELS = None  # disable DecompressionBombError for large images
         img = Image.open(io.BytesIO(img_bytes))
 
+        pixel_count = img.width * img.height
+
+        if pixel_count > 100_000_000:
+            raise ValueError(
+                f"Oversized image rejected: "
+                f"{img.width}x{img.height} "
+                f"({pixel_count} pixels)"
+            )
+        
         # Convert RGBA/P mode images to RGB for JPEG compat
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
@@ -168,26 +179,114 @@ def _resize_image_bytes(img_bytes: bytes) -> bytes:
         return buf.getvalue()
 
     except Exception as e:
-        print(f"  Image resize warning: {e}")
-        return img_bytes  # return original if resize fails
+        print(f"  Image skipped: {e}")
+        return None
 
+
+# def _prepare_images(images: list[bytes]) -> list[bytes]:
+#     """
+#     Caps at MAX_IMAGES_PER_DOC and resizes each to MAX_IMAGE_DIMENSION.
+#     """
+#     capped = images[:MAX_IMAGES_PER_DOC]
+#     if len(images) > MAX_IMAGES_PER_DOC:
+#         print(f"  Images capped: {len(images)} → {MAX_IMAGES_PER_DOC}")
+
+#     resized = []
+
+#     for i, img in enumerate(capped):
+
+#         original_size = len(img)
+
+#         resized_img = _resize_image_bytes(img)
+
+#         # Skip bad images
+#         if resized_img is None:
+#             print(f"  Image {i+1} skipped")
+#             continue
+
+#         resized_size = len(resized_img)
+
+#         if original_size != resized_size:
+#             print(
+#                 f"  Image {i+1}: "
+#                 f"{original_size//1024}KB → "
+#                 f"{resized_size//1024}KB"
+#             )
+
+#         resized.append(resized_img)
+
+#     return resized
 
 def _prepare_images(images: list[bytes]) -> list[bytes]:
-    """
-    Caps at MAX_IMAGES_PER_DOC and resizes each to MAX_IMAGE_DIMENSION.
-    """
-    capped = images[:MAX_IMAGES_PER_DOC]
-    if len(images) > MAX_IMAGES_PER_DOC:
-        print(f"  Images capped: {len(images)} → {MAX_IMAGES_PER_DOC}")
 
-    resized = []
-    for i, img in enumerate(capped):
-        original_size = len(img)
+    from PIL import Image
+
+    scored_images = []
+
+    for img_bytes in images:
+
+        try:
+            img = Image.open(
+                io.BytesIO(img_bytes)
+            )
+
+            width, height = img.size
+
+            area = width * height
+
+            score = area
+
+
+            # Prefer PNG diagrams/screenshots
+            if img.format == "PNG":
+                score *= 1.2
+
+
+            # Remove tiny images
+            if width < 200 or height < 200:
+                score *= 0.1
+
+
+            scored_images.append(
+                (
+                    score,
+                    img_bytes
+                )
+            )
+
+        except Exception:
+            continue
+
+
+    # Highest value images first
+    scored_images.sort(
+        key=lambda x: x[0],
+        reverse=True
+    )
+
+
+    selected_images = [
+        item[1]
+        for item in scored_images[:MAX_IMAGES_PER_DOC]
+    ]
+
+
+    print(
+        f"Image selection: "
+        f"{len(images)} → {len(selected_images)}"
+    )
+
+
+    resized=[]
+
+
+    for img in selected_images:
+
         resized_img = _resize_image_bytes(img)
-        resized_size = len(resized_img)
-        if original_size != resized_size:
-            print(f"  Image {i+1}: {original_size//1024}KB → {resized_size//1024}KB")
-        resized.append(resized_img)
+
+        if resized_img:
+            resized.append(resized_img)
+
 
     return resized
 

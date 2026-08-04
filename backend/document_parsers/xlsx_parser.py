@@ -133,7 +133,11 @@ class XlsxParser(BaseParser):
                     media_images = self._extract_media_images(
                         zf, zip_files, sheet_idx
                     )
+                    MAX_IMAGES_TO_STORE = 15
+
                     for img_bytes in media_images:
+                        if len(all_images) >= MAX_IMAGES_TO_STORE:
+                            break
                         all_images.append(img_bytes)
                         content_sequence.append({
                             "type": "image",
@@ -462,22 +466,73 @@ class XlsxParser(BaseParser):
 
     # ── Embedded media images ─────────────────────────────────────────
 
+    # def _extract_media_images(
+    #     self,
+    #     zf: zipfile.ZipFile,
+    #     zip_files: list[str],
+    #     sheet_idx: int
+    # ) -> list[bytes]:
+    #     """
+    #     Extracts embedded images from xl/media/ that are linked
+    #     to the current sheet via the drawing relationship file.
+    #     Only returns images actually referenced by this sheet's
+    #     drawing — avoids pulling unrelated images from other sheets.
+    #     """
+    #     images = []
+    #     try:
+    #         # Check drawing relationship to find which media files
+    #         # belong to this sheet
+    #         rel_path = (
+    #             f"xl/drawings/_rels/drawing{sheet_idx + 1}.xml.rels"
+    #         )
+
+    #         if rel_path not in zip_files:
+    #             return images
+
+    #         rel_xml = zf.read(rel_path)
+    #         rel_root = ET.fromstring(rel_xml)
+
+    #         IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp"}
+
+    #         for rel in rel_root.findall(".//{http://schemas.openxmlformats.org/package/2006/relationships}Relationship"):
+    #             target = rel.get("Target", "")
+    #             # Target paths look like "../media/image1.png"
+    #             normalized = target.replace("../", "xl/")
+    #             ext = "." + normalized.rsplit(".", 1)[-1].lower() \
+    #                 if "." in normalized else ""
+
+    #             if ext in IMAGE_EXTS and normalized in zip_files:
+    #                 img_bytes = zf.read(normalized)
+
+    #                 if len(img_bytes) > 20 * 1024 * 1024:
+    #                     print(
+    #                         f"Skipping huge image {normalized}"
+    #                     )
+    #                     continue
+
+    #                 images.append(img_bytes)
+
+    #     except Exception as e:
+    #         print(f"  Media image extraction warning: {e}")
+
+    #     return images
+
     def _extract_media_images(
         self,
         zf: zipfile.ZipFile,
         zip_files: list[str],
         sheet_idx: int
     ) -> list[bytes]:
-        """
-        Extracts embedded images from xl/media/ that are linked
-        to the current sheet via the drawing relationship file.
-        Only returns images actually referenced by this sheet's
-        drawing — avoids pulling unrelated images from other sheets.
-        """
+    
+
         images = []
+
+        MAX_IMAGE_SIZE = 20 * 1024 * 1024  # 20 MB
+        MIN_WIDTH = 200
+        MIN_HEIGHT = 200
+
         try:
-            # Check drawing relationship to find which media files
-            # belong to this sheet
+
             rel_path = (
                 f"xl/drawings/_rels/drawing{sheet_idx + 1}.xml.rels"
             )
@@ -485,22 +540,89 @@ class XlsxParser(BaseParser):
             if rel_path not in zip_files:
                 return images
 
+
             rel_xml = zf.read(rel_path)
             rel_root = ET.fromstring(rel_xml)
 
-            IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp"}
 
-            for rel in rel_root.findall(".//{http://schemas.openxmlformats.org/package/2006/relationships}Relationship"):
+            IMAGE_EXTS = {
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".bmp"
+            }
+
+
+            for rel in rel_root.findall(
+                ".//{http://schemas.openxmlformats.org/package/2006/relationships}Relationship"
+            ):
+
                 target = rel.get("Target", "")
-                # Target paths look like "../media/image1.png"
-                normalized = target.replace("../", "xl/")
-                ext = "." + normalized.rsplit(".", 1)[-1].lower() \
-                    if "." in normalized else ""
 
-                if ext in IMAGE_EXTS and normalized in zip_files:
-                    images.append(zf.read(normalized))
+                normalized = target.replace("../", "xl/")
+
+
+                ext = (
+                    "." + normalized.rsplit(".",1)[-1].lower()
+                    if "." in normalized
+                    else ""
+                )
+
+
+                if ext not in IMAGE_EXTS:
+                    continue
+
+
+                if normalized not in zip_files:
+                    continue
+
+
+                img_bytes = zf.read(normalized)
+
+
+                # Reject huge files before memory pressure
+                if len(img_bytes) > MAX_IMAGE_SIZE:
+                    print(
+                        f"  Skipping image {normalized}: "
+                        f"{len(img_bytes)//1024//1024}MB"
+                    )
+                    continue
+
+
+                # Check dimensions
+                try:
+
+                    from PIL import Image
+
+                    img = Image.open(
+                        io.BytesIO(img_bytes)
+                    )
+
+                    width,height = img.size
+
+
+                    # ignore logos/icons
+                    if (
+                        width < MIN_WIDTH
+                        or height < MIN_HEIGHT
+                    ):
+                        continue
+
+
+                except Exception:
+                    continue
+
+
+                images.append(img_bytes)
+
+
+            return images
+
 
         except Exception as e:
-            print(f"  Media image extraction warning: {e}")
 
-        return images
+            print(
+                f" Media image extraction warning: {e}"
+            )
+
+            return images

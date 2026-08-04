@@ -82,6 +82,14 @@ export function ChatMessageCard({ message, onConfirm }: ChatMessageCardProps) {
   }
 
   const cfg = typeConfig[message.type]
+  const progressColor =
+  message.type === 'success' || message.type === 'summary'
+    ? 'bg-emerald-500'
+    : message.type === 'warning' || message.type === 'confirm'
+      ? 'bg-amber-500'
+      : message.type === 'error'
+        ? 'bg-red-500'
+        : 'bg-blue-600'
 
   return (
     <div className={cn(
@@ -114,7 +122,7 @@ export function ChatMessageCard({ message, onConfirm }: ChatMessageCardProps) {
       <div className="px-4 py-3">
         {message.type === 'loading' ? (
           <div className="flex items-center gap-2 text-slate-400">
-            <LoadingDots />
+            {message.progress !== 100 && <LoadingDots />}
             <span className="text-xs">{message.content}</span>
           </div>
         ) : (
@@ -123,11 +131,21 @@ export function ChatMessageCard({ message, onConfirm }: ChatMessageCardProps) {
 
         {/* Progress bar */}
         {message.progress != null && (
-          <ProgressBar
-            value={message.progress}
-            indeterminate={message.progress === 0}
-            className="mt-2.5"
-          />
+          <div className="mt-2.5">
+            <ProgressBar
+              value={message.progress}
+              color={
+                message.type === 'success'
+                  ? 'emerald'
+                  : message.type === 'error'
+                  ? 'red'
+                  : message.type === 'warning'
+                  ? 'amber'
+                  : 'blue'
+              }
+              size="sm"
+            />
+          </div>
         )}
 
         {/* Expandable details */}

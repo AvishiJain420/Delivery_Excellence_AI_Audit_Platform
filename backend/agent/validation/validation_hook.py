@@ -165,10 +165,79 @@ class AsyncQueueCallback:
 def apply_corrections(
     identified_docs: list[dict],
     corrections: list[DocumentCorrection],
+    framework_categories: list[str],
 ) -> list[dict]:
-    """Apply user corrections to the identified documents list."""
-    correction_map = {c.filename: c.new_matched_category for c in corrections}
+    """
+    Apply user corrections while preserving the original
+    framework category naming.
+
+    User may type:
+        Business Rule Document
+
+    Framework contains:
+        Business Rule Document (BRD)
+
+    We map back to the valid framework category.
+    """
+
+    correction_map = {
+        c.filename: c.new_matched_category
+        for c in corrections
+    }
+
+
     for doc in identified_docs:
-        if doc["filename"] in correction_map:
-            doc["matched_category"] = correction_map[doc["filename"]]
+
+        if doc["filename"] not in correction_map:
+            continue
+
+
+        user_category = correction_map[doc["filename"]]
+
+
+        matched_framework_category = None
+
+
+        # Exact match first
+        for category in framework_categories:
+
+            if user_category.lower() == category.lower():
+                matched_framework_category = category
+                break
+
+
+        # Partial match fallback
+        if not matched_framework_category:
+
+            for category in framework_categories:
+
+                if (
+                    user_category.lower() in category.lower()
+                    or
+                    category.lower() in user_category.lower()
+                ):
+                    matched_framework_category = category
+                    break
+
+
+        if matched_framework_category:
+
+            doc["matched_category"] = matched_framework_category
+
+            doc["confidence"] = "high"
+
+            doc["reasoning"] = (
+                "User correction mapped to framework category"
+            )
+
+        else:
+
+            print(
+                f"WARNING: User correction '{user_category}' "
+                f"does not match framework categories"
+            )
+
+            # keep original category instead of breaking framework lookup
+
+
     return identified_docs
