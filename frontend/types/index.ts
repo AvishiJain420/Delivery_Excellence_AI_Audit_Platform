@@ -197,6 +197,8 @@ export interface AuditSummary {
   auditType?: string
   createdAt: string
   completedAt?: string
+  reportUrl?: string
+  reportName?: string
 }
 
 export interface DashboardStats {

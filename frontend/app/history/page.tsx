@@ -33,7 +33,7 @@ export default function HistoryPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-            <History size={12} /> <span>Audit History</span>
+            <History size={12} /> <span>Document Audit and Reports History</span>
           </div>
           <h1 className="text-xl font-bold text-slate-900">All Audits</h1>
           <p className="text-sm text-slate-500 mt-0.5">{audits.length} total sessions</p>
@@ -62,19 +62,19 @@ export default function HistoryPage() {
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-        <table className="w-full text-sm min-w-[640px]">
+        <table className="w-full text-sm min-w-[1000px]">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/50">
-              {['Audit Name', 'Client', 'Type', 'Docs', 'Status', 'Score', 'Created', ''].map(h => (
+              {['Audit Name', 'Client', 'Type', 'Docs', 'Status', 'Score', 'Created','Report', ''].map(h => (
                 <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {isLoading ? (
-              <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400 text-sm">Loading sessions…</td></tr>
+              <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-400 text-sm">Loading sessions…</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400 text-sm">No audits found. Start one from the dashboard.</td></tr>
+              <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-400 text-sm">No audits found. Start one from the dashboard.</td></tr>
             ) : filtered.map(audit => (
               <tr key={audit.id} className="hover:bg-slate-50/60 transition-colors group">
                 <td className="px-4 py-3.5 whitespace-nowrap">
@@ -96,19 +96,53 @@ export default function HistoryPage() {
                     {audit.overallScore != null ? `${audit.overallScore}%` : '—'}
                   </span>
                 </td>
-                <td className="px-4 py-3.5 text-slate-400 text-xs whitespace-nowrap">{formatRelativeTime(audit.createdAt)}</td>
+
+                <td className="px-4 py-3.5 text-slate-400 text-xs whitespace-nowrap">
+                  {formatRelativeTime(audit.createdAt)}
+                </td>
+
+                {/* Report */}
                 <td className="px-4 py-3.5">
+                  {audit.reportUrl ? (
+                    <a
+                      href={`${audit.reportUrl}${audit.reportUrl.includes('?') ? '&' : '?'}web=1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    >
+                      <ExternalLink size={11} />
+                      Open Report
+                    </a>
+                  ) : (
+                    <span className="text-xs text-slate-300">
+                      Not available
+                    </span>
+                  )}
+                </td>
+
+
+                {/* Existing audit actions — kept unchanged */}
+                <td className="px-4 py-3.5 w-[90px]">
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Link href={`/audit?id=${audit.id}`}>
-                      <button className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Open">
+                      <button
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Open Audit"
+                      >
                         <ExternalLink size={12} />
                       </button>
                     </Link>
-                    <button onClick={() => handleDelete(audit.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+
+                    <button
+                      onClick={() => handleDelete(audit.id)}
+                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete"
+                    >
                       <Trash2 size={12} />
                     </button>
                   </div>
                 </td>
+
               </tr>
             ))}
           </tbody>

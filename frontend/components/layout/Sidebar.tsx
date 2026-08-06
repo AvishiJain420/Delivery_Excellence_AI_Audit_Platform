@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileSearch, History, BarChart3,
-  ChevronLeft, ChevronRight, Bot, Code2, Shield, BookOpen, Sparkles,
+  ChevronLeft, ChevronRight, Bot
 } from 'lucide-react'
 import { useUIStore } from '@/store'
 
@@ -15,13 +15,13 @@ const NAV_ITEMS = [
   { href: '/reports',   label: 'Reports',        icon: BarChart3 },
 ] as const
 
-const AGENT_ITEMS = [
-  { label: 'Document Audit',    icon: FileSearch, active: true },
-  { label: 'Code Audit',        icon: Code2,      active: false },
-  { label: 'Compliance Review', icon: Shield,     active: false },
-  { label: 'AI Assistant',      icon: Sparkles,   active: false },
-  { label: 'Knowledge Base',    icon: BookOpen,   active: false },
-]
+// const AGENT_ITEMS = [
+//   { label: 'Document Audit',    icon: FileSearch, active: true },
+//   { label: 'Code Audit',        icon: Code2,      active: false },
+//   { label: 'Compliance Review', icon: Shield,     active: false },
+//   { label: 'AI Assistant',      icon: Sparkles,   active: false },
+//   { label: 'Knowledge Base',    icon: BookOpen,   active: false },
+// ]
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -68,7 +68,7 @@ export function Sidebar() {
           )
         })}
 
-        {!sidebarCollapsed && (
+        {/* {!sidebarCollapsed && (
           <>
             <p className="text-blue-400/60 text-[10px] font-semibold uppercase tracking-widest px-3 pt-5 pb-2">
               Agent Ecosystem
@@ -102,7 +102,7 @@ export function Sidebar() {
             </button>
           ))}
           </>
-        )}
+        )} */}
       </nav>
 
       {/* Collapse toggle */}

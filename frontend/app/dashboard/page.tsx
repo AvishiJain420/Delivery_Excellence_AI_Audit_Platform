@@ -46,7 +46,7 @@ function DashboardInner() {
             onClick={() => setStartAuditModal(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
           >
-            <Plus size={14} /> Start New Audit
+            <Plus size={14} /> Start Doc Audit (Coming Soon)
           </button>
         </div>
       </div>
@@ -67,7 +67,7 @@ function DashboardInner() {
       {/* Recent audits */}
       <RecentAuditsTable audits={audits ?? []} loading={auditsLoading} />
 
-      {/* Agent ecosystem placeholder */}
+      {/* Agent ecosystem placeholder
       <div className="mt-5 bg-slate-100 rounded-xl p-5 border border-slate-200">
         <div className="flex items-center justify-between">
           <div>
@@ -104,7 +104,7 @@ function DashboardInner() {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Start Audit Modal */}
       {startAuditModalOpen && (

@@ -354,6 +354,9 @@ export const dashboardApi = {
         auditType: s.audit_type ?? undefined,
         createdAt: s.completion_time ?? new Date().toISOString(),
         completedAt: s.completion_time ?? undefined,
+
+        reportUrl: s.report?.sharepoint_url ?? undefined,
+        reportName: s.report?.report_name ?? undefined,
       }
     })
   },
