@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_ROLE_KEY : str
     SUPABASE_URL : str
 
+    #-------Langfuse--------------------
+    LANGFUSE_PUBLIC_KEY : str
+    LANGFUSE_SECRET_KEY : str
+    LANGFUSE_HOST : str
+
     #--------JWT - our application tokens------
     JWT_SECRET_KEY : str
     JWT_ALGORITHM : str

@@ -3,16 +3,16 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, FileSearch, History, BarChart3,
+  LayoutDashboard, FileSearch, History,
   ChevronLeft, ChevronRight, Bot
 } from 'lucide-react'
 import { useUIStore } from '@/store'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard',      icon: LayoutDashboard },
-  { href: '/audit',     label: 'Live Audit',     icon: FileSearch },
-  { href: '/history',   label: 'Audit History',  icon: History },
-  { href: '/reports',   label: 'Reports',        icon: BarChart3 },
+  // { href: '/audit',     label: 'Live Audit',     icon: FileSearch },
+  { href: '/history',   label: 'Audit and Report History',  icon: History },
+  // { href: '/reports',   label: 'Reports',        icon: BarChart3 },
 ] as const
 
 // const AGENT_ITEMS = [

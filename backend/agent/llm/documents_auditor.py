@@ -28,7 +28,13 @@ from pydantic import BaseModel, Field
 from agent.document import Document
 from config.settings import settings
 
+#Langfuse integration
+from typing import Any
+from agent.langfuse.langfuse_client import (
+    get_langfuse_handler
+)
 
+langfuse_handler = get_langfuse_handler()
 # ============================================================
 # LLM FACTORY
 # ============================================================
@@ -182,40 +188,6 @@ def _resize_image_bytes(img_bytes: bytes) -> bytes:
         print(f"  Image skipped: {e}")
         return None
 
-
-# def _prepare_images(images: list[bytes]) -> list[bytes]:
-#     """
-#     Caps at MAX_IMAGES_PER_DOC and resizes each to MAX_IMAGE_DIMENSION.
-#     """
-#     capped = images[:MAX_IMAGES_PER_DOC]
-#     if len(images) > MAX_IMAGES_PER_DOC:
-#         print(f"  Images capped: {len(images)} → {MAX_IMAGES_PER_DOC}")
-
-#     resized = []
-
-#     for i, img in enumerate(capped):
-
-#         original_size = len(img)
-
-#         resized_img = _resize_image_bytes(img)
-
-#         # Skip bad images
-#         if resized_img is None:
-#             print(f"  Image {i+1} skipped")
-#             continue
-
-#         resized_size = len(resized_img)
-
-#         if original_size != resized_size:
-#             print(
-#                 f"  Image {i+1}: "
-#                 f"{original_size//1024}KB → "
-#                 f"{resized_size//1024}KB"
-#             )
-
-#         resized.append(resized_img)
-
-#     return resized
 
 def _prepare_images(images: list[bytes]) -> list[bytes]:
 
@@ -461,8 +433,12 @@ def calculate_weighted_score(audit_results: list[dict]) -> float:
 # MAIN ENTRY POINT
 # ============================================================
 
-def audit_document(document: Document) -> dict:
+def audit_document(
+        document: Document,
+        audit_trace: Any = None,
+        ) -> dict:
     """Audit one parsed Document. Returns a plain dict for JSON serialisation."""
+
     framework: list[dict] = document.metadata.get("framework", [])
     category: str = document.metadata.get("matched_category", "General")
 
@@ -489,10 +465,50 @@ def audit_document(document: Document) -> dict:
 
     try:
         # Invoke with token usage tracking
-        raw_response = llm.with_structured_output(
-            AuditDocumentResponse,
-            include_raw=True,
-        ).invoke(messages)
+        # raw_response = llm.with_structured_output(
+        #     AuditDocumentResponse,
+        #     include_raw=True,
+        # ).invoke(messages)
+
+        document_observation = None
+
+        if audit_trace:
+            document_observation = audit_trace.span(
+                name=f"Document Audit - {document.filename}",
+                metadata={
+                    "document": document.filename,
+                    "category": category,
+                    "criteria_count": len(framework),
+                    "original_images": len(document.images),
+                    "images_sent": len(prepared_images),
+                },
+            )
+            
+            document_observation.update(
+                    input={
+                        "document": document.filename,
+                        "framework_criteria": len(framework),
+                    }
+                )
+
+        config = {
+            "callbacks": [langfuse_handler],
+            "run_name": f"Audit - {document.filename}",
+        }
+
+        if document_observation:
+            config["metadata"] = {
+                "langfuse_parent_observation_id": document_observation.id
+            }
+
+        raw_response = (
+            llm.with_structured_output(
+                AuditDocumentResponse,
+                include_raw=True,
+            )
+            .with_config(config)
+            .invoke(messages)
+        )
 
         response: AuditDocumentResponse = raw_response["parsed"]
 
@@ -515,6 +531,7 @@ def audit_document(document: Document) -> dict:
                   f"output: {usage.get('output_tokens', '?')}  "
                   f"total: {usage.get('total_tokens', '?')}")
 
+        
         # Merge results back with framework metadata by index
         merged = _merge_results_with_framework(
             response.audit_results, framework, document.filename, category
@@ -534,6 +551,27 @@ def audit_document(document: Document) -> dict:
             for g in gaps[:5]:
                 print(f"  - [{g['criterion_number']}] {g['evaluation_metric']} ({g['score']}/5)")
 
+
+        if document_observation:
+                
+                    document_observation.update(
+                        output={
+                                    "overall_score": overall,
+                                    "criteria": len(merged),
+                                    "gaps_found": len(gaps)
+                                },
+                        metadata={
+                                "criteria_count": len(framework),
+                                "prompt_tokens": token_usage["prompt_tokens"],
+                                "completion_tokens": token_usage["completion_tokens"],
+                                "total_tokens": token_usage["total_tokens"],
+                                "images_sent": len(prepared_images),
+                                    }
+                            )
+                    
+        if document_observation:
+            document_observation.end()
+
         return {
             "filename":        document.filename,
             "matched_category": category,
@@ -552,6 +590,19 @@ def audit_document(document: Document) -> dict:
             print(raw_response)
 
         traceback.print_exc()
+
+        if document_observation:
+            document_observation.update(
+                        output={
+                            "status": "failed"
+                        }
+                    )
+
+            document_observation.end(
+                level="ERROR",
+                status_message=str(exc),
+            )
+
         return {
             "filename":        document.filename,
             "matched_category": category,
@@ -565,7 +616,6 @@ def audit_document(document: Document) -> dict:
                 "total_tokens": 0,
             },
         }
-
 
 # ============================================================
 # BATCH CONVENIENCE

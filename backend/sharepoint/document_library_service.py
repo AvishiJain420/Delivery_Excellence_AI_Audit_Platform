@@ -644,6 +644,21 @@ class DocumentLibraryService:
             content_url
         )
 
+        print(
+            f"[SharePoint Download] "
+            f"drive_id={drive_id}"
+        )
+
+        print(
+            f"[SharePoint Download] "
+            f"drive_item_id={drive_item_id}"
+        )
+
+        print(
+            f"[SharePoint Download] "
+            f"Graph filename={metadata.get('name')}"
+        )
+
         return (
             file_content,
             report_name,

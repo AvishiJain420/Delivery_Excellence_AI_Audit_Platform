@@ -17,18 +17,6 @@ import { PIPELINE_STEPS } from '@/lib/utils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-// ─── Report shape ─────────────────────────────────────────────────────────────
-export interface ReportRecord {
-  report_id: string
-  session_id: string
-  report_name: string | null
-  sharepoint_url: string | null
-  created_at: string
-  project_name: string
-  client_name: string
-  overall_score: number | null
-}
-
 // ─── Token helpers ─────────────────────────────────────────────────────────────
 export const TokenStore = {
   setTokens(access: string, refresh: string) {
@@ -243,56 +231,6 @@ export const auditApi = {
     }
   },
 
-  /**
-   * Returns completed audit sessions that have an associated report.
-   * The reports page uses this data to display the audit reports table.
-   */
-  
-  async getReports(): Promise<ReportRecord[]> {
-  const sessions = await auditApi.listSessions()
-
-  return sessions
-    .filter(
-      session =>
-        session.audit_status === 'done' &&
-        session.report
-    )
-    .map(session => ({
-      report_id:
-        session.report?.report_id ??
-        session.session_id,
-
-      session_id:
-        session.session_id,
-
-      report_name:
-        session.report?.report_name ??
-        `${session.project_name ?? 'Audit'}_Report.xlsx`,
-
-      sharepoint_url:
-        session.report?.sharepoint_url ??
-        null,
-
-      created_at:
-        session.completion_time ??
-        new Date().toISOString(),
-
-      project_name:
-        session.project_name ??
-        'Unknown Project',
-
-      client_name:
-        session.client_name ??
-        '',
-
-      overall_score:
-        session.overall_project_score != null
-          ? Math.round(
-              Number(session.overall_project_score) * 20
-            )
-          : null,
-    }))
-  },
 
   async deleteSession(sessionId: string): Promise<void> {
     const res = await apiFetch(

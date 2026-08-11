@@ -25,6 +25,7 @@ interface AuditState {
   liveLog: LiveLogEntry[]
   isConnected: boolean
   pendingValidation: IdentifiedDoc[] | null  // set when backend needs user approval
+  frameworkCategories: string[]  // set when backend sends framework categories
 
   initSession: (id: string, name: string, projectName: string, clientName: string, auditType: string) => void
   handleStage: (msg: WSStageMessage) => void
@@ -119,6 +120,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
   liveLog: [],
   isConnected: false,
   pendingValidation: null,
+  frameworkCategories: [],
 
   initSession: (id, name, projectName, clientName, auditType) => {
     set({
@@ -240,45 +242,6 @@ export const useAuditStore = create<AuditState>((set, get) => ({
         }))
         break
 
-      // case 'validation_required':
-      //   set(s => ({
-      //     pendingValidation: identified_docs ?? [],
-
-      //     session: s.session
-      //       ? {
-      //           ...s.session,
-      //           steps: s.session.steps.map(step =>
-      //             step.id === 's3'
-      //               ? {
-      //                   ...step,
-      //                   status: 'completed' as StepStatus,
-      //                   completedAt: step.completedAt ?? new Date().toISOString(),
-      //                 }
-      //               : step.id === 's4'
-      //               ? {
-      //                   ...step,
-      //                   status: 'active' as StepStatus,
-      //                   startedAt: step.startedAt ?? new Date().toISOString(),
-      //                 }
-      //               : step
-      //           ),
-      //         }
-      //       : null,
-
-      //     ...addChat(s as AuditState, {
-      //       type: 'confirm',
-      //       title: 'Document Identification — Please Review',
-      //       content: `AI has identified ${identified_docs?.length ?? 0} document(s). Please review the categories below and approve or correct before the audit continues.`,
-      //       identifiedDocs: identified_docs,
-      //     }),
-
-      //     ...addLog(
-      //       s as AuditState,
-      //       'warning',
-      //       `Validation required — ${identified_docs?.length} documents identified`
-      //     ),
-      //   }))
-      //   break
 
       case 'validation_required':
         set(s => {
@@ -301,6 +264,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
 
           return {
             pendingValidation: identified_docs ?? [],
+            frameworkCategories: (msg as any).framework_categories ?? [],
 
             session: s.session
               ? {
@@ -856,7 +820,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     set({ pendingValidation: null })
   },
 
-  reset: () => set({ session: null, chatMessages: [], liveLog: [], isConnected: false, pendingValidation: null }),
+  reset: () => set({ session: null, chatMessages: [], liveLog: [], isConnected: false, pendingValidation: null,frameworkCategories: [] }),
 }))
 
 // ─── UI Store ──────────────────────────────────────────────────────────────────

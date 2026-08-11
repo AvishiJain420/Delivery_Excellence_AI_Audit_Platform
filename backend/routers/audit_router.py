@@ -12,6 +12,7 @@ from fastapi.responses import StreamingResponse
 import asyncio
 import json
 import uuid as _uuid
+import time as time
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -654,6 +655,11 @@ async def download_audit_report(
 
     sharepoint = SharePointService()
 
+    print(
+    f"[Audit Download] "
+    f"DB report_name={session.report.report_name}"
+    )   
+
     try:
         (
             file_content,
@@ -816,9 +822,11 @@ async def run_audit_ws(
             except Exception:
                 break
 
+    
     callback = AsyncQueueCallback()
     pipeline = AuditPipeline(validation_callback=callback)
-    heartbeat_task = asyncio.create_task(heartbeat())   
+    pipeline._audit_start_time = time.perf_counter()
+    heartbeat_task = asyncio.create_task(heartbeat())  
 
     try:
         await _set_status(db, session, "fetching")
@@ -833,6 +841,7 @@ async def run_audit_ws(
             "project_name": overview.get("project_name"),
             "client_name":  overview.get("client_name"),
             "audit_type":   overview.get("audit_type"),
+            "document_count": len(overview.get("documents") or []),
         })
 
         await asyncio.get_event_loop().run_in_executor(
@@ -844,7 +853,26 @@ async def run_audit_ws(
 
         identify_task = asyncio.create_task(pipeline.identify_documents())
         question = await callback.question_queue.get()
-        await send("validation_required", identified_docs=question["identified_docs"])
+
+        def _extract_framework_name(item):
+            if isinstance(item, str):
+                return item
+            if isinstance(item, dict):
+                return item.get("document") or item.get("document_category") or item.get("name") or ""
+            return str(item)
+
+        framework_categories = list(dict.fromkeys(
+            _extract_framework_name(item)
+            for item in pipeline._framework_documents_list
+            if item
+        ))
+        framework_categories = [c for c in framework_categories if c]
+
+        await send(
+            "validation_required",
+            identified_docs=question["identified_docs"],
+            framework_categories=framework_categories,
+        )
 
         client_msg = await websocket.receive_json()
         await callback.answer_queue.put({
@@ -1018,29 +1046,38 @@ async def run_audit_ws(
         )
         await _persist_report(db, session_id, upload_result)
 
-        # Aggregate token usage across all documents in this session
-        session_token_usage = {
-            "total_prompt_tokens":     sum(
-                a.get("token_usage", {}).get("prompt_tokens", 0)
-                for a in individual_audits
-            ),
-            "total_completion_tokens": sum(
-                a.get("token_usage", {}).get("completion_tokens", 0)
-                for a in individual_audits
-            ),
-            "total_tokens":            sum(
-                a.get("token_usage", {}).get("total_tokens", 0)
-                for a in individual_audits
-            ),
+        # Use pipeline._audit_metrics — it already correctly accumulates
+        # tokens from BOTH per-document audits AND the combined summary call
+        metrics = pipeline._audit_metrics
+
+        session.input_tokens      = metrics["input_tokens"]
+        session.output_tokens     = metrics["output_tokens"]
+        session.total_tokens      = metrics["total_tokens"]
+        session.estimated_cost    = metrics["estimated_cost"]
+
+        if pipeline._audit_trace:
+            session.langfuse_trace_id = getattr(pipeline._audit_trace, "id", None)
+
+        session.token_usage = {
+            "total_prompt_tokens":     metrics["input_tokens"],
+            "total_completion_tokens": metrics["output_tokens"],
+            "total_tokens":            metrics["total_tokens"],
+            "estimated_cost_usd":      metrics["estimated_cost"],
             "per_document": {
                 a["filename"]: a.get("token_usage", {})
                 for a in individual_audits
             },
         }
-        session.token_usage = session_token_usage
-        print(f"\nSession token usage: {session_token_usage['total_tokens']} total tokens")
-        print(f"  Prompt: {session_token_usage['total_prompt_tokens']}")
-        print(f"  Completion: {session_token_usage['total_completion_tokens']}")
+
+        print(f"\nSession token usage: {session.total_tokens} total tokens")
+        print(f"  Prompt: {session.input_tokens}")
+        print(f"  Completion: {session.output_tokens}")
+        print(f"  Estimated cost: ${session.estimated_cost:.4f}")
+
+        # Track duration since pipeline start (fetching stage)
+        if pipeline._audit_start_time is not None:
+            session.duration_seconds = round(time.perf_counter() - pipeline._audit_start_time, 2)
+
 
         await _set_status(db, session, "done")
         await db.commit()

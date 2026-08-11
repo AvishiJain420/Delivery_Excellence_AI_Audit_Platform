@@ -47,14 +47,6 @@ export function useRecentAudits(limit = 10) {
   })
 }
 
-// ─── Reports ─────────────────────────────────────────────────────────────
-export function useReports() {
-  return useQuery({
-    queryKey: ['reports'],
-    queryFn: auditApi.getReports,
-    refetchInterval: 60_000,
-  })
-}
 
 // ─── Start audit mutations ────────────────────────────────────────────────────
 export function useStartAudit() {

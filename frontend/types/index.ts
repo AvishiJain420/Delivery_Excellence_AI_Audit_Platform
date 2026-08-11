@@ -137,7 +137,8 @@ export interface DocumentUpdateData {
 export interface WSStageMessage {
   stage: WSMessageStage
   data?: Record<string, unknown>
-  identified_docs?: IdentifiedDoc[]
+  identified_docs?: IdentifiedDoc[],
+  framework_categories?: string[],
   message?: string
 }
 

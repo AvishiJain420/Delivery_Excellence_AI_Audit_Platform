@@ -20,9 +20,14 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from tenacity import retry, wait_exponential, stop_after_attempt
-
 from config.settings import settings
 
+#-------------Langfuse integration-------------
+from typing import Any
+from agent.langfuse.langfuse_client import (
+     get_langfuse_handler
+)
+langfuse_handler = get_langfuse_handler()
 
 def _slim_audit_payload(individual_audits: list[dict]) -> list[dict]:
     """Strip evidence/recommendation before sending to summary LLM."""
@@ -185,14 +190,13 @@ Schema:
 
 
 def build_llm():
-    llm = ChatOpenAI(
+    return ChatOpenAI(
         base_url=settings.AZURE_OPENAI_ENDPOINT,
         api_key=settings.AZURE_OPENAI_API_KEY,
         model=settings.AZURE_OPENAI_MODEL,
         temperature=0,
         max_tokens=2000,
     )
-    return SUMMARY_PROMPT | llm | JsonOutputParser()
 
 @retry(
     wait=wait_exponential(
@@ -202,13 +206,61 @@ def build_llm():
     ),
     stop=stop_after_attempt(5),
 )
-def invoke_summary(chain, payload: dict) -> dict:
-    return chain.invoke(payload)
+
+def invoke_summary(
+    llm,
+    payload: dict,
+    summary_observation=None,
+) -> tuple[dict, dict]:
+
+    config = {
+        "callbacks": [langfuse_handler],
+        "run_name": "Combined Project Summary",
+    }
+
+    if summary_observation:
+        config["metadata"] = {
+            "langfuse_parent_observation_id": summary_observation.id
+        }
+
+    messages = SUMMARY_PROMPT.format_messages(**payload)
+    response = llm.with_config(config).invoke(messages)
+
+    token_usage = {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+    }
+
+    if hasattr(response, "usage_metadata") and response.usage_metadata:
+        usage = response.usage_metadata
+        token_usage = {
+            "prompt_tokens":     usage.get("input_tokens", 0),
+            "completion_tokens": usage.get("output_tokens", 0),
+            "total_tokens":      usage.get("total_tokens", 0),
+        }
+        print(f"  Summary tokens — input: {token_usage['prompt_tokens']}  "
+              f"output: {token_usage['completion_tokens']}  "
+              f"total: {token_usage['total_tokens']}")
+
+    # Parse JSON manually since we bypassed JsonOutputParser
+    content = response.content.strip()
+    if content.startswith("```"):
+        content = content.strip("`")
+        if content.lower().startswith("json"):
+            content = content[4:]
+        content = content.strip()
+
+    summary = json.loads(content)
+
+    return summary, token_usage
+
 
 def generate_combined_summary(
     individual_audits: list[dict],
     project_overview: dict,
     audit_type: str,
+    audit_trace : Any = None,
 ) -> dict:
 
     # ── SHORT-CIRCUIT: single document ────────────────────────────────────────
@@ -260,7 +312,7 @@ def generate_combined_summary(
         _print_summary(summary)
         return summary
 
-    chain = build_llm()
+    llm = build_llm()
 
     try:
         payload = {
@@ -271,16 +323,63 @@ def generate_combined_summary(
             ),
         }
 
-        summary = invoke_summary(
-            chain,
+        summary_observation = None
+
+        if audit_trace:
+            summary_observation = audit_trace.span(
+                name="Combined Project Summary",
+                metadata={
+                    "audit_type": audit_type,
+                    "documents": len(individual_audits),
+                    "criteria_rows": criteria_count,
+                    "payload_size": len(json.dumps(slim_payload)),
+                },
+            )
+
+        summary, token_usage = invoke_summary(
+            llm,
             payload,
+            summary_observation=summary_observation
         )
 
+        if summary_observation:
+            summary_observation.update(
+                output={
+                    "overall_project_score": summary.get("overall_project_score"),
+                    "cross_document_findings": len(
+                        summary.get("cross_document_findings", [])
+                    ),
+                    "gaps": len(summary.get("gaps_and_risks", [])),
+                    "strengths": len(summary.get("strengths", [])),
+                    "recommendations": len(
+                        summary.get("recommendations", [])
+                    ),
+                }
+            )
+
+        summary["token_usage"] = token_usage
         _print_summary(summary)
+
+        if summary_observation:
+            summary_observation.end()
+
         return summary
 
     except Exception as exc:
         print(f"Combined summary LLM error: {exc}")
+
+        if summary_observation:
+            summary_observation.update(
+                    output={
+                        "status": "failed"
+                    }
+                )
+
+            summary_observation.end(
+                    level="ERROR",
+                    status_message=str(exc),
+                )
+
         return {
             "overall_project_score": 0,
             "executive_summary":     f"Summary generation failed: {exc}",

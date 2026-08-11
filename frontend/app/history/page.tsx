@@ -1,24 +1,76 @@
 'use client'
 import { useState } from 'react'
+import { useRef, useEffect } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { useRecentAudits } from '@/hooks'
 import { Badge } from '@/components/ui/Badge'
 import { formatRelativeTime, scoreColor, statusLabel } from '@/lib/utils'
-import { History, Search, Filter, FileText, ExternalLink, Trash2 } from 'lucide-react'
+import { History, Search, ChevronDown, FileText, ExternalLink, Trash2, Check } from 'lucide-react'
 import Link from 'next/link'
 import { auditApi } from '@/services/api'
 import { useQueryClient } from '@tanstack/react-query'
 
+const AUDIT_TYPE_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'STAR', label: 'STAR' },
+  { value: 'DEX', label: 'DEX' },
+]
+
+const STATUS_OPTIONS = [
+  { value: 'all',     label: 'All' },
+  { value: 'done',    label: 'Completed' },
+  { value: 'running', label: 'Running' },
+  { value: 'failed',  label: 'Failed' },
+  { value: 'pending', label: 'Pending' },
+]
+
 export default function HistoryPage() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [filterAuditType, setFilterAuditType] = useState('all')
+
+  const [openFilter, setOpenFilter] = useState<'status' | 'type' | null>(null)
+
+  const filterRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        filterRef.current &&
+        !filterRef.current.contains(event.target as Node)
+      ) {
+        setOpenFilter(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
   const { data: audits = [], isLoading, refetch } = useRecentAudits(50)
   const qc = useQueryClient()
 
   const filtered = audits.filter(a => {
-    const matchSearch = !search || a.name.toLowerCase().includes(search.toLowerCase()) || a.projectName.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = filterStatus === 'all' || a.status === filterStatus || (filterStatus === 'completed' && a.status === 'done')
-    return matchSearch && matchStatus
+    const query = search.toLowerCase()
+    const matchSearch =
+      !search ||
+      a.name.toLowerCase().includes(query) ||
+      a.projectName.toLowerCase().includes(query) ||
+      (a.clientName ?? '').toLowerCase().includes(query)
+
+    const matchStatus =
+      filterStatus === 'all' ||
+      a.status === filterStatus ||
+      (filterStatus === 'done' && a.status === 'done')
+
+    const matchAuditType =
+      filterAuditType === 'all' ||
+      (a.auditType ?? '').toUpperCase() === filterAuditType.toUpperCase()
+
+    return matchSearch && matchStatus && matchAuditType
   })
 
   const handleDelete = async (id: string) => {
@@ -41,23 +93,166 @@ export default function HistoryPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
-          <input type="text" placeholder="Search audits…" value={search}
+      <div
+        ref={filterRef}
+        className="flex flex-wrap items-center gap-3 mb-4"
+      >
+
+        {/* Search */}
+        <div className="relative flex-1 min-w-[220px] max-w-xs">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5"
+          />
+
+          <input
+            type="text"
+            placeholder="Search by audit name or client…"
+            value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-8 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="w-full pl-8 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {['all', 'done', 'running', 'failed', 'pending'].map(s => (
-            <button key={s} onClick={() => setFilterStatus(s)}
-              className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors capitalize ${
-                filterStatus === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-              }`}>
-              {s === 'done' ? 'Completed' : s}
-            </button>
-          ))}
+
+        {/* Audit Status Filter */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() =>
+              setOpenFilter(
+                openFilter === 'status' ? null : 'status'
+              )
+            }
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-white border rounded-lg transition-colors ${
+              filterStatus !== 'all'
+                ? 'border-blue-300 text-blue-700 bg-blue-50/40'
+                : 'border-slate-200 text-slate-600 hover:border-slate-300'
+            }`}
+          >
+            <span className="font-medium">
+              Audit Status:
+            </span>
+
+            <span>
+              {filterStatus === 'all'
+                ? 'All'
+                : filterStatus === 'done'
+                  ? 'Completed'
+                  : filterStatus === 'failed'
+                    ? 'Failed'
+                    : filterStatus === 'running'
+                      ? 'Running'
+                      : 'Pending'}
+            </span>
+
+            <ChevronDown
+              size={14}
+              className={`ml-1 transition-transform ${
+                openFilter === 'status' ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+
+          {openFilter === 'status' && (
+            <div className="absolute right-0 z-50 mt-2 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1">
+
+              {[
+                { value: 'all', label: 'All' },
+                { value: 'done', label: 'Completed' },
+                { value: 'failed', label: 'Failed' },
+                { value: 'running', label: 'Running' },
+                { value: 'pending', label: 'Pending' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setFilterStatus(option.value)
+                    setOpenFilter(null)
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors ${
+                    filterStatus === option.value
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{option.label}</span>
+
+                  {filterStatus === option.value && (
+                    <Check size={14} className="text-blue-600" />
+                  )}
+                </button>
+              ))}
+
+            </div>
+          )}
         </div>
+
+        {/* Audit Type Filter */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() =>
+              setOpenFilter(
+                openFilter === 'type' ? null : 'type'
+              )
+            }
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-white border rounded-lg transition-colors ${
+              filterAuditType !== 'all'
+                ? 'border-blue-300 text-blue-700 bg-blue-50/40'
+                : 'border-slate-200 text-slate-600 hover:border-slate-300'
+            }`}
+          >
+            <span className="font-medium">
+              Audit Type:
+            </span>
+
+            <span>
+              {filterAuditType === 'all'
+                ? 'All'
+                : filterAuditType}
+            </span>
+
+            <ChevronDown
+              size={14}
+              className={`ml-1 transition-transform ${
+                openFilter === 'type' ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+
+          {openFilter === 'type' && (
+            <div className="absolute right-0 z-50 mt-2 w-36 bg-white border border-slate-200 rounded-lg shadow-lg py-1">
+
+              {[
+                { value: 'all', label: 'All' },
+                { value: 'DEX', label: 'DEX' },
+                { value: 'STAR', label: 'STAR' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setFilterAuditType(option.value)
+                    setOpenFilter(null)
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors ${
+                    filterAuditType === option.value
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{option.label}</span>
+
+                  {filterAuditType === option.value && (
+                    <Check size={14} className="text-blue-600" />
+                  )}
+                </button>
+              ))}
+
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* Table */}

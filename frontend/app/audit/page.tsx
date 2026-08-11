@@ -32,11 +32,13 @@ import { useAuditSession } from '@/hooks'
 import { formatRelativeTime } from '@/lib/utils'
 import {
   FileText, AlertTriangle, Clock, ArrowLeft, Download,
-  CheckCircle2, ExternalLink,
+  CheckCircle2, ExternalLink,LayoutDashboard , Globe
 } from 'lucide-react'
 import Link from 'next/link'
 import { auditApi } from '@/services/api'
+import {config} from '@/lib/config'
 import { useState, useEffect, useRef } from 'react'
+
 
 function AuditPageInner() {
   const params = useSearchParams()
@@ -88,7 +90,7 @@ function AuditPageInner() {
 
   const [activeTab, setActiveTab] = useState<'queue' | 'log'>('queue')
 
-  const { session, chatMessages, liveLog, isConnected ,initSession} = useAuditStore()
+  const { session, chatMessages, liveLog, isConnected ,initSession ,frameworkCategories} = useAuditStore()
   const { pendingValidation, handleValidationConfirm } = useAuditSession(sessionId)
 
   const overallProgress = session?.overallProgress ?? 0
@@ -196,9 +198,45 @@ function AuditPageInner() {
               <FileText size={14} className="text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm font-bold text-slate-900 truncate">
-                {session?.name ?? 'Loading audit…'}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-bold text-slate-900 truncate">
+                  {session?.name ?? 'Loading audit…'}
+                </h1>
+
+                {/* Polaris Platform link — visible throughout, disabled while running */}
+                {config.polarisUrl && (
+                  <div className="relative group flex-shrink-0">
+                    {isDone || isFailed ? (
+                      <a
+                        href={config.polarisUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold text-blue-600 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors"
+                      >
+                        <Globe size={10} />
+                        Polaris
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold text-slate-400 border border-slate-200 rounded-md cursor-not-allowed"
+                      >
+                        <Globe size={10} />
+                        Polaris Platform
+                      </button>
+                    )}
+
+                    {/* Warning tooltip on hover while running */}
+                    {!isDone && !isFailed && (
+                      <div className="absolute left-0 top-full mt-1 w-52 px-2.5 py-1.5 bg-slate-800 text-white text-[10px] rounded-lg shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
+                        Cannot leave the document audit while it's running. Wait for it to finish.
+                      </div>
+                    )}
+                  </div>
+                )}
+                </div>
+
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 {isDone ? (
                   <Badge variant="completed">
@@ -241,7 +279,8 @@ function AuditPageInner() {
             {/* Report download button - shown when done */}
             {isDone && session?.reportUrl && (
               <a
-                href={session.reportUrl}
+                // href={session.reportUrl}
+                href={`${session.reportUrl}${session.reportUrl.includes('?') ? '&' : '?'}web=1`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
@@ -263,6 +302,16 @@ function AuditPageInner() {
                 : 'Export Report'}
             </button>
           )}
+
+            {isDone && (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-800 rounded-lg hover:bg-slate-900 transition-colors"
+              >
+                <LayoutDashboard size={11} />
+                Dashboard
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -396,12 +445,87 @@ function AuditPageInner() {
               </div>
             )}
 
-            {chatMessages.length === 0 && session && !isDone && !isFailed && (
-              <div className="flex flex-col items-center justify-center h-full text-center py-16">
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-3">
-                  <LoadingDots />
+            {/* Failed audit sessions components */}
+            {chatMessages.length === 0 && session && isFailed && (
+              <div className="flex flex-col gap-4 p-5">
+                {/* Failed header */}
+                <div className="flex items-center gap-3 pb-3 border-b border-red-100">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle size={20} className="text-red-500" />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-bold text-red-700">
+                      Audit Failed
+                    </p>
+                    <p className="text-xs text-red-400 mt-0.5">
+                      The audit pipeline failed for this project.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm text-slate-500">Connecting to audit pipeline…</p>
+
+                {/* Failed status */}
+                <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-red-600">
+                    Failed
+                  </p>
+                  <p className="text-xs text-red-700 mt-1 font-medium">
+                    Audit Pipeline Status
+                  </p>
+                </div>
+
+                {/* Audit details */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Project
+                    </p>
+                    <p className="text-xs font-semibold text-slate-700 mt-0.5 truncate">
+                      {session.projectName || '—'}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Client
+                    </p>
+                    <p className="text-xs font-semibold text-slate-700 mt-0.5 truncate">
+                      {session.clientName || '—'}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Documents
+                    </p>
+                    <p className="text-xs font-semibold text-slate-700 mt-0.5">
+                      {session.documents.length} submitted
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Audit Type
+                    </p>
+                    <p className="text-xs font-semibold text-slate-700 mt-0.5 uppercase">
+                      {session.auditType || '—'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Failure information */}
+                <div className="bg-red-50 border border-red-100 rounded-lg p-3">
+                  <p className="text-[10px] text-red-500 font-medium uppercase tracking-wide">
+                    Status
+                  </p>
+                  <p className="text-xs font-semibold text-red-700 mt-0.5">
+                    This audit could not be completed because the pipeline failed.
+                  </p>
+                </div>
+
+                <p className="text-[10px] text-slate-400 text-center">
+                  No audit report was generated for this failed session.
+                </p>
               </div>
             )}
 
@@ -457,6 +581,7 @@ function AuditPageInner() {
       {pendingValidation && (
         <ValidationModal
           docs={pendingValidation}
+          frameworkCategories={frameworkCategories}
           onConfirm={handleValidationConfirm}
         />
       )}

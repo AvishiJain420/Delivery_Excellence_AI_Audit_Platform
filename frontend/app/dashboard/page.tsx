@@ -8,7 +8,8 @@ import { RecentAuditsTable } from '@/components/dashboard/RecentAuditsTable'
 import { StartAuditModal } from '@/components/dashboard/StartAuditModal'
 import { useUIStore } from '@/store'
 import { useDashboardStats, useRecentAudits } from '@/hooks'
-import { LayoutDashboard, CheckCircle2, Play, XCircle, FileText, Plus  } from 'lucide-react'
+import { LayoutDashboard, CheckCircle2, Play, XCircle, FileText, Plus ,Globe } from 'lucide-react'
+import {config} from '@/lib/config'
 import { useStartAudit } from '@/hooks'
 
 function DashboardInner() {
@@ -36,19 +37,30 @@ function DashboardInner() {
             <LayoutDashboard size={12} />
             <span>Dashboard</span>
           </div>
-          <h1 className="text-xl font-bold text-slate-900">Audit Overview</h1>
+          <h1 className="text-xl font-bold text-slate-900">Document Audit Overview</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {config.polarisUrl && (
+            <a
+              href={config.polarisUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              <Globe size={13} /> Polaris Platform
+            </a>
+          )}
+          {/*
           <button
             onClick={() => setStartAuditModal(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
           >
             <Plus size={14} /> Start Doc Audit (Coming Soon)
-          </button>
-        </div>
+          </button> */}
+        </div> 
       </div>
 
       {/* Stat cards */}

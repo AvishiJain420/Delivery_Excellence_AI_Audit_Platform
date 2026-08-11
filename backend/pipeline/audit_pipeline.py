@@ -19,7 +19,7 @@ from __future__ import annotations
  
 import asyncio
 import os
- 
+import time
 from sharepoint.sharepoint_service import SharePointService
 from document_parsers.parser_pipeline import parse_document
 from agent.document import Document
@@ -33,7 +33,7 @@ from agent.validation.validation_hook import (
     apply_corrections,
 )
 from agent.llm.excel_exporter import export_audit_to_excel
- 
+from agent.langfuse.langfuse_client import get_langfuse
  
 class AuditPipeline:
  
@@ -61,6 +61,31 @@ class AuditPipeline:
         self._audit_report_name: str | None = None
         self._audit_report_metadata: dict = {}
 
+        #Langfuse trace for the entire audit session
+        self._audit_trace = None
+        self._audit_start_time: float | None = None
+        self._audit_metrics = {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "estimated_cost": 0.0,
+        }
+
+    def _calculate_cost(
+    self,
+    input_tokens: int,
+    output_tokens: int,
+    ) -> float:
+
+        # GPT-5.4 Azure pricing per 1M tokens
+        input_cost_per_million = 2.50
+        output_cost_per_million = 15.00
+
+        return (
+            (input_tokens / 1_000_000) * input_cost_per_million
+            +
+            (output_tokens / 1_000_000) * output_cost_per_million
+        )
 
     def get_project_details(self, item_id : str) -> dict :
 
@@ -113,9 +138,26 @@ class AuditPipeline:
         print("Identifying documents")
         print(f"{'='*60}")
  
+        # Extract unique document names — handles both formats:
+        # STAR: framework_documents_list is list[str]
+        # DEX:  framework_documents_list is list[dict] with "document" key
+        def _extract_name(item):
+            if isinstance(item, str):
+                return item
+            if isinstance(item, dict):
+                return item.get("document") or item.get("document_category") or item.get("name") or ""
+            return str(item)
+
+        framework_document_names = list(dict.fromkeys(
+            _extract_name(item)
+            for item in self._framework_documents_list
+            if item
+        ))
+        framework_document_names = [d for d in framework_document_names if d]
+
         identified = llm_identify(
             documents=self._project_document_list,
-            framework_checklist=self._framework_documents_list,
+            framework_checklist=framework_document_names,
         )
  
         print("\nLLM identification results:")
@@ -131,11 +173,17 @@ class AuditPipeline:
  
         if validation.corrections:
             print("\nApplying user corrections:")
+            framework_categories = list(dict.fromkeys(
+                _extract_name(item)
+                for item in self._framework_documents_list
+                if item
+            ))
+            framework_categories = [c for c in framework_categories if c]
             identified = apply_corrections(
-                identified, 
+                identified,
                 validation.corrections,
-                self._framework_documents_list
-                )
+                framework_categories,
+            )
  
         self._identified_documents = identified
         return identified
@@ -291,10 +339,26 @@ class AuditPipeline:
             framework = doc.metadata.get("framework", [])
             print(f"  Category : {doc.metadata.get('matched_category')}")
             print(f"  Criteria : {len(framework)}")
-            result = audit_document(document=doc)
+
+            result = audit_document(
+                document=doc,
+                audit_trace=self._audit_trace,
+                )
+
             results.append(result)
             print(f"  ✓ Score: {result.get('overall_score', 'N/A')}/5")
- 
+
+            usage = result.get("token_usage", {})
+
+            self._audit_metrics["input_tokens"] += usage.get("prompt_tokens", 0)
+            self._audit_metrics["output_tokens"] += usage.get("completion_tokens", 0)
+            self._audit_metrics["total_tokens"] += usage.get("total_tokens", 0)
+
+            self._audit_metrics["estimated_cost"] = self._calculate_cost(
+                            self._audit_metrics["input_tokens"],
+                            self._audit_metrics["output_tokens"],
+                        )
+            
         self._individual_audits = results
         print(f"\nAudited {len(results)} document(s)")
         return results
@@ -305,12 +369,26 @@ class AuditPipeline:
         print(f"\n{'='*60}")
         print("Generating combined cross-document summary")
         print(f"{'='*60}")
+
         summary = generate_combined_summary(
             individual_audits=self._individual_audits,
             project_overview=self._project_overview,
             audit_type=self._project_overview.get("audit_type", ""),
+            audit_trace=self._audit_trace,
         )
+        
         self._combined_summary = summary
+        
+        summary_usage = summary.get("token_usage", {})
+
+        self._audit_metrics["input_tokens"] += summary_usage.get("prompt_tokens", 0)
+        self._audit_metrics["output_tokens"] += summary_usage.get("completion_tokens", 0)
+        self._audit_metrics["total_tokens"] += summary_usage.get("total_tokens", 0)
+        self._audit_metrics["estimated_cost"] = self._calculate_cost(
+                                                    self._audit_metrics["input_tokens"],
+                                                    self._audit_metrics["output_tokens"],
+                                                )
+        
         print(f"Overall project score: {summary.get('overall_project_score', 'N/A')}/5")
         return summary
  
@@ -320,10 +398,13 @@ class AuditPipeline:
         print(f"\n{'='*60}")
         print("Exporting Audit Report to Excel")
         print(f"{'='*60}")
+
         if not self._project_overview:
             raise RuntimeError("Project overview is missing.")
+        
         if not self._individual_audits:
             raise RuntimeError("Individual audit results are empty.")
+        
         if not self._combined_summary:
             self._combined_summary = {
                 "executive_summary": "No combined summary generated.",
@@ -341,26 +422,6 @@ class AuditPipeline:
         self._audit_report_path = report_path
         return report_path
  
-
-    # def upload_audit_report(self) -> dict:
-
-    #     print(f"\n{'='*60}")
-    #     print("Uploading Audit Report to SharePoint")
-    #     print(f"{'='*60}")
-    #     if not self._audit_report_path:
-    #         raise RuntimeError("Excel report not generated yet.")
-        
-    #     upload_result = self.sharepoint.upload_audit_report(
-    #         item_id=self._project_overview["item_id"],
-    #         local_report_path=self._audit_report_path,
-    #         project_name=self._project_overview["project_name"],
-    #         audit_type=self._project_overview["audit_type"],
-    #     )
-    #     self._audit_report_metadata = upload_result
-    #     self._audit_report_url = upload_result["report_url"]
-    #     self._audit_report_name = upload_result["report_name"]
-    #     print(f"✓ Uploaded: {self._audit_report_url}")
-    #     return upload_result
 
     def upload_audit_report(self) -> dict:
 
@@ -421,27 +482,104 @@ class AuditPipeline:
             asyncio.run(pipeline.run_full_pipeline("42"))   # script
             await pipeline.run_full_pipeline("42")           # FastAPI
         """
-        overview = self.get_project_details(item_id)
-        self.framework_document_list()
-        identified = await self.identify_documents()
-        self.filter_framework_for_llm()
-        parsed = self.parse_documents()
-        audits = self.audit_documents()
-        summary = self.combined_summary()
-        report_path = self.export_audit_report()
-        upload = self.upload_audit_report()
- 
-        return {
-            "project_overview": overview,
-            "identified_documents": identified,
-            "parsed_documents": parsed,
-            "individual_audits": audits,
-            "combined_summary": summary,
-            "excel_report": {
-                "local_path": report_path,
-                "report_name": upload["report_name"],
-                "report_url": upload["report_url"],
-                "drive_item_id": upload["drive_item_id"],
-            },
-        }
+
+        langfuse = get_langfuse()
+
+        try: 
+
+            overview = self.get_project_details(item_id)
+
+            self._audit_start_time = time.perf_counter()
+
+            self._audit_trace = langfuse.trace(
+                name="AI Audit Session",
+                session_id=item_id,
+                user_id=overview.get("client_name"),
+                input={
+                    "project": overview.get("project_name"),
+                    "client": overview.get("client_name"),
+                    "project_code": overview.get("project_code"),
+                    "audit_type": overview.get("audit_type"),
+                    "documents": len(overview.get("documents", [])),
+                },
+                metadata={
+                    "item_id": overview.get("item_id"),
+                    "project_name": overview.get("project_name"),
+                    "project_code": overview.get("project_code"),
+                    "client_name": overview.get("client_name"),
+                    "audit_type": overview.get("audit_type"),
+                },
+            )
+
+            self.framework_document_list()
+            identified = await self.identify_documents()
+            self.filter_framework_for_llm()
+            parsed = self.parse_documents()
+            audits = self.audit_documents()
+            summary = self.combined_summary()
+            report_path = self.export_audit_report()
+            upload = self.upload_audit_report()
+
+            duration = 0.0
+
+            if self._audit_start_time is not None:
+                duration = round(
+                    time.perf_counter() - self._audit_start_time,
+                    2,
+                )
+
+            if self._audit_trace:
+                self._audit_trace.update(
+                    output={
+                        "status": "COMPLETED",
+                        "overall_project_score": summary.get("overall_project_score"),
+                        "documents_audited": len(audits),
+                        "report_name": upload.get("report_name"),
+                        "duration_seconds": duration,
+
+                        "cost_summary": {
+                            "input_tokens": self._audit_metrics["input_tokens"],
+                            "output_tokens": self._audit_metrics["output_tokens"],
+                            "total_tokens": self._audit_metrics["total_tokens"],
+                            "estimated_cost_usd": self._audit_metrics["estimated_cost"],
+                        },
+                    }
+                )
+
+                self._audit_trace.end()
     
+            return {
+                "project_overview": overview,
+                "identified_documents": identified,
+                "parsed_documents": parsed,
+                "individual_audits": audits,
+                "combined_summary": summary,
+                "excel_report": {
+                    "local_path": report_path,
+                    "report_name": upload["report_name"],
+                    "report_url": upload["report_url"],
+                    "drive_item_id": upload["drive_item_id"],
+                },
+                }
+
+        except Exception as exc:
+
+            if self._audit_trace:
+
+                self._audit_trace.update(
+                    output={
+                        "status": "FAILED",
+                        "error": str(exc),
+                    }
+                )
+
+                self._audit_trace.end(
+                    level="ERROR",
+                    status_message=str(exc),
+                )
+                self._audit_trace = None
+
+            raise
+
+        finally:
+            langfuse.flush()

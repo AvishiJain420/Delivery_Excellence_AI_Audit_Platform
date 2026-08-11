@@ -68,6 +68,17 @@ class AuditSession(Base):
     error_message      = Column(Text, nullable=True)
 
     token_usage        = Column(JSONB, default=dict)
+
+    # ===== Langfuse Audit Totals =====
+    input_tokens       = Column(Integer, default=0, nullable=False)
+    output_tokens      = Column(Integer, default=0, nullable=False)
+    total_tokens       = Column(Integer, default=0, nullable=False)
+
+    estimated_cost     = Column(Float, default=0.0, nullable=False)
+
+    duration_seconds   = Column(Float, default=0.0, nullable=False)
+
+    langfuse_trace_id  = Column(String, nullable=True)
  
     project       = relationship("Project",        back_populates="sessions",    lazy="select")
     user          = relationship("User",           back_populates="sessions",    lazy="select")
