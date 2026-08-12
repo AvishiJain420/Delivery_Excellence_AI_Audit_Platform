@@ -31,6 +31,8 @@ class User(Base):
     # We store email for display purposes and for sending notifications,
     # but it's NOT used as a login identifier (azure_oid is).
     azure_email = Column(String, nullable=True, index=True)
+
+    role = Column(String, nullable=False, default="user")
  
     created_at = Column(DateTime(timezone=True), default=_now)
 

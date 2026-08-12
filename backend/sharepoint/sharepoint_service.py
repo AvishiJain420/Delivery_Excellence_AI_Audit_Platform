@@ -1,3 +1,5 @@
+import re
+from urllib.parse import urlparse
 from config.settings import settings
 from sharepoint.graph_client import GraphClient
 from sharepoint.star_service import AttachmentService
@@ -18,6 +20,82 @@ class SharePointService:
         self.dex_service        = DExDocumentService(graph)
         self.document_library_service = DocumentLibraryService(graph)
 
+    @staticmethod
+    def _normalize_sharepoint_link(raw_link) -> str:
+        """
+        Normalize a SharePoint link coming from a multi-line text field.
+
+        The value may be:
+        - A normal URL
+        - A URL surrounded by whitespace
+        - An HTML anchor tag
+        - Plain text containing a SharePoint URL
+        """
+
+        if raw_link is None:
+            raise ValueError(
+                "SharepointLink field is empty. "
+                "Please provide the SharePoint folder link."
+            )
+
+        link = str(raw_link).strip()
+
+        if not link:
+            raise ValueError(
+                "SharepointLink field is empty. "
+                "Please provide the SharePoint folder link."
+            )
+
+        print(f"Raw SharepointLink value: {repr(link)}")
+
+        # --------------------------------------------------
+        # Case 1: Already a normal URL
+        # --------------------------------------------------
+        if link.startswith(("http://", "https://")):
+            parsed = urlparse(link)
+
+            if parsed.scheme and parsed.netloc:
+                return link
+
+        # --------------------------------------------------
+        # Case 2: HTML anchor
+        # Example:
+        # <a href="https://tenant.sharepoint.com/...">...</a>
+        # --------------------------------------------------
+        href_match = re.search(
+            r'href=["\'](https?://[^"\']+)["\']',
+            link,
+            re.IGNORECASE,
+        )
+
+        if href_match:
+            normalized = href_match.group(1).strip()
+            print(f"Extracted URL from HTML: {normalized}")
+            return normalized
+
+        # --------------------------------------------------
+        # Case 3: Plain text containing a URL
+        # --------------------------------------------------
+        url_match = re.search(
+            r'https?://[^\s<>"\']+',
+            link,
+            re.IGNORECASE,
+        )
+
+        if url_match:
+            normalized = url_match.group(0).rstrip(".,);")
+            print(f"Extracted URL from text: {normalized}")
+            return normalized
+
+        # --------------------------------------------------
+        # Nothing usable found
+        # --------------------------------------------------
+        raise ValueError(
+            f"SharepointLink does not contain a valid URL. "
+            f"Received value: {repr(link)}"
+        )
+
+    
     def get_audit_context(self, item_id: str) -> dict:
 
         print(f"\nFetching SharePoint item: {item_id}")

@@ -12,43 +12,159 @@ class DExDocumentService:
         self.graph = graph
 
     def parse_sharepoint_link(self, raw_html: str) -> dict:
-        """
-        Parses the SharePoint Rich Text column and extracts:
 
-        1. Absolute SharePoint URL
-        2. Server-relative folder path
-        """
+        if raw_html is None:
+            raise ValueError("SharePoint Link field is empty.")
+
+        raw_html = str(raw_html).strip()
 
         if not raw_html:
             raise ValueError("SharePoint Link field is empty.")
 
-        soup = BeautifulSoup(raw_html, "html.parser")
+        # print(f"Raw SharePoint Link value: {repr(raw_html)}")
+
+        # ==========================================================
+        # STEP 1: Decode HTML entities
+        # ==========================================================
+
+        # Converts:
+        #
+        # https&#58;//...
+        #        ↓
+        # https://...
+        #
+        # &amp;
+        #   ↓
+        # &
+        #
+        from html import unescape
+
+        decoded_html = unescape(raw_html)
+
+        # print(
+        #     f"HTML-decoded SharePoint Link: "
+        #     f"{repr(decoded_html)}"
+        # )
+
+        # ==========================================================
+        # STEP 2: Look for an <a href="...">
+        # ==========================================================
+
+        soup = BeautifulSoup(decoded_html, "html.parser")
+
+        href = None
 
         anchor = soup.find("a")
 
-        if anchor is None:
-            raise ValueError("No hyperlink found in SharePoint Link field.")
+        if anchor is not None:
+            href = anchor.get("href")
 
-        href = anchor.get("href")
+            if href:
+                print(
+                    f"Hyperlink found in SharePoint field: "
+                    f"{href}"
+                )
+
+        # ==========================================================
+        # STEP 3: If there is no <a>, extract URL from text
+        # ==========================================================
 
         if not href:
-            raise ValueError("Hyperlink does not contain href.")
 
-        # Convert relative URL into absolute URL
+            text = soup.get_text(" ", strip=True)
+
+            # print(
+            #     f"SharePoint field text: "
+            #     f"{repr(text)}"
+            # )
+
+            # Find an absolute URL anywhere inside the text.
+            import re
+
+            url_match = re.search(
+                r'https?://[^\s<>"\']+',
+                text,
+                re.IGNORECASE
+            )
+
+            if url_match:
+                href = url_match.group(0).rstrip(
+                    ".,);"
+                )
+
+                # print(
+                #     f"SharePoint URL extracted from text: "
+                #     f"{href}"
+                # )
+
+        # ==========================================================
+        # STEP 4: Relative URL support
+        # ==========================================================
+
+        if not href:
+
+            text = soup.get_text(" ", strip=True)
+
+            if text.startswith("/"):
+                href = text
+
+                # print(
+                #     f"Relative SharePoint URL detected: "
+                #     f"{href}"
+                # )
+
+        # ==========================================================
+        # STEP 5: Validate
+        # ==========================================================
+
+        if not href:
+            raise ValueError(
+                "SharePoint Link field does not contain "
+                "a valid SharePoint URL or hyperlink."
+            )
+
+        # ==========================================================
+        # STEP 6: Convert relative URL to absolute
+        # ==========================================================
+
         if href.startswith("/"):
 
             tenant = settings.SHAREPOINT_TENANT_URL.rstrip("/")
 
             href = f"{tenant}{href}"
 
+        # ==========================================================
+        # STEP 7: Parse URL
+        # ==========================================================
+
         parsed = urllib.parse.urlparse(href)
+
+        if not parsed.scheme or not parsed.netloc:
+            raise ValueError(
+                f"Invalid SharePoint URL extracted from field: "
+                f"{href}"
+            )
+
+        # ==========================================================
+        # STEP 8: Extract folder path
+        # ==========================================================
 
         params = urllib.parse.parse_qs(parsed.query)
 
         folder_path = None
 
         if "id" in params:
-            folder_path = urllib.parse.unquote(params["id"][0])
+            folder_path = urllib.parse.unquote(
+                params["id"][0]
+            )
+
+        print(
+            f"Final SharePoint URL: {href}"
+        )
+
+        print(
+            f"Folder path: {folder_path}"
+        )
 
         return {
             "sharepoint_url": href,
