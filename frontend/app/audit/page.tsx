@@ -202,39 +202,6 @@ function AuditPageInner() {
                 <h1 className="text-sm font-bold text-slate-900 truncate">
                   {session?.name ?? 'Loading audit…'}
                 </h1>
-
-                {/* Polaris Platform link — visible throughout, disabled while running */}
-                {config.polarisUrl && (
-                  <div className="relative group flex-shrink-0">
-                    {isDone || isFailed ? (
-                      <a
-                        href={config.polarisUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold text-blue-600 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors"
-                      >
-                        <Globe size={10} />
-                        Polaris
-                      </a>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled
-                        className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold text-slate-400 border border-slate-200 rounded-md cursor-not-allowed"
-                      >
-                        <Globe size={10} />
-                        Polaris Platform
-                      </button>
-                    )}
-
-                    {/* Warning tooltip on hover while running */}
-                    {!isDone && !isFailed && (
-                      <div className="absolute left-0 top-full mt-1 w-52 px-2.5 py-1.5 bg-slate-800 text-white text-[10px] rounded-lg shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
-                        Cannot leave the document audit while it's running. Wait for it to finish.
-                      </div>
-                    )}
-                  </div>
-                )}
                 </div>
 
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -301,17 +268,51 @@ function AuditPageInner() {
                 ? 'Downloading...'
                 : 'Export Report'}
             </button>
-          )}
+            )}
 
             {isDone && (
               <Link
                 href="/dashboard"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-800 rounded-lg hover:bg-slate-900 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 rounded-lg hover:bg-blue-800 transition-colors"
               >
                 <LayoutDashboard size={11} />
                 Dashboard
               </Link>
             )}
+
+            {/* Polaris Platform link — visible throughout, disabled while running */}
+                {config.polarisUrl && (
+                  <div className="relative group flex-shrink-0">
+                    {isDone || isFailed ? (
+                      <a
+                        href={config.polarisUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors"
+                      >
+                        <Globe size={10} />
+                        Polaris Platform
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold text-slate-400 border border-slate-200 rounded-md cursor-not-allowed"
+                      >
+                        <Globe size={10} />
+                        Polaris Platform
+                      </button>
+                    )}
+
+                    {/* Warning tooltip on hover while running */}
+                    {!isDone && !isFailed && (
+                      <div className="absolute left-0 top-full mt-1 w-52 px-2.5 py-1.5 bg-slate-800 text-white text-[10px] rounded-lg shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
+                        Cannot leave the document audit while it's running. Wait for it to finish.
+                      </div>
+                    )}
+                  </div>
+                )}
+
           </div>
         </div>
       </div>

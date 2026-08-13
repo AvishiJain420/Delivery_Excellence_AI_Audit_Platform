@@ -260,8 +260,8 @@ export default function HistoryPage() {
         <table className="w-full text-sm min-w-[1000px]">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/50">
-              {['Audit Name', 'Client', 'Type', 'Docs', 'Status', 'Score', 'Created','Report', ''].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+              {['Audit Name', 'Client', 'Type', 'Docs', 'Status', 'Score', 'Created','Audit','Report'].map(h => (
+                <th key={h} className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
@@ -271,63 +271,97 @@ export default function HistoryPage() {
             ) : filtered.length === 0 ? (
               <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-400 text-sm">No audits found. Start one from the dashboard.</td></tr>
             ) : filtered.map(audit => (
-              <tr key={audit.id} className="hover:bg-slate-50/60 transition-colors group">
-                <td className="px-4 py-3.5 whitespace-nowrap">
-                  <div className="flex items-center gap-2.5">
+              
+              <tr
+                  key={audit.id}
+                  className="hover:bg-slate-50/60 transition-colors group"
+                >
+                  {/* Audit Name */}
+                <td className="px-4 py-3.5 text-left whitespace-nowrap">
+                  <div className="flex items-center justify-start gap-2.5">
                     <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                       <FileText size={12} className="text-blue-600" />
                     </div>
-                    <span className="font-medium text-slate-700 max-w-[160px] truncate">{audit.name}</span>
+
+                    <span className="font-medium text-slate-700 max-w-[160px] truncate">
+                      {audit.name}
+                    </span>
                   </div>
                 </td>
-                <td className="px-4 py-3.5 text-slate-500 text-xs">{audit.clientName || '—'}</td>
-                <td className="px-4 py-3.5 text-slate-500 text-xs">{audit.auditType ?? '—'}</td>
-                <td className="px-4 py-3.5 text-slate-500 tabular-nums text-xs">{audit.documentCount}</td>
-                <td className="px-4 py-3.5">
-                  <Badge variant={audit.status as any}>{statusLabel(audit.status)}</Badge>
-                </td>
-                <td className="px-4 py-3.5 tabular-nums text-xs">
-                  <span className={scoreColor(audit.overallScore)}>
-                    {audit.overallScore != null ? `${audit.overallScore}%` : '—'}
-                  </span>
-                </td>
 
-                <td className="px-4 py-3.5 text-slate-400 text-xs whitespace-nowrap">
-                  {formatRelativeTime(audit.createdAt)}
-                </td>
+                  {/* Client */}
+                  <td className="px-4 py-3.5 text-center text-slate-500 text-xs">
+                    {audit.clientName || '—'}
+                  </td>
 
-                {/* Report */}
-                <td className="px-4 py-3.5">
-                  {audit.reportUrl ? (
-                    <a
-                      href={`${audit.reportUrl}${audit.reportUrl.includes('?') ? '&' : '?'}web=1`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                    >
-                      <ExternalLink size={11} />
-                      Open Report
-                    </a>
-                  ) : (
-                    <span className="text-xs text-slate-300">
-                      Not available
+                  {/* Type */}
+                  <td className="px-4 py-3.5 text-center text-slate-500 text-xs">
+                    {audit.auditType ?? '—'}
+                  </td>
+
+                  {/* Docs */}
+                  <td className="px-4 py-3.5 text-center text-slate-500 tabular-nums text-xs">
+                    {audit.documentCount}
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-4 py-3.5 text-center">
+                    <div className="flex justify-center">
+                      <Badge variant={audit.status as any}>
+                        {statusLabel(audit.status)}
+                      </Badge>
+                    </div>
+                  </td>
+
+                  {/* Score */}
+                  <td className="px-4 py-3.5 text-center tabular-nums text-xs">
+                    <span className={scoreColor(audit.overallScore)}>
+                      {audit.overallScore != null
+                        ? `${audit.overallScore}%`
+                        : '—'}
                     </span>
-                  )}
-                </td>
+                  </td>
 
+                  {/* Created */}
+                  <td className="px-4 py-3.5 text-center text-slate-400 text-xs whitespace-nowrap">
+                    {formatRelativeTime(audit.createdAt)}
+                  </td>
 
-                {/* Existing audit actions — kept unchanged */}
-                <td className="px-4 py-3.5 w-[90px]">
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Audit */}
+                  <td className="px-2 py-3.5 text-center">
                     <Link href={`/audit?id=${audit.id}`}>
                       <button
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors whitespace-nowrap"
                         title="Open Audit"
                       >
-                        <ExternalLink size={12} />
+                        <ExternalLink size={11} />
+                        Open Audit
                       </button>
                     </Link>
+                  </td>
 
+                  {/* Report */}
+                  <td className="px-2 py-3.5 text-center">
+                    {audit.reportUrl ? (
+                      <a
+                        href={`${audit.reportUrl}${audit.reportUrl.includes('?') ? '&' : '?'}web=1`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                      >
+                        <ExternalLink size={11} />
+                        Open Report
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-300">
+                        Not available
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Delete - currently disabled */}
+                  {/*
+                  <td className="px-4 py-3.5 text-center">
                     <button
                       onClick={() => handleDelete(audit.id)}
                       className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -335,10 +369,9 @@ export default function HistoryPage() {
                     >
                       <Trash2 size={12} />
                     </button>
-                  </div>
-                </td>
-
-              </tr>
+                  </td>
+                  */}
+                </tr>
             ))}
           </tbody>
         </table>
