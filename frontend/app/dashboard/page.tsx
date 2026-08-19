@@ -7,13 +7,14 @@ import { StatCard } from '@/components/dashboard/StatCard'
 import { RecentAuditsTable } from '@/components/dashboard/RecentAuditsTable'
 import { StartAuditModal } from '@/components/dashboard/StartAuditModal'
 import { useUIStore } from '@/store'
-import { useDashboardStats, useRecentAudits } from '@/hooks'
+import { useDashboardStats, useRecentAudits, useCurrentUser} from '@/hooks'
 import { LayoutDashboard, CheckCircle2, Play, XCircle, FileText, Plus ,Globe } from 'lucide-react'
 import {config} from '@/lib/config'
 import { useStartAudit } from '@/hooks'
 
 function DashboardInner() {
   const params = useSearchParams()
+  const {data : currentUser} = useCurrentUser()
   const itemId = params.get('item_id')   // set when coming from Power Apps redirect
   const { startAuditModalOpen, setStartAuditModal } = useUIStore()
   const { powerAppMutation } = useStartAudit()
@@ -37,7 +38,16 @@ function DashboardInner() {
             <LayoutDashboard size={12} />
             <span>Dashboard</span>
           </div>
-          <h1 className="text-xl font-bold text-slate-900">Document Audit Overview</h1>
+
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-slate-900">Document Audit Overview</h1>
+            {currentUser?.role === 'admin' && (
+              <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full">
+                Admin View
+              </span>
+            )}
+          </div>
+          
           <p className="text-sm text-slate-500 mt-0.5">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
@@ -132,7 +142,7 @@ function DashboardInner() {
 export default function DashboardPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>}>
-      <DashboardInner />
+        <DashboardInner />
     </Suspense>
   )
 }

@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRef, useEffect } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
-import { useRecentAudits } from '@/hooks'
+import { useRecentAudits , useCurrentUser } from '@/hooks'
 import { Badge } from '@/components/ui/Badge'
 import { formatRelativeTime, scoreColor, statusLabel } from '@/lib/utils'
 import { History, Search, ChevronDown, FileText, ExternalLink, Trash2, Check } from 'lucide-react'
@@ -25,6 +25,7 @@ const STATUS_OPTIONS = [
 ]
 
 export default function HistoryPage() {
+  const { data: currentUser } = useCurrentUser()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterAuditType, setFilterAuditType] = useState('all')
@@ -87,7 +88,14 @@ export default function HistoryPage() {
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
             <History size={12} /> <span>Document Audit and Reports History</span>
           </div>
-          <h1 className="text-xl font-bold text-slate-900">All Audits</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-slate-900">All Audits</h1>
+            {currentUser?.role === 'admin' && (
+              <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full">
+                Admin View
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-500 mt-0.5">{audits.length} total sessions</p>
         </div>
       </div>

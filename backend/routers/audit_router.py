@@ -22,7 +22,7 @@ from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from auth.auth import get_current_user
+from auth.auth import get_current_user,require_admin
 from db.database import get_db
 from db.models import (
     AuditSession, AuditResult, CombinedSummary,
@@ -33,14 +33,12 @@ from agent.validation.validation_hook import AsyncQueueCallback
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
 
-
 # ─────────────────────────────────────────────
 # SCHEMAS
 # ─────────────────────────────────────────────
 class StartAuditFromPowerAppRequest(BaseModel):
     """Flow 1: User comes from Power Apps with just the SharePoint item ID"""
     sharepoint_item_id: str
-
 
 class StartAuditManualRequest(BaseModel):
     """Flow 2: User enters project details directly on your site"""
@@ -50,7 +48,6 @@ class StartAuditManualRequest(BaseModel):
     # SharePoint item ID is optional — user can audit without SharePoint
     # (stores null in DB, pipeline will skip SharePoint fetch if null)
     sharepoint_item_id: Optional[str] = None
-
 
 class SessionOut(BaseModel):
     session_id: str
@@ -62,7 +59,6 @@ class SessionOut(BaseModel):
 
     class Config:
         from_attributes = True
-
 
 # ─────────────────────────────────────────────
 # DB PERSIST HELPERS
@@ -420,7 +416,7 @@ async def list_sessions(
     db: AsyncSession = Depends(get_db),
 ):
 
-    result = await db.execute(
+    query=(
         select(AuditSession)
         .options(
             selectinload(AuditSession.project),
@@ -428,13 +424,19 @@ async def list_sessions(
             selectinload(AuditSession.summary),
             selectinload(AuditSession.report),
         )
-        .where(
-            AuditSession.user_id == current_user.user_id
-        )
         .order_by(
             desc(AuditSession.completion_time)
         )
     )
+
+    # Microsoft Entra ID Admin app-role users can see every audit session.
+    # All other authenticated users can see only their own sessions.
+    if current_user.role != "admin":
+        query = query.where(
+            AuditSession.user_id == current_user.user_id
+        )
+
+    result = await db.execute(query)
 
     sessions = result.scalars().all()
 
@@ -503,12 +505,13 @@ async def get_session(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(AuditSession).where(
-            AuditSession.session_id == session_id,
-            AuditSession.user_id == current_user.user_id,
-        )
-    )
+    query = select(AuditSession).where(AuditSession.session_id == session_id)
+
+    # Admins can open any session; regular users only their own
+    if current_user.role != "admin":
+        query = query.where(AuditSession.user_id == current_user.user_id)
+
+    result = await db.execute(query)
     session = result.scalar_one_or_none()
     if not session:
         raise HTTPException(404, "Session not found")
@@ -605,25 +608,18 @@ async def download_audit_report(
     and sends it to the browser as an attachment.
     """
 
-    result = await db.execute(
+    query = (
         select(AuditSession)
-        .options(
-            selectinload(
-                AuditSession.report
-            )
-        )
-        .where(
-            AuditSession.session_id
-            == session_id,
-
-            AuditSession.user_id
-            == current_user.user_id,
-        )
+        .options(selectinload(AuditSession.report))
+        .where(AuditSession.session_id == session_id)
     )
 
-    session = (
-        result.scalar_one_or_none()
-    )
+    # Admins can download any session's report; regular users only their own
+    if current_user.role != "admin":
+        query = query.where(AuditSession.user_id == current_user.user_id)
+
+    result = await db.execute(query)
+    session = result.scalar_one_or_none()
 
     if not session:
         raise HTTPException(
@@ -716,12 +712,13 @@ async def delete_session(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(AuditSession).where(
-            AuditSession.session_id == session_id,
-            AuditSession.user_id == current_user.user_id,
-        )
-    )
+    query = select(AuditSession).where(AuditSession.session_id == session_id)
+
+    # Admins can delete any session; regular users only their own
+    if current_user.role != "admin":
+        query = query.where(AuditSession.user_id == current_user.user_id)
+
+    result = await db.execute(query)
     session = result.scalar_one_or_none()
     if not session:
         raise HTTPException(404, "Session not found")
@@ -776,18 +773,47 @@ async def run_audit_ws(
 
     try:
         payload = jwt.decode(token, cfg.JWT_SECRET_KEY, algorithms=["HS256"])
+
+        if payload.get("type") != "access":
+            await websocket.send_json({
+                "stage": "error",
+                "message": "Invalid token type",
+            })
+            await websocket.close(code=4001)
+            return
+        
         user_id = payload["sub"]
+
+        if not user_id:
+            await websocket.send_json({
+                "stage": "error",
+                "message": "Invalid token",
+            })
+            await websocket.close(code=4001)
+            return
+        
     except JWTError:
         await websocket.send_json({"stage": "error", "message": "Invalid token"})
         await websocket.close(code=4001)
         return
 
-    result = await db.execute(
-        select(AuditSession).where(
-            AuditSession.session_id == session_id,
-            AuditSession.user_id == _uuid.UUID(user_id),
-        )
+    # Fetch the requesting user's role so admins can attach to any session's
+    # live pipeline run, matching the REST endpoint behavior above.
+    user_result = await db.execute(
+        select(User).where(User.user_id == _uuid.UUID(user_id))
     )
+    requesting_user = user_result.scalar_one_or_none()
+
+    if not requesting_user:
+        await websocket.send_json({"stage": "error", "message": "User not found"})
+        await websocket.close(code=4001)
+        return
+
+    session_query = select(AuditSession).where(AuditSession.session_id == session_id)
+    if requesting_user.role != "admin":
+        session_query = session_query.where(AuditSession.user_id == _uuid.UUID(user_id))
+
+    result = await db.execute(session_query)
     session: AuditSession = result.scalar_one_or_none()
     if not session:
         await websocket.send_json({"stage": "error", "message": "Session not found"})

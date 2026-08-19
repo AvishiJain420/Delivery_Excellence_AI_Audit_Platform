@@ -42,6 +42,7 @@ export interface BackendUser {
   user_id: string
   user_name: string
   azure_email: string | null
+  role: 'admin' | 'user'
   created_at: string
 }
 
@@ -112,6 +113,7 @@ export interface BackendSession {
     report_id: string
     sharepoint_url: string
     report_name: string
+    drive_item_id?: string | null
   } | null
 }
 
