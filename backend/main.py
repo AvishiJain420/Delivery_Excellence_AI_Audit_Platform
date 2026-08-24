@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,13 +9,14 @@ from db.database import engine, Base
 from auth.auth import router as auth_router, _get_msal_app
 from routers.audit_router import router as audit_router
 
+_executor = ThreadPoolExecutor(max_workers=32, thread_name_prefix="audit_worker")
 
 async def _prewarm_msal():
     """Build MSAL app in background thread right after server starts.
     This makes the first user login instant instead of slow."""
     try:
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, _get_msal_app)
+        await loop.run_in_executor(_executor, _get_msal_app)
         print("✓ MSAL pre-warmed successfully")
     except Exception as e:
         print(f"⚠ MSAL pre-warm failed (will retry on first login): {e}")
@@ -22,6 +24,10 @@ async def _prewarm_msal():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Set the global executor so all run_in_executor calls use it
+    loop = asyncio.get_event_loop()
+    loop.set_default_executor(_executor)
+
     # Create DB tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -31,6 +37,7 @@ async def lifespan(app: FastAPI):
 
     yield
     await engine.dispose()
+    _executor.shutdown(wait=False)
 
 
 app = FastAPI(
@@ -63,3 +70,8 @@ app.include_router(audit_router)
 @app.get("/", tags=["Health"])
 async def root():
     return {"status": "ok", "version": "2.0.0"}
+
+# In main.py
+@app.get("/health", tags=["Health"])
+async def health():
+    return {"status": "healthy"}

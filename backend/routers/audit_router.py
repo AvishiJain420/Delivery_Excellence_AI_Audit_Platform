@@ -791,7 +791,7 @@ async def run_audit_ws(
             })
             await websocket.close(code=4001)
             return
-        
+            
     except JWTError:
         await websocket.send_json({"stage": "error", "message": "Invalid token"})
         await websocket.close(code=4001)
@@ -828,26 +828,31 @@ async def run_audit_ws(
         await websocket.close()
         return
 
+    # Replace the send() helper inside run_audit_ws with this:
+    ws_closed = False
+
     async def send(stage: str, data=None, **extra):
-        msg = {"stage": stage}
-        if data is not None:
-            msg["data"] = data
-        msg.update(extra)
-        await websocket.send_json(msg)
+        nonlocal ws_closed
+        if ws_closed:
+            return  # silently skip — client already disconnected
+        try:
+            msg = {"stage": stage}
+            if data is not None:
+                msg["data"] = data
+            msg.update(extra)
+            await websocket.send_json(msg)
+        except Exception:
+            ws_closed = True  # mark closed, stop trying to send
 
     async def heartbeat():
-
+        nonlocal ws_closed
         while True:
             await asyncio.sleep(10)
-
             try:
-                await websocket.send_json({
-                    "stage": "heartbeat"
-                })
-
+                await websocket.send_json({"stage": "heartbeat"})
             except Exception:
+                ws_closed = True
                 break
-
     
     callback = AsyncQueueCallback()
     pipeline = AuditPipeline(validation_callback=callback)
@@ -1116,11 +1121,18 @@ async def run_audit_ws(
         await asyncio.sleep(0.5)
 
     except WebSocketDisconnect:
-        await _set_status(db, session, "failed", error="Client disconnected")
-        await db.commit()
+        print(f"[WS] Client disconnected from session {session_id}. Pipeline continues in background.")
+        # Don't set failed — pipeline is still running in executor threads.
+        # Those threads don't use the websocket so they complete fine.
+        # The final _set_status(db, session, "done") call will still execute
+        # because it runs AFTER the executor returns, in the try block above.
+        # Nothing to do here.
 
     except asyncio.CancelledError:
         print("Audit cancelled.")
+        # Only reaches here if the task itself was cancelled, not a disconnect.
+        await _set_status(db, session, "failed", error="Audit task cancelled")
+        await db.commit()
         return
 
     except RuntimeError as exc:

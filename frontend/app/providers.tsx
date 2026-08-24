@@ -51,7 +51,13 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
-      queries: { staleTime: 10_000, retry: 1, refetchOnWindowFocus: false },
+      queries: 
+      { 
+        staleTime: 60_000, 
+        retry: 1, 
+        refetchOnWindowFocus: false,
+        refetchOnMount:false
+      },
     },
   }))
 
