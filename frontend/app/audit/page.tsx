@@ -353,6 +353,14 @@ function AuditPageInner() {
             )}
           </div>
 
+          {/* AI disclaimer */}
+          <div className="flex-shrink-0 px-4 md:px-5 py-1.5 bg-amber-50 border-b border-amber-100">
+            <p className="text-[9px] text-amber-700 text-center leading-relaxed">
+              AI-generated results may contain errors or inaccuracies. Please review the
+              findings and recommendations before taking action.
+            </p>
+          </div>  
+          
           {/* Chat messages */}
           <div className="flex-1 overflow-y-auto px-4 md:px-5 py-4 space-y-3">
           

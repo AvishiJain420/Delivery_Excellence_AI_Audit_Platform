@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import os
 import re
 from datetime import datetime
@@ -63,11 +62,11 @@ PRIORITY_BY_SCORE: Dict[int, Tuple[str, str]] = {
 # Score-cell fill on Detailed Findings (unchanged from the original
 # exporter — already matched the reference template).
 SCORE_FILLS = {
-    5: "92D050",
-    4: "C6EFCE",
-    3: "FFD966",
-    2: "F4B183",
-    1: "FF9999",
+    5: "1E8449",
+    4: "27AE60",
+    3: "F39C12",
+    2: "E67E22",
+    1: "C0392B",
 }
 
 # Fixed-color snapshot metrics on the Executive Summary tab.
@@ -258,7 +257,7 @@ def _create_how_to_use_sheet(
     ws = wb.create_sheet(SHEET_HOWTO)
     LAST_COL = 11  # A:K
 
-    col_widths = {"A": 30, "B": 24, "C": 52, "D": 28, "E": 19.18, "F": 10}
+    col_widths = {"A": 52, "B": 24, "C": 52, "D": 28, "E": 19.18, "F": 10}
     for col, width in col_widths.items():
         ws.column_dimensions[col].width = width
     for col_letter in ["G", "H", "I", "J", "K"]:
@@ -279,10 +278,10 @@ def _create_how_to_use_sheet(
     # ws.row_dimensions[4].height = 14.75
 
     # ── About this document ──────────────────────────────────────────
-    _banner(ws, 5, "  ABOUT THIS DOCUMENT", LAST_COL)
+    _banner(ws, 5, "ABOUT THIS DOCUMENT", LAST_COL)
     about_text = (
-        f"This report is the output of a structured {audit_type} AI Audit conducted as part of the "
-        "Delivery Excellence initiative. It evaluates the quality and completeness of multiple project "
+        f"This report is the output of a structured {audit_type} AI, by the "
+        "Delivery Excellence team. It evaluates the quality and completeness of multiple project "
         "documents against a predefined KPI framework. Findings are intended for mid-to-senior delivery "
         "and practice leadership to prioritise remediation actions, track accountability, and improve "
         "document governance standards across engagements."
@@ -326,23 +325,26 @@ def _create_how_to_use_sheet(
     steps = [
         ("1", "Start in Executive Summary",
          "Scan the per-document scorecard. Flag any document with an Overall Score below 3.0 or a "
-         "'Weak'/'Missing' status for immediate attention. Use this view for steering committee updates."),
+         "'Weak'/'Missing' status for immediate attention. Steering committee will be using this tab "
+         "for the audit."),
         ("2", "Drill into Detailed Findings",
          "Filter by Document Name to focus on one document at a time. Within a document, sort by Score "
          "ascending to see the weakest areas first. Read Finding, Evidence, and Recommendation before "
-         "assigning an owner."),
+         "assigning an owner."
+         "Sort or filter Detailed Findings by Evaluation Metric across documents to spot systemic "
+         "weaknesses — e.g., if a KPI scores low across most documents, that is a template or "
+         "process issue, not a single-document issue."),
         ("3", "Assign Actions in the Action Tracker",
          "Each document's highest-priority open recommendation appears in the Action Tracker. Set the "
          "Target Date and Status. Use the Status legend at the bottom of this tab. Escalate any Overdue "
          "item to the Delivery Manager."),
-        ("4", "Review Detailed Findings for patterns",
-         "Sort or filter Detailed Findings by Evaluation Metric across documents to spot systemic "
-         "weaknesses — e.g., if a KPI scores low across most documents, that is a template or process "
-         "issue, not a single-document issue."),
-        ("5", "Re-audit after remediation",
-         "Once remediation actions are closed, the Delivery Lead should confirm the underlying document "
-         "has been updated. Re-run the audit to refresh scores in Detailed Findings and the Executive "
-         "Summary view."),
+        ("4 (Recommended)", "Team Lead to review the documents based on the AI findings and fixes applied",
+         "Once remediation actions are closed, the Delivery Lead should confirm the "
+         "underlying document has been updated."),
+        # ("5", "Re-audit after remediation",
+        #  "Once remediation actions are closed, the Delivery Lead should confirm the underlying document "
+        #  "has been updated. Re-run the audit to refresh scores in Detailed Findings and the Executive "
+        #  "Summary view."),
     ]
     for i, values in enumerate(steps):
         _write_row(ws, row, list(values), _zebra(i), aligns=[CENTER, LEFT, LEFT])
@@ -353,76 +355,76 @@ def _create_how_to_use_sheet(
     row += 1
 
     # ── Score legend ─────────────────────────────────────────────────
-    _banner(ws, row, "  SCORE LEGEND", 4)
-    row += 1
-    _table_header(ws, row, ["Score", "Label", "What It Means", "Typical Action"])
-    row += 1
-    legend_rows = [
-        (5, "Strong", "Criterion fully met — well-documented and comprehensive.",
-         "No action needed. Note as a strength."),
-        (4, "Good", "Largely met with minor gaps — mostly complete.",
-         "Minor enhancement recommended."),
-        (3, "Partial", "Partially addressed — key elements present but incomplete.",
-         "Prioritise gap closure in next revision."),
-        (2, "Weak", "Minimally addressed — significant gaps present.",
-         "High-priority remediation required."),
-        (1, "Missing", "Criterion not addressed at all in the document.",
-         "Critical — immediate action required."),
-    ]
-    for score, label, meaning, action in legend_rows:
-        band_label, band_color = BAND_COLORS[score]
-        score_cell = ws.cell(row=row, column=1, value=score)
-        score_cell.font = _font(size=9.5, bold=True, color="FFFFFF")
-        score_cell.fill = _fill(band_color)
-        score_cell.border = THIN_BORDER
-        score_cell.alignment = CENTER
+    # _banner(ws, row, "SCORE LEGEND", 4)
+    # row += 1
+    # _table_header(ws, row, ["Score", "Label", "What It Means", "Typical Action"])
+    # row += 1
+    # legend_rows = [
+    #     (5, "Strong", "Criterion fully met — well-documented and comprehensive.",
+    #      "No action needed. Note as a strength."),
+    #     (4, "Good", "Largely met with minor gaps — mostly complete.",
+    #      "Minor enhancement recommended."),
+    #     (3, "Partial", "Partially addressed — key elements present but incomplete.",
+    #      "Prioritise gap closure in next revision."),
+    #     (2, "Weak", "Minimally addressed — significant gaps present.",
+    #      "High-priority remediation required."),
+    #     (1, "Missing", "Criterion not addressed at all in the document.",
+    #      "Critical — immediate action required."),
+    # ]
+    # for score, label, meaning, action in legend_rows:
+    #     band_label, band_color = BAND_COLORS[score]
+    #     score_cell = ws.cell(row=row, column=1, value=score)
+    #     score_cell.font = _font(size=9.5, bold=True, color="FFFFFF")
+    #     score_cell.fill = _fill(band_color)
+    #     score_cell.border = THIN_BORDER
+    #     score_cell.alignment = CENTER
 
-        zebra_hex = _zebra(score_and_index := (5 - score))
-        for col, value in [(2, label), (3, meaning), (4, action)]:
-            cell = ws.cell(row=row, column=col, value=value)
-            cell.font = _font(size=9.5, color=TEXT_DARK)
-            cell.fill = _fill(zebra_hex)
-            cell.border = THIN_BORDER
-            cell.alignment = LEFT
-        ws.row_dimensions[row].height = 30
-        row += 1
+    #     zebra_hex = _zebra(score_and_index := (5 - score))
+    #     for col, value in [(2, label), (3, meaning), (4, action)]:
+    #         cell = ws.cell(row=row, column=col, value=value)
+    #         cell.font = _font(size=9.5, color=TEXT_DARK)
+    #         cell.fill = _fill(zebra_hex)
+    #         cell.border = THIN_BORDER
+    #         cell.alignment = LEFT
+    #     ws.row_dimensions[row].height = 30
+    #     row += 1
 
-    row += 2
+    # row += 2
 
     # ── Status guide ─────────────────────────────────────────────────
-    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=3)
-    banner_cell = ws.cell(row=row, column=1, value="  STATUS GUIDE — Use These Values in the Status Column")
-    for col in range(1, 4):
-        ws.cell(row=row, column=col).fill = _fill(NAVY)
-    banner_cell.font = _font(size=10, bold=True, color="FFFFFF")
-    banner_cell.alignment = Alignment(horizontal="left", vertical="center")
-    ws.row_dimensions[row].height = 25.5
-    row += 1
+    # ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=3)
+    # banner_cell = ws.cell(row=row, column=1, value="  STATUS GUIDE — Use These Values in the Status Column")
+    # for col in range(1, 4):
+    #     ws.cell(row=row, column=col).fill = _fill(NAVY)
+    # banner_cell.font = _font(size=10, bold=True, color="FFFFFF")
+    # banner_cell.alignment = Alignment(horizontal="left", vertical="center")
+    # ws.row_dimensions[row].height = 25.5
+    # row += 1
 
-    status_rows = [
-        ("Open", "Action not yet started"),
-        ("In Progress", "Work underway"),
-        ("Pending Review", "Draft ready; awaiting sign-off"),
-        ("Closed", "Remediation complete and verified"),
-        ("Overdue", "Past target date; needs escalation"),
-        ("Deferred", "Intentionally pushed; agreed deferral"),
-    ]
-    for label, desc in status_rows:
-        badge_fill, badge_font = STATUS_COLORS[label]
-        ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=3)
-        badge_cell = ws.cell(row=row, column=1, value=label)
-        badge_cell.font = _font(size=9.5, bold=True, color=badge_font)
-        badge_cell.fill = _fill(badge_fill)
-        badge_cell.border = THIN_BORDER
-        badge_cell.alignment = CENTER
+    # status_rows = [
+    #     ("Open", "Action not yet started"),
+    #     ("In Progress", "Work underway"),
+    #     ("Pending Review", "Draft ready; awaiting sign-off"),
+    #     ("Closed", "Remediation complete and verified"),
+    #     ("Overdue", "Past target date; needs escalation"),
+    #     ("Deferred", "Intentionally pushed; agreed deferral"),
+    # ]
+    # for label, desc in status_rows:
+    #     badge_fill, badge_font = STATUS_COLORS[label]
+    #     ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=3)
+    #     badge_cell = ws.cell(row=row, column=1, value=label)
+    #     badge_cell.font = _font(size=9.5, bold=True, color=badge_font)
+    #     badge_cell.fill = _fill(badge_fill)
+    #     badge_cell.border = THIN_BORDER
+    #     badge_cell.alignment = CENTER
 
-        desc_cell = ws.cell(row=row, column=2, value=desc)
-        desc_cell.font = _font(size=9.5, color=TEXT_DARK)
-        desc_cell.fill = _fill(ZEBRA_A)
-        # desc_cell.border = THIN_BORDER
-        desc_cell.alignment = LEFT
-        ws.row_dimensions[row].height = 14.5
-        row += 1
+    #     desc_cell = ws.cell(row=row, column=2, value=desc)
+    #     desc_cell.font = _font(size=9.5, color=TEXT_DARK)
+    #     desc_cell.fill = _fill(ZEBRA_A)
+    #     # desc_cell.border = THIN_BORDER
+    #     desc_cell.alignment = LEFT
+    #     ws.row_dimensions[row].height = 14.5
+    #     row += 1
 
     return ws
 
@@ -441,7 +443,7 @@ def _create_executive_summary_sheet(
     ws = wb.create_sheet(SHEET_EXEC)
     LAST_COL = 10  # A:J
 
-    widths = {"A": 44.27, "B": 75.82, "C": 51.45, "D": 9, "E": 17,
+    widths = {"A": 60, "B": 75.82, "C": 51.45, "D": 9, "E": 17,
               "F": 9, "G": 15.27, "H": 28, "I": 16.73, "J": 15.18}
     for col, w in widths.items():
         ws.column_dimensions[col].width = w
@@ -467,13 +469,13 @@ def _create_executive_summary_sheet(
     gaps_and_risks = _first_present(combined_summary, "gaps_and_risks", "risks",
                                      "major_gaps_and_risks", default=[])
     strengths = _first_present(combined_summary, "strengths", "project_strengths", default=[])
-    recommendations = _first_present(combined_summary, "recommendations", "recommendation", default=[])
+    #recommendations = _first_present(combined_summary, "recommendations", "recommendation", default=[])
     cross_doc_findings = _first_present(combined_summary, "cross_document_findings", "findings", default=[])
 
-    labels = ["Overall Project Score", "Total Gaps and Risks", "Total Strengths",
-              "Total Recommendations", "Cross Document Findings"]
+    labels = ["Overall Project Score", "# Gaps and Risks identified in documents (Details below)",
+              "# Cross Document Findings (Details below)"]
     for i, label in enumerate(labels):
-        cell = ws.cell(row=row, column=1 + 2 * i, value=label)
+        cell = ws.cell(row=row, column=i+1, value=label)
         cell.font = _font(size=9, bold=True, color=NAVY)
         cell.fill = _fill(ZEBRA_A)
         cell.alignment = CENTER
@@ -484,12 +486,12 @@ def _create_executive_summary_sheet(
     metric_values = [
         (f"{round(overall_score, 2)} / 5" if overall_score is not None else "N/A", score_color),
         (len(gaps_and_risks), SNAPSHOT_GAPS_COLOR),
-        (len(strengths), SNAPSHOT_STRENGTHS_COLOR),
-        (len(recommendations), SNAPSHOT_RECS_COLOR),
+        #(len(strengths), SNAPSHOT_STRENGTHS_COLOR),
+        #(len(recommendations), SNAPSHOT_RECS_COLOR),
         (len(cross_doc_findings), SNAPSHOT_FINDINGS_COLOR),
     ]
     for i, (value, color) in enumerate(metric_values):
-        cell = ws.cell(row=row, column=1 + 2 * i, value=value)
+        cell = ws.cell(row=row, column=i+1, value=value)
         cell.font = _font(size=20, bold=True, color="FFFFFF")
         cell.fill = _fill(color)
         cell.alignment = CENTER
@@ -515,23 +517,21 @@ def _create_executive_summary_sheet(
                   fill_hex=NAVY)
     row += 1
     for i, audit in enumerate(individual_audits):
-
         results = audit.get("audit_results", [])
 
-        doc_score = audit.get("overall_score", 0)
-        scores = [
-            r.get("score")
-            for r in results
-            if r.get("score") is not None
-        ]
-                
+        doc_score = audit.get("overall_score")
+
+        if doc_score is None:
+            doc_score = 0
+
+        band_label, band_color = _band_for(doc_score)
+
         issues = sum(
             1
             for r in results
-            if _clamp_score(r.get("score", 0)) <= 3
+            if r.get("score") is not None and _clamp_score(r.get("score")) <= 3
         )
 
-        band_label, band_color = _band_for(doc_score)
         zebra_hex = _zebra(i)
 
         name_cell = ws.cell(row=row, column=1, value=audit.get("filename", ""))
@@ -568,7 +568,7 @@ def _create_executive_summary_sheet(
 
         ws.row_dimensions[row].height = 24
         row += 1
-
+    
     row += 1
 
     # ── Cross Document Findings: Documents | Finding | Severity ──────
@@ -658,10 +658,20 @@ def _create_detailed_findings_sheet(
     individual_audits: List[Dict[str, Any]],
 ):
     ws = wb.create_sheet(SHEET_FINDINGS)
-    LAST_COL = 10  # A:J
+    LAST_COL = 9  # A:I
 
-    widths = {"A": 8.82, "B": 17.73, "C": 13.27, "D": 12.45, "E": 29.82,
-              "F": 9.54, "G": 8.18, "H": 53.54, "I": 34, "J": 40.45}
+    widths = {
+    "A": 14,
+    "B": 17.73,
+    "C": 27,
+    "D": 20,
+    "E": 29.82,
+    "F": 9.54,
+    "G": 53.54,
+    "H": 53.54,
+    "I": 40.45,
+    }
+
     for col, w in widths.items():
         ws.column_dimensions[col].width = w
 
@@ -676,11 +686,47 @@ def _create_detailed_findings_sheet(
     ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=5)
     ws.row_dimensions[3].height = 33.75
 
-    headers = ["Doc ID", "Document Name", "Doc Type", "Evaluation Category", "Evaluation Metric",
-               "Priority", "Score", "Finding", "Evidence (from Document)", "Recommendation"]
-    _table_header(ws, 4, headers, fill_hex=NAVY)
+    row=4
+    _banner(ws, row, "SCORE LEGEND", 4)
+    row += 1
+    _table_header(ws, row, ["Score", "Label", "What It Means", "Typical Action"])
+    row += 1
+    legend_rows = [
+        (5, "Strong", "Criterion fully met — well-documented and comprehensive.",
+         "No action needed. Note as a strength."),
+        (4, "Good", "Largely met with minor gaps — mostly complete.",
+         "Minor enhancement recommended."),
+        (3, "Partial", "Partially addressed — key elements present but incomplete.",
+         "Prioritise gap closure in next revision."),
+        (2, "Weak", "Minimally addressed — significant gaps present.",
+         "High-priority remediation required."),
+        (1, "Missing", "Criterion not addressed at all in the document.",
+         "Critical — immediate action required."),
+    ]
+    for score, label, meaning, action in legend_rows:
+        band_label, band_color = BAND_COLORS[score]
+        score_cell = ws.cell(row=row, column=1, value=score)
+        score_cell.font = _font(size=9.5, bold=True, color="FFFFFF")
+        score_cell.fill = _fill(band_color)
+        score_cell.border = THIN_BORDER
+        score_cell.alignment = CENTER
+    
+        zebra_hex = _zebra(score_and_index := (5 - score))
+        for col, value in [(2, label), (3, meaning), (4, action)]:
+            cell = ws.cell(row=row, column=col, value=value)
+            cell.font = _font(size=9.5, color=TEXT_DARK)
+            cell.fill = _fill(zebra_hex)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT
+        ws.row_dimensions[row].height = 30
+        row += 1
+    row+=2
 
-    row = 5
+    headers = ["Doc ID", "Document Name", "Doc Type", "Evaluation Category", "Evaluation Metric", 
+               "Score", "Finding", "Evidence (from Document)", "Recommendation"]
+    _table_header(ws, 12, headers, fill_hex=NAVY)
+
+    row_ = 13
     for doc_index, audit in enumerate(individual_audits, start=1):
         doc_id = f"DOC-{doc_index:02d}"
         filename = audit.get("filename", "")
@@ -688,17 +734,55 @@ def _create_detailed_findings_sheet(
         results = audit.get("audit_results", [])
 
         if not results:
-            values = [doc_id, filename, doc_type, "", "", "Critical", 0,
-                      audit.get("summary", "Audit failed — re-run required."), "", ""]
-            _write_row(ws, row, values, "FFFFFF",
-                       aligns=[CENTER, LEFT, LEFT, CENTER, LEFT, CENTER, CENTER, LEFT_TOP, LEFT_TOP, LEFT_TOP])
-            ws.cell(row=row, column=1).font = _font(size=9.5, bold=True, color="FFFFFF")
-            ws.cell(row=row, column=1).fill = _fill(NAVY)
-            ws.cell(row=row, column=6).font = _font(size=9.5, bold=True, color="FFFFFF")
-            ws.cell(row=row, column=6).fill = _fill(PRIORITY_BY_SCORE[1][1])
-            ws.cell(row=row, column=7).fill = _score_fill(0)
-            ws.row_dimensions[row].height = 40
-            row += 1
+            values = [
+                doc_id,
+                filename,
+                doc_type,
+                "",
+                "",
+                0,
+                "Critical",
+                audit.get("summary", "Audit failed — re-run required."),
+                "",
+            ]
+
+            _write_row(
+                ws,
+                row_,
+                values,
+                "FFFFFF",
+                aligns=[
+                    CENTER,
+                    LEFT,
+                    LEFT,
+                    CENTER,
+                    LEFT,
+                    CENTER,
+                    LEFT_TOP,
+                    LEFT_TOP,
+                    LEFT_TOP,
+                ],
+            )
+
+            ws.cell(row=row_, column=1).font = _font(
+                size=9.5,
+                bold=True,
+                color="FFFFFF"
+            )
+            ws.cell(row=row_, column=1).fill = _fill(NAVY)
+
+            # Score column
+            ws.cell(row=row_, column=6).value = 0
+            ws.cell(row=row_, column=6).fill = _fill("C0392B")
+            ws.cell(row=row_, column=6).font = _font(
+                size=9.5,
+                bold=True,
+                color="FFFFFF"
+            )
+            ws.cell(row=row_, column=6).alignment = CENTER
+
+            ws.row_dimensions[row_].height = 40
+            row_ += 1
             continue
 
         for result in results:
@@ -709,32 +793,32 @@ def _create_detailed_findings_sheet(
                 doc_id, filename, doc_type,
                 result.get("evaluation_category", ""),
                 result.get("evaluation_metric", ""),
-                priority_label,
+                # priority_label,
                 score,
                 result.get("finding", ""),
                 result.get("evidence", ""),
                 result.get("recommendation", ""),
             ]
-            _write_row(ws, row, values, "FFFFFF",
+            _write_row(ws, row_, values, "FFFFFF",
                        aligns=[CENTER, LEFT, LEFT, CENTER, LEFT, CENTER, CENTER, LEFT_TOP, LEFT_TOP, LEFT_TOP])
 
-            id_cell = ws.cell(row=row, column=1)
+            id_cell = ws.cell(row=row_, column=1)
             id_cell.font = _font(size=9.5, bold=True, color="FFFFFF")
             id_cell.fill = _fill(NAVY)
 
-            priority_cell = ws.cell(row=row, column=6)
-            priority_cell.font = _font(size=9.5, bold=True, color="FFFFFF")
-            priority_cell.fill = _fill(priority_color)
+            # priority_cell = ws.cell(row=row, column=6)
+            # priority_cell.font = _font(size=9.5, bold=True, color="FFFFFF")
+            # priority_cell.fill = _fill(priority_color)
 
-            score_cell = ws.cell(row=row, column=7)
+            score_cell = ws.cell(row=row_, column=6)
             score_cell.fill = _score_fill(score)
             score_cell.font = _font(size=9.5, bold=False, color=TEXT_DARK)
 
-            ws.row_dimensions[row].height = 66
-            row += 1
+            ws.row_dimensions[row_].height = 66
+            row_ += 1
 
-    ws.freeze_panes = "A5"
-    ws.auto_filter.ref = f"A4:J{row - 1}" if row > 5 else "A4:J4"
+    # ws.freeze_panes = "A5"
+    ws.auto_filter.ref = f"A12:I{row_ - 1}" if row_ > 13 else "A12:I12"
     return ws
 
 
@@ -764,7 +848,6 @@ def _top_recommendation_for_doc(audit: Dict[str, Any]) -> Tuple[str, str, str]:
             0 if (
                 r.get("evaluation_category", "") or ""
             ).strip().lower() == "must have" else 1,
-            r.get("criterion_number", 999),
         ),
     )
 
@@ -797,57 +880,92 @@ def _create_action_tracker_sheet(
     ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=2)
     ws.row_dimensions[2].height = 6
 
+    row = 5
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=3)
+    banner_cell = ws.cell(row=row, column=1, value="  STATUS GUIDE — Use These Values in the Status Column")
+    for col in range(1, 4):
+        ws.cell(row=row, column=col).fill = _fill(NAVY)
+    banner_cell.font = _font(size=10, bold=True, color="FFFFFF")
+    banner_cell.alignment = Alignment(horizontal="left", vertical="center")
+    ws.row_dimensions[row].height = 25.5
+    row += 1
+
+    status_rows = [
+        ("Open", "Action not yet started"),
+        ("In Progress", "Work underway"),
+        ("Pending Review", "Draft ready; awaiting sign-off"),
+        ("Closed", "Remediation complete and verified"),
+        ("Overdue", "Past target date; needs escalation"),
+        ("Deferred", "Intentionally pushed; agreed deferral"),
+    ]
+    for label, desc in status_rows:
+        badge_fill, badge_font = STATUS_COLORS[label]
+        ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=3)
+        badge_cell = ws.cell(row=row, column=1, value=label)
+        badge_cell.font = _font(size=9.5, bold=True, color=badge_font)
+        badge_cell.fill = _fill(badge_fill)
+        badge_cell.border = THIN_BORDER
+        badge_cell.alignment = CENTER
+
+        desc_cell = ws.cell(row=row, column=2, value=desc)
+        desc_cell.font = _font(size=9.5, color=TEXT_DARK)
+        desc_cell.fill = _fill(ZEBRA_A)
+        # desc_cell.border = THIN_BORDER
+        desc_cell.alignment = LEFT
+        ws.row_dimensions[row].height = 14.5
+        row += 1
+
     headers = ["Document Name", "Recommendation", "Priority", "Target Date", "Status",
                "Progress / Notes", "Completion Date", "Verified By"]
-    _table_header(ws, 5, headers, fill_hex=NAVY)
+    _table_header(ws, 13, headers, fill_hex=NAVY)
 
-    row = 6
+    row_ = 14
     for i, audit in enumerate(individual_audits):
         recommendation, priority_label, priority_color = _top_recommendation_for_doc(audit)
         zebra_hex = _zebra(i)
 
-        name_cell = ws.cell(row=row, column=1, value=audit.get("filename", ""))
+        name_cell = ws.cell(row=row_, column=1, value=audit.get("filename", ""))
         name_cell.font = _font(size=9.5, color=TEXT_DARK)
         name_cell.fill = _fill(zebra_hex)
         name_cell.border = THIN_BORDER
         name_cell.alignment = LEFT
 
-        rec_cell = ws.cell(row=row, column=2, value=recommendation)
+        rec_cell = ws.cell(row=row_, column=2, value=recommendation)
         rec_cell.font = _font(size=9.5, color=TEXT_DARK)
         rec_cell.fill = _fill("FFFFFF")
         rec_cell.border = THIN_BORDER
         rec_cell.alignment = LEFT_TOP
 
-        pr_cell = ws.cell(row=row, column=3, value=priority_label)
+        pr_cell = ws.cell(row=row_, column=3, value=priority_label)
         pr_cell.font = _font(size=9.5, bold=True, color="FFFFFF")
         pr_cell.fill = _fill(priority_color)
         pr_cell.border = THIN_BORDER
         pr_cell.alignment = CENTER
 
-        target_cell = ws.cell(row=row, column=4, value=None)
+        target_cell = ws.cell(row=row_, column=4, value=None)
         target_cell.fill = _fill(zebra_hex)
         target_cell.border = THIN_BORDER
         target_cell.alignment = LEFT
 
         status_fill, status_font = STATUS_COLORS["Open"]
-        status_cell = ws.cell(row=row, column=5, value="Open")
+        status_cell = ws.cell(row=row_, column=5, value="Open")
         status_cell.font = _font(size=9.5, bold=True, color=status_font)
         status_cell.fill = _fill(status_fill)
         status_cell.border = THIN_BORDER
         status_cell.alignment = CENTER
 
         for col in (6, 7, 8):
-            cell = ws.cell(row=row, column=col, value=None)
+            cell = ws.cell(row=row_, column=col, value=None)
             cell.font = _font(size=9, color=PENDING_FONT_COLOR)
             cell.fill = _fill(PENDING_FILL)
             cell.border = THIN_BORDER
             cell.alignment = LEFT
 
-        ws.row_dimensions[row].height = 36
-        row += 1
+        ws.row_dimensions[row_].height = 36
+        row_ += 1
 
-    ws.freeze_panes = "A6"
-    ws.auto_filter.ref = f"A5:H{row - 1}" if row > 6 else "A5:H5"
+    #ws.freeze_panes = "A6"
+    ws.auto_filter.ref = f"A13:H{row_ - 1}" if row_ > 13 else "A13:H13"
     return ws
 
 
