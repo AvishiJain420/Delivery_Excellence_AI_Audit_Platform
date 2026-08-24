@@ -62,10 +62,6 @@ def build_llm(criterion_count: int = 20) -> ChatOpenAI:
 # OUTPUT SCHEMA
 # ============================================================
 
-# ============================================================
-# OUTPUT SCHEMA
-# ============================================================
-
 class AuditCriterionResult(BaseModel):
     """
     Minimal LLM response for one framework criterion.
@@ -374,9 +370,27 @@ def _merge_results_with_framework(
     Guarantees correct order and fills missing criteria with score=1.
     """
     # Build a lookup by index
-    result_map: dict[int, AuditCriterionResult] = {
-        r.criterion_index: r for r in audit_results
-    }
+    # result_map: dict[int, AuditCriterionResult] = {
+    #     r.criterion_index: r for r in audit_results
+    # }
+
+    result_map: dict[int, AuditCriterionResult] = {}
+
+    for r in audit_results:
+        if r.criterion_index in result_map:
+            print(
+                f"  WARNING: duplicate criterion_index "
+                f"{r.criterion_index} returned by LLM — keeping latest result"
+            )
+
+        if r.criterion_index > len(framework):
+            print(
+                f"  WARNING: invalid criterion_index "
+                f"{r.criterion_index} returned by LLM — ignoring"
+            )
+            continue
+
+        result_map[r.criterion_index] = r
 
     merged = []
     for i, criterion in enumerate(framework, 1):

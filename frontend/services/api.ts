@@ -1,125 +1,509 @@
 /**
  * services/api.ts
- *
- * WHERE THIS FILE LIVES: frontend/services/api.ts
- *
- * This is the ONLY place in the frontend that calls the backend REST API.
- * All components import from here — never fetch() directly in a component.
- *
- * Auth: reads access_token from localStorage, attaches as Bearer header.
- * Token refresh: if a call returns 401, tries /auth/refresh once then clears.
  */
+
 import type {
-  BackendUser, BackendSession, AuditSummary, DashboardStats, AuditStatus,
-  AuditDocument, AuditSession, StepStatus,
+  BackendUser,
+  BackendSession,
+  AuditSummary,
+  DashboardStats,
+  AuditStatus,
+  AuditDocument,
+  AuditSession,
+  StepStatus,
 } from '@/types'
+
 import { PIPELINE_STEPS } from '@/lib/utils'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+
+/**
+ * How long we allow the refresh endpoint to respond before
+ * considering the refresh attempt failed.
+ */
+const REFRESH_TIMEOUT_MS = 10_000
+
+/**
+ * Shared refresh promise.
+ *
+ * This is VERY important.
+ *
+ * Without this, if several API calls receive 401 at the same time:
+ *
+ *   Request A → 401 → refresh
+ *   Request B → 401 → refresh
+ *   Request C → 401 → refresh
+ *
+ * all three calls can hit /auth/refresh simultaneously.
+ *
+ * With this variable:
+ *
+ *   Request A → 401 ─┐
+ *   Request B → 401 ─┼→ ONE refresh request
+ *   Request C → 401 ─┘
+ *
+ * All requests wait for the same refresh operation.
+ */
+let refreshPromise: Promise<boolean> | null = null
 
 // ─── Token helpers ─────────────────────────────────────────────────────────────
+
 export const TokenStore = {
   setTokens(access: string, refresh: string) {
     if (typeof window === 'undefined') return
+
     localStorage.setItem('access_token', access)
     localStorage.setItem('refresh_token', refresh)
   },
+
   getAccess(): string | null {
     if (typeof window === 'undefined') return null
+
     return localStorage.getItem('access_token')
   },
+
   getRefresh(): string | null {
     if (typeof window === 'undefined') return null
+
     return localStorage.getItem('refresh_token')
   },
+
   clear() {
     if (typeof window === 'undefined') return
+
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
   },
 }
 
 // ─── Authenticated fetch ───────────────────────────────────────────────────────
-async function apiFetch(path: string, opts: RequestInit = {}): Promise<Response> {
+
+async function apiFetch(
+  path: string,
+  opts: RequestInit = {},
+): Promise<Response> {
   const token = TokenStore.getAccess()
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+
+    ...(token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {}),
+
     ...(opts.headers as Record<string, string> ?? {}),
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...opts, headers })
+  const res = await fetch(`${API_URL}${path}`, {
+    ...opts,
+    headers,
+  })
 
-  // Auto-refresh on 401
-  if (res.status === 401) {
-    const refreshed = await attemptRefresh()
-    if (refreshed) {
-      headers.Authorization = `Bearer ${TokenStore.getAccess()}`
-      return fetch(`${API_URL}${path}`, { ...opts, headers })
-    }
-    // Redirect to login if refresh failed
-    TokenStore.clear()
-    if (typeof window !== 'undefined') window.location.href = '/auth/login'
+  /**
+   * Normal successful/non-auth response.
+   */
+  if (res.status !== 401) {
+    return res
   }
+
+  /**
+   * If we are already on an auth page, don't start another
+   * authentication redirect loop.
+   */
+  if (
+    typeof window !== 'undefined' &&
+    window.location.pathname.startsWith('/auth')
+  ) {
+    return res
+  }
+
+  /**
+   * Try refreshing the access token.
+   *
+   * attemptRefresh() is concurrency-safe, so even if several
+   * requests arrive here simultaneously, only ONE refresh request
+   * will actually be sent to the backend.
+   */
+  const refreshed = await attemptRefresh()
+
+  if (refreshed) {
+    const newAccessToken = TokenStore.getAccess()
+
+    /**
+     * If for some reason refresh reported success but there is
+     * no access token in storage, don't retry with an empty token.
+     */
+    if (!newAccessToken) {
+      TokenStore.clear()
+      redirectToLogin()
+      return res
+    }
+
+    /**
+     * Create fresh headers rather than mutating the old object.
+     */
+    const retryHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+
+      ...(opts.headers as Record<string, string> ?? {}),
+
+      Authorization: `Bearer ${newAccessToken}`,
+    }
+
+    /**
+     * Retry the original request exactly once.
+     *
+     * We deliberately do NOT recursively call apiFetch() here.
+     * Otherwise a bad token could create an infinite 401 → refresh
+     * → 401 → refresh loop.
+     */
+    const retryResponse = await fetch(`${API_URL}${path}`, {
+      ...opts,
+      headers: retryHeaders,
+    })
+
+    /**
+     * If the refreshed token is still rejected, clear the local
+     * authentication state and send the user back to login.
+     */
+    if (retryResponse.status === 401) {
+      TokenStore.clear()
+      redirectToLogin()
+    }
+
+    return retryResponse
+  }
+
+  /**
+   * Refresh failed.
+   *
+   * Clear tokens and redirect to login.
+   */
+  TokenStore.clear()
+
+  redirectToLogin()
 
   return res
 }
 
+// ─── Redirect helper ───────────────────────────────────────────────────────────
+
+function redirectToLogin() {
+  if (typeof window === 'undefined') return
+
+  const currentPath =
+    window.location.pathname +
+    window.location.search
+
+  /**
+   * Never redirect if we are already somewhere under /auth.
+   */
+  if (currentPath.startsWith('/auth')) {
+    return
+  }
+
+  const loginUrl =
+    currentPath
+      ? `/auth/login?return_to=${encodeURIComponent(currentPath)}`
+      : '/auth/login'
+
+  console.log(
+    '[apiFetch] Authentication failed.',
+  )
+
+  console.log(
+    '[apiFetch] Current path:',
+    currentPath,
+  )
+
+  console.log(
+    '[apiFetch] Redirecting to:',
+    loginUrl,
+  )
+
+  window.location.href = loginUrl
+}
+
+// ─── Refresh token ─────────────────────────────────────────────────────────────
+
 async function attemptRefresh(): Promise<boolean> {
-  const refresh_token = TokenStore.getRefresh()
-  if (!refresh_token) return false
-  try {
-    const res = await fetch(`${API_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token }),
-    })
-    if (!res.ok) return false
-    const { access_token, refresh_token: new_refresh } = await res.json()
-    TokenStore.setTokens(access_token, new_refresh)
-    return true
-  } catch { return false }
+  /**
+   * If another request is already refreshing the token,
+   * wait for that same operation.
+   */
+  if (refreshPromise) {
+    return refreshPromise
+  }
+
+  const refreshToken = TokenStore.getRefresh()
+
+  if (!refreshToken) {
+    return false
+  }
+
+  /**
+   * Create one shared refresh operation.
+   */
+  refreshPromise = (async () => {
+    try {
+      const controller = new AbortController()
+
+      const timeoutId = window.setTimeout(() => {
+        controller.abort()
+      }, REFRESH_TIMEOUT_MS)
+
+      try {
+        const res = await fetch(`${API_URL}/auth/refresh`, {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            refresh_token: refreshToken,
+          }),
+
+          signal: controller.signal,
+        })
+
+        if (!res.ok) {
+          console.warn(
+            '[auth] Token refresh failed:',
+            res.status,
+          )
+
+          return false
+        }
+
+        const data = await res.json()
+
+        const accessToken = data?.access_token
+        const newRefreshToken =
+          data?.refresh_token ?? refreshToken
+
+        if (!accessToken) {
+          console.warn(
+            '[auth] Refresh response did not contain access_token',
+          )
+
+          return false
+        }
+
+        /**
+         * Store the new access token.
+         *
+         * Some backends rotate the refresh token while others
+         * return the existing one. Supporting both is safer.
+         */
+        TokenStore.setTokens(
+          accessToken,
+          newRefreshToken,
+        )
+
+        console.log(
+          '[auth] Access token refreshed successfully',
+        )
+
+        return true
+      } finally {
+        window.clearTimeout(timeoutId)
+      }
+    } catch (error) {
+      if (
+        error instanceof DOMException &&
+        error.name === 'AbortError'
+      ) {
+        console.warn(
+          '[auth] Token refresh timed out',
+        )
+      } else {
+        console.warn(
+          '[auth] Token refresh request failed:',
+          error,
+        )
+      }
+
+      return false
+    } finally {
+      /**
+       * Very important:
+       *
+       * Allow another refresh operation later if necessary.
+       */
+      refreshPromise = null
+    }
+  })()
+
+  return refreshPromise
 }
 
 // ─── Auth API ──────────────────────────────────────────────────────────────────
+
 export const authApi = {
-  /**
-   * Step 1: Get the Microsoft login URL.
-   * Frontend calls this, then does: window.location.href = data.auth_url
-   */
-  async getLoginUrl(): Promise<string> {
-    const res = await fetch(`${API_URL}/auth/azure/login`)
-    if (!res.ok) throw new Error('Failed to get login URL')
+  async getLoginUrl(
+    returnTo: string = '/dashboard',
+  ): Promise<string> {
+    const url = new URL(
+      `${API_URL}/auth/azure/login`,
+    )
+
+    url.searchParams.set(
+      'return_to',
+      returnTo,
+    )
+
+    const res = await fetch(url.toString())
+
+    if (!res.ok) {
+      throw new Error(
+        'Failed to get login URL',
+      )
+    }
+
     const { auth_url } = await res.json()
+
     return auth_url
   },
 
   /**
-   * Step 2: Called on /auth/callback page.
-   * Reads tokens from URL fragment (#access_token=...&refresh_token=...)
-   * Stores them and returns the user.
+   * Called on /auth/callback page.
+   *
+   * React StrictMode in Next.js development can run useEffect twice.
+   *
+   * First run:
+   *
+   *   hash contains tokens
+   *   ↓
+   *   store tokens
+   *   ↓
+   *   remove hash
+   *
+   * Second run:
+   *
+   *   hash is empty
+   *   ↓
+   *   retrieve tokens from localStorage
+   *
+   * This prevents the second StrictMode execution from
+   * incorrectly reporting "Auth Failed".
    */
-  handleCallback(): { access_token: string; refresh_token: string } | null {
-    if (typeof window === 'undefined') return null
-    const fragment = window.location.hash.substring(1)
-    const params = new URLSearchParams(fragment)
-    const access_token = params.get('access_token')
-    const refresh_token = params.get('refresh_token')
-    if (!access_token || !refresh_token) return null
-    TokenStore.setTokens(access_token, refresh_token)
-    window.history.replaceState({}, document.title, window.location.pathname)
-    return { access_token, refresh_token }
+  handleCallback(): {
+    access_token: string
+    refresh_token: string
+  } | null {
+    if (typeof window === 'undefined') {
+      return null
+    }
+
+    const fragment =
+      window.location.hash.substring(1)
+
+    const params =
+      new URLSearchParams(fragment)
+
+    const accessToken =
+      params.get('access_token')
+
+    const refreshToken =
+      params.get('refresh_token')
+
+    /**
+     * First execution:
+     * tokens are present in the URL fragment.
+     */
+    if (accessToken && refreshToken) {
+      TokenStore.setTokens(
+        accessToken,
+        refreshToken,
+      )
+
+      /**
+       * IMPORTANT:
+       *
+       * Preserve the query string.
+       *
+       * Example:
+       *
+       * /auth/callback?return_to=%2Fdashboard#access_token=...
+       *
+       * becomes:
+       *
+       * /auth/callback?return_to=%2Fdashboard
+       *
+       * instead of losing ?return_to=/dashboard.
+       */
+      const cleanUrl =
+        window.location.pathname +
+        window.location.search
+
+      window.history.replaceState(
+        {},
+        document.title,
+        cleanUrl,
+      )
+
+      return {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      }
+    }
+
+    /**
+     * Second StrictMode execution or page refresh.
+     *
+     * The hash has already been removed, so retrieve the
+     * tokens that were stored during the first execution.
+     */
+    const storedAccessToken =
+      TokenStore.getAccess()
+
+    const storedRefreshToken =
+      TokenStore.getRefresh()
+
+    if (
+      storedAccessToken &&
+      storedRefreshToken
+    ) {
+      return {
+        access_token: storedAccessToken,
+        refresh_token: storedRefreshToken,
+      }
+    }
+
+    /**
+     * No tokens anywhere.
+     *
+     * This is a genuine authentication failure.
+     */
+    return null
   },
 
   async getMe(): Promise<BackendUser> {
     const res = await apiFetch('/auth/me')
-    if (!res.ok) throw new Error('Not authenticated')
+
+    if (!res.ok) {
+      throw new Error(
+        'Not authenticated',
+      )
+    }
+
     return res.json()
+  },
+
+  clearTokens() {
+    TokenStore.clear()
   },
 
   logout() {
     TokenStore.clear()
-    if (typeof window !== 'undefined') window.location.href = '/auth/login'
+
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/login'
+    }
   },
 
   isLoggedIn(): boolean {
@@ -128,102 +512,153 @@ export const authApi = {
 }
 
 // ─── Audit API ─────────────────────────────────────────────────────────────────
-export const auditApi = {
-  /**
-   * Flow 1: User came from Power Apps with ?item_id=68 in URL.
-   * Fetches project from SharePoint and creates a session.
-   */
-  async startFromPowerApp(sharepoint_item_id: string): Promise<{
-      session_id: string; project_name: string; client_name: string; audit_type: string
-    }> {
-      const res = await apiFetch('/audit/sessions/powerapp', {
-        method: 'POST',
-        body: JSON.stringify({ sharepoint_item_id }),
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.detail ?? 'Failed to start audit')
-      }
-      return res.json()
-    },
 
-  /**
-   * Flow 2: User fills form on site manually.
-   */
+export const auditApi = {
+  async startFromPowerApp(
+    sharepoint_item_id: string,
+  ): Promise<{
+    session_id: string
+    project_name: string
+    client_name: string
+    audit_type: string
+  }> {
+    const res = await apiFetch(
+      '/audit/sessions/powerapp',
+      {
+        method: 'POST',
+
+        body: JSON.stringify({
+          sharepoint_item_id,
+        }),
+      },
+    )
+
+    if (!res.ok) {
+      let message = 'Failed to start audit'
+
+      try {
+        const err = await res.json()
+
+        message =
+          err.detail ?? message
+      } catch {}
+
+      throw new Error(message)
+    }
+
+    return res.json()
+  },
+
   async startManual(data: {
     project_name: string
     client_name: string
     project_code: string
     sharepoint_item_id?: string | null
-  }): Promise<{ session_id: string; project_name: string; client_name: string }> {
-    const res = await apiFetch('/audit/sessions/manual', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
+  }): Promise<{
+    session_id: string
+    project_name: string
+    client_name: string
+  }> {
+    const res = await apiFetch(
+      '/audit/sessions/manual',
+      {
+        method: 'POST',
+
+        body: JSON.stringify(data),
+      },
+    )
+
     if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.detail ?? 'Failed to start audit')
+      let message = 'Failed to start audit'
+
+      try {
+        const err = await res.json()
+
+        message =
+          err.detail ?? message
+      } catch {}
+
+      throw new Error(message)
     }
+
     return res.json()
   },
 
   async listSessions(): Promise<BackendSession[]> {
-    const res = await apiFetch('/audit/sessions')
-    if (!res.ok) throw new Error('Failed to fetch sessions')
+    const res = await apiFetch(
+      '/audit/sessions',
+    )
+
+    if (!res.ok) {
+      throw new Error(
+        'Failed to fetch sessions',
+      )
+    }
+
     return res.json()
   },
 
-  async getSession(sessionId: string): Promise<BackendSession> {
-    const res = await apiFetch(`/audit/sessions/${sessionId}`)
-    if (!res.ok) throw new Error(`Session ${sessionId} not found`)
+  async getSession(
+    sessionId: string,
+  ): Promise<BackendSession> {
+    const res = await apiFetch(
+      `/audit/sessions/${sessionId}`,
+    )
+
+    if (!res.ok) {
+      throw new Error(
+        `Session ${sessionId} not found`,
+      )
+    }
+
     return res.json()
   },
 
   async downloadReport(
-    sessionId: string
+    sessionId: string,
   ): Promise<{
     blob: Blob
     fileName: string
   }> {
     const res = await apiFetch(
-      `/audit/sessions/${sessionId}/download`
+      `/audit/sessions/${sessionId}/download`,
     )
 
     if (!res.ok) {
-      let message = "Failed to download report"
+      let message =
+        'Failed to download report'
 
       try {
         const error = await res.json()
-        message = (
-          error.detail
-          ?? message
-        )
-      } catch {
-        // Keep the default message if the
-        // response is not JSON.
-      }
+
+        message =
+          error.detail ?? message
+      } catch {}
 
       throw new Error(message)
     }
 
     const blob = await res.blob()
 
-    const contentDisposition = (
+    const contentDisposition =
       res.headers.get(
-        "Content-Disposition"
+        'Content-Disposition',
       )
-    )
 
-    const filenameMatch = (
+    /**
+     * Handles:
+     *
+     * filename="report.xlsx"
+     * filename=report.xlsx
+     */
+    const filenameMatch =
       contentDisposition?.match(
-        /filename="?([^"]+)"?/
+        /filename="?([^"]+)"?/,
       )
-    )
 
-    const fileName = (
-      filenameMatch?.[1]
-      ?? "audit_report.xlsx"
-    )
+    const fileName =
+      filenameMatch?.[1] ??
+      'audit_report.xlsx'
 
     return {
       blob,
@@ -231,133 +666,290 @@ export const auditApi = {
     }
   },
 
-
-  async deleteSession(sessionId: string): Promise<void> {
+  async deleteSession(
+    sessionId: string,
+  ): Promise<void> {
     const res = await apiFetch(
       `/audit/sessions/${sessionId}`,
-      { method: 'DELETE' }
+      {
+        method: 'DELETE',
+      },
     )
 
     if (!res.ok) {
-      let message = 'Failed to delete audit session'
+      let message =
+        'Failed to delete audit session'
 
       try {
         const error = await res.json()
-        message = error.detail ?? message
-      } catch {
-        // Keep the default message if the response is not JSON.
-      }
+
+        message =
+          error.detail ?? message
+      } catch {}
 
       throw new Error(message)
     }
   },
 }
 
-
-
 // ─── Dashboard API ─────────────────────────────────────────────────────────────
-// Derives stats from the sessions list — no separate backend endpoint needed
+
 export const dashboardApi = {
   async getStats(): Promise<DashboardStats> {
-    const sessions = await auditApi.listSessions()
+    const sessions =
+      await auditApi.listSessions()
+
     return {
       total: sessions.length,
-      completed: sessions.filter(s => s.audit_status === 'done').length,
-      running: sessions.filter(s => !['done','failed','pending'].includes(s.audit_status)).length,
-      failed: sessions.filter(s => s.audit_status === 'failed').length,
-      pending: sessions.filter(s => s.audit_status === 'pending').length,
+
+      completed:
+        sessions.filter(
+          s => s.audit_status === 'done',
+        ).length,
+
+      running:
+        sessions.filter(
+          s =>
+            ![
+              'done',
+              'failed',
+              'pending',
+            ].includes(s.audit_status),
+        ).length,
+
+      failed:
+        sessions.filter(
+          s =>
+            s.audit_status === 'failed',
+        ).length,
+
+      pending:
+        sessions.filter(
+          s =>
+            s.audit_status === 'pending',
+        ).length,
     }
   },
-  
-  async getRecentAudits(limit = 10): Promise<AuditSummary[]> {
-    const sessions = await auditApi.listSessions()
-    return sessions.slice(0, limit).map(s => {
-      // The list endpoint returns flat project fields, not nested under `project`
-      const projectName = (s as any).project_name ?? s.project?.project_name ?? ''
-      const clientName = (s as any).client_name ?? s.project?.client_name ?? ''
-      
-      return {
-        id: s.session_id,
-        name: projectName || `Session ${s.session_id.slice(0, 8)}`,
-        projectName: projectName || 'Unknown Project',
-        clientName,
-        status: s.audit_status,
-        documentCount: s.document_count ?? 0,
 
-        overallScore:
-          s.overall_project_score != null
-            ? Math.round(Number(s.overall_project_score) * 20)
-            : undefined,
-        
-        auditType: s.audit_type ?? undefined,
-        createdAt: s.completion_time ?? new Date().toISOString(),
-        completedAt: s.completion_time ?? undefined,
+  async getRecentAudits(
+    limit = 10,
+  ): Promise<AuditSummary[]> {
+    const sessions =
+      await auditApi.listSessions()
 
-        reportUrl: s.report?.sharepoint_url ?? undefined,
-        reportName: s.report?.report_name ?? undefined,
-      }
-    })
+    return sessions
+      .slice(0, limit)
+      .map(s => {
+        const projectName =
+          (s as any).project_name ??
+          s.project?.project_name ??
+          ''
+
+        const clientName =
+          (s as any).client_name ??
+          s.project?.client_name ??
+          ''
+
+        return {
+          id: s.session_id,
+
+          name:
+            projectName ||
+            `Session ${s.session_id.slice(
+              0,
+              8,
+            )}`,
+
+          projectName:
+            projectName ||
+            'Unknown Project',
+
+          clientName,
+
+          status:
+            s.audit_status,
+
+          documentCount:
+            s.document_count ?? 0,
+
+          overallScore:
+            s.overall_project_score != null
+              ? Math.round(
+                  Number(
+                    s.overall_project_score,
+                  ) * 20,
+                )
+              : undefined,
+
+          auditType:
+            s.audit_type ?? undefined,
+
+          createdAt:
+            s.completion_time ??
+            new Date().toISOString(),
+
+          completedAt:
+            s.completion_time ??
+            undefined,
+
+          reportUrl:
+            s.report?.sharepoint_url ??
+            undefined,
+
+          reportName:
+            s.report?.report_name ??
+            undefined,
+        }
+      })
   },
-  
 }
 
 // ─── WebSocket URL builder ─────────────────────────────────────────────────────
-export function buildWsUrl(sessionId: string): string {
-  const wsBase = (process.env.NEXT_PUBLIC_WS_URL ?? API_URL).replace(/^http/, 'ws')
-  const token = TokenStore.getAccess() ?? ''
-  return `${wsBase}/audit/sessions/${sessionId}/run?token=${token}`
+
+export function buildWsUrl(
+  sessionId: string,
+): string {
+  const wsBase = (
+    process.env.NEXT_PUBLIC_WS_URL ??
+    API_URL
+  ).replace(/^http/, 'ws')
+
+  const token =
+    TokenStore.getAccess() ?? ''
+
+  return (
+    `${wsBase}/audit/sessions/` +
+    `${sessionId}/run?token=${encodeURIComponent(token)}`
+  )
 }
 
-/**
- * Maps a full BackendSession (from GET /audit/sessions/{id}) to an AuditSession
- * suitable for loading into the Zustand store via loadSession().
- * Called on page refresh to hydrate store state from the database.
- */
-export function mapBackendSessionToAuditSession(s: BackendSession): AuditSession {
-  // List endpoint returns flat fields; detail endpoint nests them under `project`
-  const projectName = (s as any).project_name ?? s.project?.project_name ?? ''
-  const clientName = (s as any).client_name ?? s.project?.client_name ?? ''
-  const name = projectName || `Session ${s.session_id.slice(0,8)}`
-  const documents: AuditDocument[] = (s.documents ?? []).map(d => {
-    const backendStatus = d.status ?? 'queued'
-    const docStatus: import('@/types').DocumentStatus =
-      backendStatus === 'completed' ? 'completed'
-      : backendStatus === 'failed' ? 'failed'
-      : backendStatus === 'queued' ? 'queued'
-      : 'processing'
+// ─── Map backend session to frontend AuditSession ─────────────────────────────
 
-    return {
-      id: d.document_id,
-      name: d.file_name,
-      type: d.framework_category ?? 'document',
-      status: docStatus,
-      progress: docStatus === 'completed' ? 100 : docStatus === 'processing' ? 50 : 0,
-      checks: [],
-      startedAt: d.started_at ?? undefined,
-      completedAt: d.completed_at ?? undefined,
-    }
-  })
+export function mapBackendSessionToAuditSession(
+  s: BackendSession,
+): AuditSession {
+  const projectName =
+    (s as any).project_name ??
+    s.project?.project_name ??
+    ''
 
-  const allDone = s.audit_status === 'done'
-  const steps = PIPELINE_STEPS.map(step => ({
-    ...step,
-    status: (allDone ? 'completed' : 'pending') as StepStatus,
-    completedAt: allDone ? (s.completion_time ?? undefined) : undefined,
-  }))
+  const clientName =
+    (s as any).client_name ??
+    s.project?.client_name ??
+    ''
+
+  const name =
+    projectName ||
+    `Session ${s.session_id.slice(
+      0,
+      8,
+    )}`
+
+  const documents: AuditDocument[] =
+    (s.documents ?? []).map(d => {
+      const backendStatus =
+        d.status ?? 'queued'
+
+      const docStatus: import('@/types').DocumentStatus =
+        backendStatus === 'completed'
+          ? 'completed'
+          : backendStatus === 'failed'
+            ? 'failed'
+            : backendStatus === 'queued'
+              ? 'queued'
+              : 'processing'
+
+      return {
+        id: d.document_id,
+
+        name: d.file_name,
+
+        type:
+          d.framework_category ??
+          'document',
+
+        status: docStatus,
+
+        progress:
+          docStatus === 'completed'
+            ? 100
+            : docStatus === 'processing'
+              ? 50
+              : 0,
+
+        checks: [],
+
+        startedAt:
+          d.started_at ??
+          undefined,
+
+        completedAt:
+          d.completed_at ??
+          undefined,
+      }
+    })
+
+  const allDone =
+    s.audit_status === 'done'
+
+  const steps = PIPELINE_STEPS.map(
+    step => ({
+      ...step,
+
+      status: (
+        allDone
+          ? 'completed'
+          : 'pending'
+      ) as StepStatus,
+
+      completedAt:
+        allDone
+          ? (
+              s.completion_time ??
+              undefined
+            )
+          : undefined,
+    }),
+  )
 
   return {
     id: s.session_id,
+
     name,
+
     projectName,
+
     clientName,
-    auditType: s.audit_type ?? '',
-    status: s.audit_status,
+
+    auditType:
+      s.audit_type ?? '',
+
+    status:
+      s.audit_status,
+
     steps,
+
     documents,
-    overallProgress: s.audit_status === 'done' ? 100 : 0,
-    createdAt: s.completion_time ?? new Date().toISOString(),
-    completedAt: s.completion_time ?? undefined,
-    reportUrl: s.report?.sharepoint_url ?? undefined,
-    reportName: s.report?.report_name ?? undefined,
+
+    overallProgress:
+      s.audit_status === 'done'
+        ? 100
+        : 0,
+
+    createdAt:
+      s.completion_time ??
+      new Date().toISOString(),
+
+    completedAt:
+      s.completion_time ??
+      undefined,
+
+    reportUrl:
+      s.report?.sharepoint_url ??
+      undefined,
+
+    reportName:
+      s.report?.report_name ??
+      undefined,
   }
 }

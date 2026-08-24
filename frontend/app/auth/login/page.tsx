@@ -11,7 +11,10 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const url = await authApi.getLoginUrl()
+      // Pass /dashboard as return_to — the real destination
+      // is saved in sessionStorage by layout AuthGuard and
+      // read by callback/page.tsx after Microsoft login.
+      const url = await authApi.getLoginUrl('/dashboard')
       window.location.href = url
     } catch (e: any) {
       setError(e.message ?? 'Failed to connect to authentication service')
@@ -22,16 +25,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Bot className="text-white w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-bold text-white">AuditIQ</h1>
-          <p className="text-blue-300/80 text-sm mt-1">Enterprise AI Audit Platform</p>
+          <h1 className="text-2xl font-bold text-white">Polaris</h1>
+          <p className="text-blue-300/80 text-sm mt-1">AI Document Audit Platform</p>
         </div>
 
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <h2 className="text-lg font-bold text-slate-900 mb-1">Sign in</h2>
           <p className="text-sm text-slate-500 mb-6">
@@ -59,7 +60,7 @@ export default function LoginPage() {
                 <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
               </svg>
             )}
-            {loading ? 'Redirecting…' : 'Sign in with Microsoft'}
+            {loading ? 'Redirecting to Microsoft…' : 'Sign in with Microsoft'}
           </button>
 
           <div className="mt-5 flex items-center gap-2 text-xs text-slate-400">
