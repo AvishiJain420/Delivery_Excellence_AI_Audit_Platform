@@ -1,7 +1,7 @@
 [
     {
         "framework": "DEX",
-        "document": "Functional Requirement Document",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
         "project_phase": "Requirement Gathering",
         "evaluation_category": "Must Have",
         "evaluation_metric": "Functional Requirement Completeness & Logic",
@@ -9,7 +9,7 @@
     },
     {
         "framework": "DEX",
-        "document": "Functional Requirement Document",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
         "project_phase": "Requirement Gathering",
         "evaluation_category": "Must Have",
         "evaluation_metric": "Data Source, Integration & Processing Requirements",
@@ -17,7 +17,7 @@
     },
     {
         "framework": "DEX",
-        "document": "Functional Requirement Document",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
         "project_phase": "Requirement Gathering",
         "evaluation_category": "Must Have",
         "evaluation_metric": "Reporting & Analytics Requirements",
@@ -25,7 +25,7 @@
     },
     {
         "framework": "DEX",
-        "document": "Functional Requirement Document",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
         "project_phase": "Requirement Gathering",
         "evaluation_category": "Must Have",
         "evaluation_metric": "Security, Access & Non-Functional Requirements",
@@ -33,7 +33,7 @@
     },
     {
         "framework": "DEX",
-        "document": "Functional Requirement Document",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
         "project_phase": "Requirement Gathering",
         "evaluation_category": "Must Have",
         "evaluation_metric": "Validation, Reconciliation & Exception Handling",
@@ -41,7 +41,7 @@
     },
     {
         "framework": "DEX",
-        "document": "Functional Requirement Document",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
         "project_phase": "Requirement Gathering",
         "evaluation_category": "Must Have",
         "evaluation_metric": "Technical Implementation Readiness",
@@ -49,15 +49,7 @@
     },
     {
         "framework": "DEX",
-        "document": "Functional Requirement Document",
-        "project_phase": "Requirement Gathering",
-        "evaluation_category": "Good to Have",
-        "evaluation_metric": "Business Alignment & User Context",
-        "evaluation_pointer": "Verify alignment with business objectives, user expectations, and operational use cases"
-    },
-    {
-        "framework": "DEX",
-        "document": "Functional Requirement Document",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
         "project_phase": "Requirement Gathering",
         "evaluation_category": "Must Have",
         "evaluation_metric": "Dependency, Assumptions & Constraints Management",
@@ -65,7 +57,71 @@
     },
     {
         "framework": "DEX",
-        "document": "Functional Requirement Document",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Mockups, Wireframes & Process Flow Representation",
+        "evaluation_pointer": "Verify inclusion of visual flows, architecture diagrams, wireframes, or process representations"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Requirement Traceability",
+        "evaluation_pointer": "Verify whether each specification points back to the business or functional requirement it satisfies"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "System Behaviour Defined",
+        "evaluation_pointer": "Verify whether the document says what the system does when a user takes an action"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Field-level Specification",
+        "evaluation_pointer": "Verify whether inputs and outputs are named at field level with types, formats and mandatory flags"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Calculation Logic",
+        "evaluation_pointer": "Verify whether every calculation and derivation is written out precisely enough that two developers would build it identically"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Volume & Retention",
+        "evaluation_pointer": "Verify whether expected volumes, the historical load period and retention requirements are stated"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Process Flow",
+        "evaluation_pointer": "Verify whether end-to-end process flows are documented with their sequence and decision branches"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Business Alignment & User Context",
+        "evaluation_pointer": "Verify alignment with business objectives, user expectations, and operational use cases"
+    },
+    {
+        "framework": "DEX",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
         "project_phase": "Requirement Gathering",
         "evaluation_category": "Good to Have",
         "evaluation_metric": "Documentation, Glossary & Change Governance",
@@ -73,11 +129,11 @@
     },
     {
         "framework": "DEX",
-        "document": "Functional Requirement Document",
+        "document": "Functional Requirement Document (FRD / FSD / FRS)",
         "project_phase": "Requirement Gathering",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "Mockups, Wireframes & Process Flow Representation",
-        "evaluation_pointer": "Verify inclusion of visual flows, architecture diagrams, wireframes, or process representations"
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Edge Case Coverage",
+        "evaluation_pointer": "Check whether nulls, boundary conditions and negative scenarios are described"
     },
     {
         "framework": "DEX",
@@ -165,7 +221,87 @@
         "project_phase": "Testing",
         "evaluation_category": "Must Have",
         "evaluation_metric": "Test Case Coverage",
-        "evaluation_pointer": "Verify whether all relevant test cases of data validation, UI/UX, functional, security and access testing.\nReporting/Dashboarding project: KPIs, reports, dashboards, charts, filters, modules etc. are covered in SIT scenarios\nDatawarehouse project: Medallion layer wise tables, column business rules, aggregated layers vs source layers, reporting and/or analytical layer vs source, data standardization & data type checks, Constraint checks, specific use case if part of requirements\nReport/Dashboard to Datawarehouse project: Frontend backend value match\nCustom App: UI/UX, Functionality, Frontend to Backend Data Validation"
+        "evaluation_pointer": "Verify whether all relevant test cases are covered across data validation, UI/UX, functional, security and access testing, with scenarios matched to the project type: for reporting or dashboarding projects, KPIs, reports, dashboards, charts, filters and modules; for data warehouse projects, medallion layer-wise tables, column business rules, aggregated versus source layers, reporting or analytical layer versus source, data standardisation and data type checks, constraint checks and any use case specific to the requirements; for report or dashboard to data warehouse projects, frontend to backend value match; for custom applications, UI/UX, functionality and frontend to backend data validation"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "SQL Query Validation",
+        "evaluation_pointer": "Verify whether backend SQL/datamart queries are properly documented and executable"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Data Match Validation",
+        "evaluation_pointer": "Verify whether frontend and backend values match correctly"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Pass/Fail Status Tracking",
+        "evaluation_pointer": "Verify whether each test case includes pass/fail indicators"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Exception Handling Validation",
+        "evaluation_pointer": "Verify whether exceptions and mismatches are captured properly"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Test Data Validation",
+        "evaluation_pointer": "Verify whether test data ranges, products, and dimensions are properly validated"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Aggregation Validation",
+        "evaluation_pointer": "Verify whether aggregation logic like KPI, monthly, regional summaries, and charts are validated"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Report Visualization Validation",
+        "evaluation_pointer": "Verify whether charts, visuals, and dashboard outputs are validated correctly"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Comments & Fix Tracking",
+        "evaluation_pointer": "Verify whether comments, fixes required, and issue tracking fields are maintained"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Time Period Validation",
+        "evaluation_pointer": "Verify whether date ranges and reporting periods are validated correctly"
+    },
+    {
+        "framework": "DEX",
+        "document": "SIT (System Integration Testing) Document",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "End-to-End Reconciliation Readiness",
+        "evaluation_pointer": "Verify whether source-to-report reconciliation is traceable and testable"
     },
     {
         "framework": "DEX",
@@ -187,14 +323,6 @@
         "framework": "DEX",
         "document": "SIT (System Integration Testing) Document",
         "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "SQL Query Validation",
-        "evaluation_pointer": "Verify whether backend SQL/datamart queries are properly documented and executable"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
         "evaluation_category": "Good to Have",
         "evaluation_metric": "Query Optimization Checks",
         "evaluation_pointer": "Check whether validation queries are optimized and reusable"
@@ -211,25 +339,9 @@
         "framework": "DEX",
         "document": "SIT (System Integration Testing) Document",
         "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "Data Match Validation",
-        "evaluation_pointer": "Verify whether frontend and backend values match correctly"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
         "evaluation_category": "Good to Have",
         "evaluation_metric": "Tolerance Threshold Definition",
         "evaluation_pointer": "Check whether acceptable variance thresholds are defined"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "Pass/Fail Status Tracking",
-        "evaluation_pointer": "Verify whether each test case includes pass/fail indicators"
     },
     {
         "framework": "DEX",
@@ -243,25 +355,9 @@
         "framework": "DEX",
         "document": "SIT (System Integration Testing) Document",
         "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "Exception Handling Validation",
-        "evaluation_pointer": "Verify whether exceptions and mismatches are captured properly"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
         "evaluation_category": "Good to Have",
         "evaluation_metric": "Root Cause Analysis Tracking",
         "evaluation_pointer": "Check whether RCA details are captured for failed scenarios"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "Test Data Validation",
-        "evaluation_pointer": "Verify whether test data ranges, products, and dimensions are properly validated"
     },
     {
         "framework": "DEX",
@@ -275,25 +371,9 @@
         "framework": "DEX",
         "document": "SIT (System Integration Testing) Document",
         "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "Aggregation Validation",
-        "evaluation_pointer": "Verify whether aggregation logic like KPI, monthly, regional summaries, and charts are validated"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
         "evaluation_category": "Good to Have",
         "evaluation_metric": "Drilldown Validation",
         "evaluation_pointer": "Check whether drilldowns and hierarchical reporting are tested"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "Report Visualization Validation",
-        "evaluation_pointer": "Verify whether charts, visuals, and dashboard outputs are validated correctly"
     },
     {
         "framework": "DEX",
@@ -307,25 +387,9 @@
         "framework": "DEX",
         "document": "SIT (System Integration Testing) Document",
         "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "Comments & Fix Tracking",
-        "evaluation_pointer": "Verify whether comments, fixes required, and issue tracking fields are maintained"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
         "evaluation_category": "Good to Have",
         "evaluation_metric": "Defect Lifecycle Tracking",
         "evaluation_pointer": "Check whether defect resolution lifecycle is tracked"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "Time Period Validation",
-        "evaluation_pointer": "Verify whether date ranges and reporting periods are validated correctly"
     },
     {
         "framework": "DEX",
@@ -339,16 +403,2544 @@
         "framework": "DEX",
         "document": "SIT (System Integration Testing) Document",
         "project_phase": "Testing",
-        "evaluation_category": "Must Have",
-        "evaluation_metric": "End-to-End Reconciliation Readiness",
-        "evaluation_pointer": "Verify whether source-to-report reconciliation is traceable and testable"
-    },
-    {
-        "framework": "DEX",
-        "document": "SIT (System Integration Testing) Document",
-        "project_phase": "Testing",
         "evaluation_category": "Good to Have",
         "evaluation_metric": "Audit & Execution Traceability",
         "evaluation_pointer": "Check whether tester details, timestamps, and execution tracking are maintained"
+    },
+    {
+        "framework": "DEX",
+        "document": "Universal Document Standards (Applies to All Documents)",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Standard Template Usage",
+        "evaluation_pointer": "Verify whether the document sits on the current ProcDNA template rather than a format someone built themselves"
+    },
+    {
+        "framework": "DEX",
+        "document": "Universal Document Standards (Applies to All Documents)",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "File Naming Compliance",
+        "evaluation_pointer": "Verify whether the file name carries the date, project, document title, version and author initials"
+    },
+    {
+        "framework": "DEX",
+        "document": "Universal Document Standards (Applies to All Documents)",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Author & Approver Named",
+        "evaluation_pointer": "Verify whether the document names who wrote it, who reviewed it and who approved it"
+    },
+    {
+        "framework": "DEX",
+        "document": "Universal Document Standards (Applies to All Documents)",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Single Live Version",
+        "evaluation_pointer": "Verify whether only one live copy sits in the working folder, with superseded versions moved to archive"
+    },
+    {
+        "framework": "DEX",
+        "document": "Universal Document Standards (Applies to All Documents)",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Terminology Consistency",
+        "evaluation_pointer": "Verify whether the same thing is called the same name throughout, with terms defined where they first appear e.g. Refer to HCP as either HCP, doctor, MD, prescriber or physician throughout all the documents."
+    },
+    {
+        "framework": "DEX",
+        "document": "Universal Document Standards (Applies to All Documents)",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Client Repository Sync",
+        "evaluation_pointer": "Check whether documents owed to the client also sit in the client folder and match the internal copy"
+    },
+    {
+        "framework": "DEX",
+        "document": "Universal Document Standards (Applies to All Documents)",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Access & Confidentiality",
+        "evaluation_pointer": "Check whether access is restricted to the right people and any sensitivity marking is applied"
+    },
+    {
+        "framework": "DEX",
+        "document": "Universal Document Standards (Applies to All Documents)",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Evidence Attached",
+        "evaluation_pointer": "Check whether claims of completion are backed by evidence such as screenshots, logs or query output"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Business Case & Objectives",
+        "evaluation_pointer": "Verify whether the charter states the business problem being solved and what success looks like in measurable terms"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Scope Boundaries",
+        "evaluation_pointer": "Verify whether the charter says what is in scope and, just as plainly, what is not"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Deliverables & Milestones",
+        "evaluation_pointer": "Verify whether the main deliverables are listed with phase milestones, client review points, approval gates and target dates"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Sponsor & Governance Structure",
+        "evaluation_pointer": "Verify whether the sponsor, key stakeholders and the forum that makes decisions are all named"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Team Structure & Allocation",
+        "evaluation_pointer": "Verify whether the charter names the team, their roles and how much of their time the project gets"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Budget & Effort Estimate",
+        "evaluation_pointer": "Verify whether the charter carries a budget and effort estimate"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Risks & Assumptions",
+        "evaluation_pointer": "Verify whether the known risks, assumptions and constraints are written down with an owner against each"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Success Criteria",
+        "evaluation_pointer": "Verify whether the charter defines measurable success criteria and how the project will be accepted as complete"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Delivery Methodology",
+        "evaluation_pointer": "Verify whether the charter states the delivery methodology and the working rhythm that goes with it"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "SOW Alignment",
+        "evaluation_pointer": "Verify whether the charter's scope, timeline and deliverables match what the SOW actually commits to"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Charter Authorization",
+        "evaluation_pointer": "Verify whether someone with the authority to start the project has signed the charter, with a date"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Task-level Breakdown",
+        "evaluation_pointer": "Verify whether the work is broken into tasks small enough to track meaningfully"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Approved Baseline",
+        "evaluation_pointer": "Verify whether an approved baseline exists as the reference against which slippage is measured"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Task Ownership",
+        "evaluation_pointer": "Verify whether each task names an individual rather than a team"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Dependencies & Critical Path",
+        "evaluation_pointer": "Verify whether task dependencies, sequencing and the critical path are identified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Plan vs Actual",
+        "evaluation_pointer": "Verify whether actual progress is tracked against baseline so variance and slippage are visible"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Buffer & Timeline Realism",
+        "evaluation_pointer": "Verify whether the plan leaves room for review cycles and defect fixing rather than assuming everything lands first time"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Solution Approach",
+        "evaluation_pointer": "Check whether the charter outlines how the solution will be built and on what platform"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Reporting Cadence",
+        "evaluation_pointer": "Check whether the charter sets out reporting cadence, governance meetings and how issues escalate"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Charter / Project Plan / Schedule / Scope",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Leave & Holiday Overlay",
+        "evaluation_pointer": "Check whether team leave and holiday calendars are reflected in the schedule"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Full RAID Coverage",
+        "evaluation_pointer": "Verify whether risks, assumptions, issues and dependencies are all present and sitting in the right category"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Entry ID & Description",
+        "evaluation_pointer": "Verify whether each entry has an ID and a description specific enough to act on"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Impact & Priority Rating",
+        "evaluation_pointer": "Verify whether each risk carries an impact rating and the priority that follows from them"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Mitigation & Contingency",
+        "evaluation_pointer": "Verify whether each risk has both a mitigation to stop it happening and a contingency for if it does"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "One Named Owner per Item",
+        "evaluation_pointer": "Verify whether every item names one person as owner rather than a team"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Dates & Status",
+        "evaluation_pointer": "Verify whether raised date, due date, current status are all maintained"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Issue Escalation Path",
+        "evaluation_pointer": "Verify whether open issues show an escalation trigger, a contact and the action being taken"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Dependency Impact",
+        "evaluation_pointer": "Verify whether dependencies name the party being waited on and the timeline impact if they slip"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Log Currency",
+        "evaluation_pointer": "Verify whether the log is genuinely live, with no items sitting long past their due date"
+    },
+    {
+        "framework": "DEX",
+        "document": "RAID Log (Risks, Assumptions, Issues, Dependencies)",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Workstream Tagging",
+        "evaluation_pointer": "Check whether items are tagged by workstream or phase so they can be filtered and reported"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Project Overview & Objectives",
+        "evaluation_pointer": "Verify whether the deck sets out the project purpose, objectives and expected outcomes for the audience"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Scope Walkthrough",
+        "evaluation_pointer": "Verify whether in-scope and out-of-scope items were presented so both sides leave with the same understanding"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Delivery Approach & Timeline",
+        "evaluation_pointer": "Verify whether the delivery methodology, phases, milestones and key dates were presented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Team Introductions & Contacts",
+        "evaluation_pointer": "Verify whether delivery and client team members are introduced with names, roles and contact points"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Tools, Access & Environments",
+        "evaluation_pointer": "Verify whether the tools, repositories and access the project will use are covered, along with who arranges what"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Assumptions, Risks & Dependencies Raised",
+        "evaluation_pointer": "Verify whether known assumptions, early risks and client-side dependencies were flagged at kick-off"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Deck Circulated & Acknowledged",
+        "evaluation_pointer": "Verify whether the deck was shared after the session and acknowledged by the client"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Activity Coverage",
+        "evaluation_pointer": "Verify whether activities are listed at a level granular enough for someone to be held to them"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Role Definitions & Legend",
+        "evaluation_pointer": "Verify whether roles are spelled out with a RACI legend and real names attached where possible"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "RACI like component",
+        "evaluation_pointer": "Define dependencies, owners, POCs to assign RACI for both Business team from the client side, IT Team from the client side, ProcDNA team/s and/or other vendors"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Function-wise Coverage",
+        "evaluation_pointer": "Verify whether the RACI covers every function including data, engineering, BI, QA, infrastructure and security"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Internal Role Definition",
+        "evaluation_pointer": "Verify whether internal roles, reporting lines and individual ownership are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Handoff Ownership",
+        "evaluation_pointer": "Verify whether each handoff says who passes the work, who receives it and who accepts it"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Decision Rights",
+        "evaluation_pointer": "Verify whether decision rights for scope, design and release decisions are assigned to named roles"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Escalation Matrix",
+        "evaluation_pointer": "Verify whether escalation levels, contacts and expected response times are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Engagement Model",
+        "evaluation_pointer": "Verify whether recurring communication is listed with the purpose it serves with audience, frequency and channel"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Governance Forums",
+        "evaluation_pointer": "Verify whether status reporting and the governance or steering forums are defined with their cadence"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Ways of Working",
+        "evaluation_pointer": "Check whether working hours, response expectations and the definition of done are covered"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Success Criteria",
+        "evaluation_pointer": "Check whether the agreed success criteria are restated so the team starts aligned"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Next Steps & Immediate Actions",
+        "evaluation_pointer": "Check whether the deck closes with immediate next steps carrying owners and dates"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Phase-wise Grouping",
+        "evaluation_pointer": "Check whether activities are grouped by phase or workstream so the matrix can be read easily"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Client Turnaround Times",
+        "evaluation_pointer": "Check whether client-side dependencies such as access, data and approvals carry agreed turnaround times"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Backup Owners",
+        "evaluation_pointer": "Check whether critical roles have a named backup so absence does not stop the work"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Overlap Hours",
+        "evaluation_pointer": "Check whether working hours, overlap windows and availability across geographies are addressed"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Meeting Ground Rules",
+        "evaluation_pointer": "Check whether ground rules on agendas, meeting notes and documentation are set out"
+    },
+    {
+        "framework": "DEX",
+        "document": "Kick off Deck",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Plan Kept Current",
+        "evaluation_pointer": "Check whether the plan is refreshed when stakeholders or the meeting rhythm change"
+    },
+    {
+        "framework": "DEX",
+        "document": "Change Control Register/Change Tracker",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "CR Identification",
+        "evaluation_pointer": "Verify whether each change carries an ID, who raised it, when, and a description that explains the business reason"
+    },
+    {
+        "framework": "DEX",
+        "document": "Change Control Register/Change Tracker",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Scope, Time & Cost Impact",
+        "evaluation_pointer": "Verify whether each change records its effect on scope, schedule, effort and budget in actual numbers"
+    },
+    {
+        "framework": "DEX",
+        "document": "Change Control Register/Change Tracker",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Downstream Impact Analysis",
+        "evaluation_pointer": "Verify whether the assessment covers what else the change touches, including data model, interfaces, reports and tests"
+    },
+    {
+        "framework": "DEX",
+        "document": "Change Control Register/Change Tracker",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Approval Decision Record",
+        "evaluation_pointer": "Verify whether the approver, the decision, the date and any conditions attached are all recorded"
+    },
+    {
+        "framework": "DEX",
+        "document": "Change Control Register/Change Tracker",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Implementation Ownership",
+        "evaluation_pointer": "Verify whether every approved change has an implementation owner, a priority, a target date and a status"
+    },
+    {
+        "framework": "DEX",
+        "document": "Change Control Register/Change Tracker",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Baseline Updated",
+        "evaluation_pointer": "Verify whether approved changes have flowed back into the scope, plan, requirement and design baselines"
+    },
+    {
+        "framework": "DEX",
+        "document": "Change Control Register/Change Tracker",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Rejected CRs Retained",
+        "evaluation_pointer": "Verify whether rejected and deferred requests are retained along with the reason for the decision"
+    },
+    {
+        "framework": "DEX",
+        "document": "Stakeholder Register",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Stakeholder Coverage",
+        "evaluation_pointer": "Verify whether internal, client and third-party stakeholders are all listed with name, role and organisation"
+    },
+    {
+        "framework": "DEX",
+        "document": "Stakeholder Register",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Influence & Interest Rating",
+        "evaluation_pointer": "Verify whether each stakeholder has an assessed level of influence and interest"
+    },
+    {
+        "framework": "DEX",
+        "document": "Stakeholder Register",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Engagement Approach",
+        "evaluation_pointer": "Verify whether each stakeholder is mapped to an engagement approach such as manage closely, keep satisfied or monitor"
+    },
+    {
+        "framework": "DEX",
+        "document": "Stakeholder Register",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Channel & Frequency",
+        "evaluation_pointer": "Verify whether the register records how often each stakeholder hears from the project and through which channel"
+    },
+    {
+        "framework": "DEX",
+        "document": "Stakeholder Register",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Expectations & Concerns",
+        "evaluation_pointer": "Verify whether the register captures what each stakeholder wants from the project and what worries them"
+    },
+    {
+        "framework": "DEX",
+        "document": "Stakeholder Register",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Approval Authority Mapped",
+        "evaluation_pointer": "Verify whether approvers, sign-off authorities and escalation contacts are identified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Stakeholder Register",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Attitude Tracking",
+        "evaluation_pointer": "Check whether current and target stakeholder attitudes are recorded along with how the gap will be closed"
+    },
+    {
+        "framework": "DEX",
+        "document": "Stakeholder Register",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Engagement Actions",
+        "evaluation_pointer": "Check whether specific engagement actions are documented with owners and review dates"
+    },
+    {
+        "framework": "DEX",
+        "document": "Stakeholder Register",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Register Kept Current",
+        "evaluation_pointer": "Check whether the register is refreshed when stakeholders change roles or leave"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Action Description",
+        "evaluation_pointer": "Verify whether each action has an ID and a description that states the outcome expected"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "One Named Owner per Action",
+        "evaluation_pointer": "Verify whether every action names one owner"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Dates & Overdue Visibility",
+        "evaluation_pointer": "Verify whether raised and due dates are recorded and overdue items are visible"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Status Kept Current",
+        "evaluation_pointer": "Verify whether the status column reflects where each action actually stands"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Priority Classification",
+        "evaluation_pointer": "Verify whether actions carry a priority so critical items stand apart from routine follow-ups"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Source Traceability",
+        "evaluation_pointer": "Verify whether each action can be traced to the meeting, decision or escalation it came from"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Closure Comments",
+        "evaluation_pointer": "Verify whether closed actions record the closure date and what was actually done"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Category Tagging",
+        "evaluation_pointer": "Check whether actions are tagged by type or workstream so they can be grouped"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Carry-forward Escalation",
+        "evaluation_pointer": "Check whether actions that keep slipping are escalated rather than quietly re-dated"
+    },
+    {
+        "framework": "DEX",
+        "document": "Action Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Open vs Closed Summary",
+        "evaluation_pointer": "Check whether a summary of open, in-progress and closed actions is available"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Full Object Coverage",
+        "evaluation_pointer": "Verify whether every reporting table, view and column is documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Technical Attributes",
+        "evaluation_pointer": "Verify whether data type, length, nullability and key designation are recorded per field"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Field Business Definition",
+        "evaluation_pointer": "Verify whether each field has a plain-language business definition rather than a restatement of its name"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Source & Lineage",
+        "evaluation_pointer": "Verify whether the originating source and derivation lineage are identified per field"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Allowed Values",
+        "evaluation_pointer": "Verify whether valid value sets and code lists are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Grain & Relationships",
+        "evaluation_pointer": "Verify whether table grain, keys and relationships are described"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Refresh Frequency",
+        "evaluation_pointer": "Verify whether refresh frequency and data currency are stated per object"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Owners & Stewards",
+        "evaluation_pointer": "Verify whether business owner, data steward and technical owner are named"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Full KPI Inventory",
+        "evaluation_pointer": "Verify whether every metric exposed in reporting appears in the glossary"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "KPI Business Definition",
+        "evaluation_pointer": "Verify whether each KPI has a definition a business user could understand unaided"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Calculation Formula",
+        "evaluation_pointer": "Verify whether the exact formula is stated, including numerator, denominator and filters"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Source Tables",
+        "evaluation_pointer": "Verify whether the source table and attributes behind each KPI are identified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Granularity & Slicing",
+        "evaluation_pointer": "Verify whether the granularity and the dimensions each KPI can be sliced by are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Time Period Definitions",
+        "evaluation_pointer": "Verify whether time definitions such as MTD, QTD, YTD and rolling periods are defined precisely"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Inclusions & Exclusions",
+        "evaluation_pointer": "Verify whether the records counted and the records excluded from each KPI are stated"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Matches the Built Measure",
+        "evaluation_pointer": "Verify whether the glossary definitions match the measure logic actually running in the reporting layer"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Sensitive Field Flagging",
+        "evaluation_pointer": "Check whether sensitive and personally identifiable fields are flagged with handling rules"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Definition Change Control",
+        "evaluation_pointer": "Check whether definition changes go through governance and are versioned"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Visual Guidance",
+        "evaluation_pointer": "Check whether the recommended visual type for each KPI is indicated"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Dictionary / KPI Glossary",
+        "project_phase": "Deployment",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "KPI Owner",
+        "evaluation_pointer": "Check whether each KPI has a business owner and approver"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Release Contents",
+        "evaluation_pointer": "Verify whether the components, versions and changes being deployed are itemised"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Team & Availability",
+        "evaluation_pointer": "Verify whether the deployment team, contacts and their availability during the window are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Prerequisites & Approvals",
+        "evaluation_pointer": "Verify whether prerequisites, approvals and code freeze confirmation are captured"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Execution Runbook",
+        "evaluation_pointer": "Verify whether steps are sequenced with owners, durations and verification points"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Backup Taken & Verified",
+        "evaluation_pointer": "Verify whether backups were taken and verified before production was touched"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Post-deployment Verification",
+        "evaluation_pointer": "Verify whether post-deployment checks and the criteria for restoring user access are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Go / No-Go Criteria",
+        "evaluation_pointer": "Verify whether go and no-go criteria, checkpoint timing and the decision authority are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Rollback Triggers",
+        "evaluation_pointer": "Verify whether the plan states precisely what conditions trigger a rollback"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Rollback Steps",
+        "evaluation_pointer": "Verify whether rollback steps, sequence, owners and expected duration are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Post-rollback Verification",
+        "evaluation_pointer": "Verify whether post-rollback checks and data integrity confirmation are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Deployment Communications",
+        "evaluation_pointer": "Verify whether user notifications and status updates are planned with owners and timing"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Deployment Risks",
+        "evaluation_pointer": "Check whether risks specific to this release and their mitigations are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Rollback Rehearsed",
+        "evaluation_pointer": "Check whether the rollback procedure was tested in a lower environment"
+    },
+    {
+        "framework": "DEX",
+        "document": "Implementation Plan / Rollback Plan",
+        "project_phase": "Deployment",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Post-implementation Review",
+        "evaluation_pointer": "Check whether a post-implementation review is planned to capture lessons"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "System & Support Scope",
+        "evaluation_pointer": "Verify whether the runbook describes the system, its components and what support does and does not cover"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Job Inventory & Schedule",
+        "evaluation_pointer": "Verify whether every scheduled job is listed with its schedule, dependencies and expected duration"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Operational Procedures",
+        "evaluation_pointer": "Verify whether routine procedures are written as steps someone could follow without prior knowledge"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Failure Runbooks",
+        "evaluation_pointer": "Verify whether common failures carry diagnosis steps, resolution actions and post-fix validation"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Restart & Reprocessing",
+        "evaluation_pointer": "Verify whether job restart, backfill and reprocessing procedures are documented with their safeguards"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Health Checks & Thresholds",
+        "evaluation_pointer": "Verify whether monitoring points, thresholds and daily health checks are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Escalation Contacts",
+        "evaluation_pointer": "Verify whether escalation levels, named contacts and response expectations are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Access & Credentials",
+        "evaluation_pointer": "Verify whether required access and credential retrieval are documented without exposing the secrets themselves"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Severity & Response Times",
+        "evaluation_pointer": "Verify whether incident severity definitions and their response and resolution times are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Known Issues",
+        "evaluation_pointer": "Check whether recurring issues and their workarounds are catalogued"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Manual Intervention Control",
+        "evaluation_pointer": "Check whether manual interventions in production require documented approval and logging"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "BCP & DR Procedure",
+        "evaluation_pointer": "Check whether failover, disaster recovery and business continuity procedures are documented or referenced"
+    },
+    {
+        "framework": "DEX",
+        "document": "Support Runbook / SOP",
+        "project_phase": "Hypercare",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Runbook Kept Current",
+        "evaluation_pointer": "Check whether the runbook is version-controlled and reviewed at a set cadence"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Access Control Review",
+        "evaluation_pointer": "Verify whether authentication, role-based access, least privilege and periodic access review were assessed"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Row-Level Security Tested",
+        "evaluation_pointer": "Verify whether row-level and object-level security were tested for isolation and cannot be bypassed"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Sensitive Data Handling",
+        "evaluation_pointer": "Verify whether PII and sensitive fields are identified with masking or restriction controls"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Encryption in Transit & at Rest",
+        "evaluation_pointer": "Verify whether encryption standards for data in transit and at rest are documented and confirmed in place"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Secret & Credential Management",
+        "evaluation_pointer": "Verify whether credentials sit in an approved secret store with rotation, and nothing is hardcoded in code"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Audit Logging & Traceability",
+        "evaluation_pointer": "Verify whether access logs, change logs and audit trails are enabled and retained per policy"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Environment Segregation",
+        "evaluation_pointer": "Verify whether production and non-production are segregated and production data is restricted in lower environments"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Policy Mapped to Controls",
+        "evaluation_pointer": "Verify whether applicable regulations and client policies are mapped to the controls actually implemented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Findings Risk-Rated",
+        "evaluation_pointer": "Verify whether each finding carries a risk rating and its business impact"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Remediation Plan",
+        "evaluation_pointer": "Verify whether every finding has a remediation action, owner, target date and status"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Security Signed Off",
+        "evaluation_pointer": "Verify whether security approval was obtained before production release"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Retention & Disposal",
+        "evaluation_pointer": "Check whether retention periods and secure disposal requirements are covered"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Vendor Access Risk",
+        "evaluation_pointer": "Check whether third-party components and vendor access risks were assessed"
+    },
+    {
+        "framework": "DEX",
+        "document": "Security & Compliance Assessment",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Reassessment Schedule",
+        "evaluation_pointer": "Check whether a schedule for reassessing security is defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Entry Detail & Clarity",
+        "evaluation_pointer": "Verify whether each entry says what happened, when, and who it affected in enough detail to be useful"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Root Cause Analysis",
+        "evaluation_pointer": "Verify whether entries analyse why it happened rather than only what happened"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Action Taken & Outcome",
+        "evaluation_pointer": "Verify whether the corrective action taken and its outcome are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Preventive Control Added",
+        "evaluation_pointer": "Verify whether each learning results in a preventive control added to a checklist, standard or runbook"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Category & Phase",
+        "evaluation_pointer": "Verify whether entries are categorised by type and tagged to the phase they arose in"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Owner & Follow-up",
+        "evaluation_pointer": "Verify whether an owner and the status of the follow-up action are recorded"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Logged as It Happens",
+        "evaluation_pointer": "Verify whether learnings were logged close to the event rather than reconstructed at project close"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Impact Rating",
+        "evaluation_pointer": "Check whether the impact of each learning is rated"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Linked to Documents",
+        "evaluation_pointer": "Check whether entries reference the standard or checklist that was updated as a result"
+    },
+    {
+        "framework": "DEX",
+        "document": "Learning Log",
+        "project_phase": "Project Management",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Reviewed at Retros",
+        "evaluation_pointer": "Check whether the log is reviewed at retrospectives and reusable learnings shared more widely"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "NFR Category Coverage",
+        "evaluation_pointer": "Verify whether the document covers performance, availability, scalability, security, data quality, maintainability and compliance"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Quantified Targets",
+        "evaluation_pointer": "Verify whether every NFR carries a number rather than a subjective description"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Performance Targets",
+        "evaluation_pointer": "Verify whether batch windows, query response times, dashboard load times and refresh SLAs are quantified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Uptime & Recovery Objectives",
+        "evaluation_pointer": "Verify whether uptime targets, maintenance windows, RTO and RPO are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Volume & Growth Assumptions",
+        "evaluation_pointer": "Verify whether current volumes, projected growth and concurrent user load are stated"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Security Requirements",
+        "evaluation_pointer": "Verify whether authentication, authorisation, row-level security, encryption and PII handling requirements are specified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Data Quality Thresholds",
+        "evaluation_pointer": "Verify whether accuracy, completeness, timeliness and reconciliation tolerances are quantified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Monitoring & Alerting",
+        "evaluation_pointer": "Verify whether logging, monitoring, alert thresholds and supportability requirements are specified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Backup & Restore",
+        "evaluation_pointer": "Verify whether backup frequency, restore procedure and archival requirements carry measurable targets"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "NFR Testability",
+        "evaluation_pointer": "Verify whether each NFR says how it will be tested, in which environment, and what counts as a pass"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Priority & Trade-offs",
+        "evaluation_pointer": "Check whether NFRs are prioritised and any trade-off between competing ones is explained"
+    },
+    {
+        "framework": "DEX",
+        "document": "Non-Functional Requirements (NFR) Document",
+        "project_phase": "Requirement Gathering",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "NFR Ownership",
+        "evaluation_pointer": "Check whether each NFR area has a named owner and approver"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Architecture & Rationale",
+        "evaluation_pointer": "Verify whether the document explains not only the architecture but why that approach was chosen"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Source Extract Design",
+        "evaluation_pointer": "Verify whether each source names its connection method, extraction strategy and how incremental data is identified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Schema & Grain Design",
+        "evaluation_pointer": "Verify whether the target schema, keys, grain, relationships and slowly changing dimension handling are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Transformation Design",
+        "evaluation_pointer": "Verify whether the transformation layers and the way business rules are implemented are specified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Orchestration & Dependencies",
+        "evaluation_pointer": "Verify whether job orchestration, schedules, dependencies and failure behaviour are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Reporting Layer Design",
+        "evaluation_pointer": "Verify whether dataset design, connection mode, measure standards and report performance approach are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Error Handling & Reconciliation",
+        "evaluation_pointer": "Verify whether error handling, retry logic, audit tables and source-to-target reconciliation are designed"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Performance Design",
+        "evaluation_pointer": "Verify whether partitioning, indexing, incremental processing and growth headroom are addressed"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Naming Standards",
+        "evaluation_pointer": "Verify whether naming conventions for objects, jobs, models and code artefacts are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Environment & CI/CD Design",
+        "evaluation_pointer": "Verify whether environment topology, branching, code promotion and deployment automation are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Design Approved Before Build",
+        "evaluation_pointer": "Verify whether architecture and client approval were obtained before development started"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "End-to-End Components",
+        "evaluation_pointer": "Verify whether the diagram shows everything from source systems through to consumption"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Layer Separation",
+        "evaluation_pointer": "Verify whether the raw, cleansed and curated layers are drawn as distinct zones"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Environment Boundaries",
+        "evaluation_pointer": "Verify whether development, test and production environments and their boundaries are visible"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Flow Direction & Protocol",
+        "evaluation_pointer": "Verify whether connections show the direction of flow and how the interaction happens"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Security Components",
+        "evaluation_pointer": "Verify whether the identity provider, secret store, network boundaries and access control points are drawn"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Platform Labelling",
+        "evaluation_pointer": "Verify whether each component is labelled with the actual platform or service in use"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Consumers & Outbound Feeds",
+        "evaluation_pointer": "Verify whether reporting layers, downstream consumers and outbound feeds are represented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Legend & Readability",
+        "evaluation_pointer": "Verify whether a legend explains the notation and the labelling is legible"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Entities & Relationships",
+        "evaluation_pointer": "Verify whether entities, attributes and relationships are defined with cardinality marked"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Logical & Physical Models",
+        "evaluation_pointer": "Verify whether both a logical and a physical model exist and agree with each other"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Keys & Constraints",
+        "evaluation_pointer": "Verify whether primary keys, foreign keys, unique constraints and indexes are specified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Fact Grain Defined",
+        "evaluation_pointer": "Verify whether the grain of each fact table is stated and shared dimensions are conformed"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Types & Naming Standards",
+        "evaluation_pointer": "Verify whether data types, lengths and object naming follow the agreed standard"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Historisation Approach",
+        "evaluation_pointer": "Verify whether the historisation approach is specified for each entity that changes over time"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Alternatives Considered",
+        "evaluation_pointer": "Check whether alternatives were considered and the reason for the chosen option is recorded"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Infrastructure Sizing",
+        "evaluation_pointer": "Check whether environment configuration, compute sizing and running cost are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Orchestration & CI/CD",
+        "evaluation_pointer": "Check whether orchestration, scheduling and deployment pipelines are depicted"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Monitoring Components",
+        "evaluation_pointer": "Check whether monitoring, logging and alerting components appear on the diagram"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "HA & DR Representation",
+        "evaluation_pointer": "Check whether redundancy, failover or disaster recovery components are shown"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Matches Deployed Schema",
+        "evaluation_pointer": "Check whether the model matches the schema actually deployed, including post-approval changes"
+    },
+    {
+        "framework": "DEX",
+        "document": "Technical Design Document",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Volumetrics per Entity",
+        "evaluation_pointer": "Check whether expected row counts and growth are documented per entity"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Interface Inventory",
+        "evaluation_pointer": "Verify whether every inbound and outbound interface is inventoried with an ID and description"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Source & Target Objects",
+        "evaluation_pointer": "Verify whether each interface names its source system, source object, target system and target object"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Pattern & Load Type",
+        "evaluation_pointer": "Verify whether each interface states its pattern, such as batch, incremental, full load or API"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Trigger & Schedule",
+        "evaluation_pointer": "Verify whether triggers, schedules, refresh frequency and expected volumes are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Field-level Mapping",
+        "evaluation_pointer": "Verify whether mapping is specified at field level with data types, nullability and transformation rules"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "File & API Contract",
+        "evaluation_pointer": "Verify whether file formats, delimiters, naming patterns and API contracts are specified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Error Handling & Retry",
+        "evaluation_pointer": "Verify whether each interface defines its error scenarios, retry logic and alert routing"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Reconciliation Controls",
+        "evaluation_pointer": "Verify whether row counts and reconciliation checkpoints between source and target are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Interface Ownership",
+        "evaluation_pointer": "Verify whether interface owners, upstream dependencies and third-party responsibilities are identified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Latency & Processing Window",
+        "evaluation_pointer": "Check whether expected latency and processing windows are quantified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Integration Design",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Interface Build Status",
+        "evaluation_pointer": "Check whether build and test status is tracked per interface"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Flow Diagram",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Source to Consumption",
+        "evaluation_pointer": "Verify whether the diagram traces data from every source through to final consumption"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Flow Diagram",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Processing Stages",
+        "evaluation_pointer": "Verify whether each processing stage and the transitions between layers are represented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Flow Diagram",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Dataset Labelling",
+        "evaluation_pointer": "Verify whether objects at each stage are named rather than shown as generic boxes"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Flow Diagram",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Direction & Frequency",
+        "evaluation_pointer": "Verify whether each flow shows its direction and how often it runs"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Flow Diagram",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Rule Application Points",
+        "evaluation_pointer": "Verify whether the points where transformations or business rules apply are identified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Flow Diagram",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Downstream Consumers",
+        "evaluation_pointer": "Verify whether outbound extracts, downstream systems and report consumers appear on the diagram"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Flow Diagram",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "DQ Checkpoints Shown",
+        "evaluation_pointer": "Check whether data quality and validation checkpoints are marked within the flow"
+    },
+    {
+        "framework": "DEX",
+        "document": "Data Flow Diagram",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Overview & Detail Views",
+        "evaluation_pointer": "Check whether both an overview and a detailed view are provided"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "All Screens Covered",
+        "evaluation_pointer": "Verify whether a wireframe exists for every dashboard, screen and navigation page in scope"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "KPI & Visual Placement",
+        "evaluation_pointer": "Verify whether each KPI and chart is placed on the layout with its intended visual type"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Filters & Navigation",
+        "evaluation_pointer": "Verify whether filters, default selections, drill paths and navigation controls are shown"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Layout & Canvas Spec",
+        "evaluation_pointer": "Verify whether canvas size, grid alignment and spacing are specified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Interaction Behaviour",
+        "evaluation_pointer": "Verify whether cross-filtering, drill-through, tooltip and bookmark behaviour is described"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Traceable to KPIs",
+        "evaluation_pointer": "Verify whether each visual maps to an approved requirement or KPI definition"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Client Sign-off Before Build",
+        "evaluation_pointer": "Verify whether business stakeholders approved the wireframes before development began"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Style Guide Adherence",
+        "evaluation_pointer": "Check whether fonts, colour palette and component styling follow the agreed style guide"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Readability & Accessibility",
+        "evaluation_pointer": "Check whether readability, colour contrast and usability have been considered"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Empty & Error States",
+        "evaluation_pointer": "Check whether no-data, loading and error states are depicted"
+    },
+    {
+        "framework": "DEX",
+        "document": "Wireframes / Figma for Dashboard",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Wireframe Versions",
+        "evaluation_pointer": "Check whether wireframe versions and feedback rounds are tracked"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Every Target Field Mapped",
+        "evaluation_pointer": "Verify whether every target field has a source field or an explicitly stated derivation"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Source & Target Named",
+        "evaluation_pointer": "Verify whether each mapping names its source system, source object, target schema and target table"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Types & Conversion Rules",
+        "evaluation_pointer": "Verify whether data types and lengths on both sides are stated along with any conversion rule"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Derivation Logic",
+        "evaluation_pointer": "Verify whether derived fields carry the actual rule rather than a description of it"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Keys, Grain & Joins",
+        "evaluation_pointer": "Verify whether business keys, join conditions and record grain are defined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Null & Default Handling",
+        "evaluation_pointer": "Verify whether nullability, default values and handling of invalid data are specified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Load Type & History",
+        "evaluation_pointer": "Verify whether load type, incremental keys, deduplication and historisation treatment are specified"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Filters & Delete Handling",
+        "evaluation_pointer": "Verify whether record filters, exclusions and delete handling are documented"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Traceable to Requirements",
+        "evaluation_pointer": "Check whether mappings tie back to requirement or business rule identifiers"
+    },
+    {
+        "framework": "DEX",
+        "document": "Source to Target Mapping (STTM)",
+        "project_phase": "Design",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Points to a Data Model",
+        "evaluation_pointer": "Check whether the mapping references an approved physical data model rather than standing in for one"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Component Coverage",
+        "evaluation_pointer": "Verify whether every built component has at least one test, including extracts, transformations, measures and security roles"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Test ID & Description",
+        "evaluation_pointer": "Verify whether each test carries an ID, the module under test and what it validates"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Expected Result Stated",
+        "evaluation_pointer": "Verify whether a precise expected result was stated for each test"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Inputs & Pre-conditions",
+        "evaluation_pointer": "Verify whether inputs, pre-conditions and test data are documented well enough to re-run the test"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Actual Result & Status",
+        "evaluation_pointer": "Verify whether actual results and pass or fail status are recorded for every test"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Negative & Boundary Cases",
+        "evaluation_pointer": "Verify whether nulls, duplicates, invalid inputs and boundary values were tested alongside the clean cases"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Execution Evidence",
+        "evaluation_pointer": "Verify whether tester name, execution date and supporting evidence such as query output are captured"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Defect Link & Retest",
+        "evaluation_pointer": "Verify whether failed tests link to a defect and show a retest result after the fix"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Signed Off Before SIT",
+        "evaluation_pointer": "Verify whether unit testing was signed off before the build was handed to system testing"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Repeatable Tests",
+        "evaluation_pointer": "Check whether tests are automated or scripted so they can be re-run on demand"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Coverage by Module",
+        "evaluation_pointer": "Check whether coverage or completeness is reported by module or layer"
+    },
+    {
+        "framework": "DEX",
+        "document": "Unit Testing Document",
+        "project_phase": "Development",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Pass Rate Summary",
+        "evaluation_pointer": "Check whether an aggregated pass rate is available"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Defect Description",
+        "evaluation_pointer": "Verify whether each defect states what was observed against what was expected"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Steps to Reproduce",
+        "evaluation_pointer": "Verify whether steps to reproduce, environment, build version and evidence are captured"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Severity & Priority",
+        "evaluation_pointer": "Verify whether severity and priority are assigned using defined criteria rather than judgement in the moment"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Module & Test Case Link",
+        "evaluation_pointer": "Verify whether each defect links to the affected module, the test case that found it and the testing phase"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Raised By & Assigned To",
+        "evaluation_pointer": "Verify whether raised-by and assigned-to are recorded"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Root Cause Recorded",
+        "evaluation_pointer": "Verify whether resolved defects record the root cause and not only the fix applied"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Fix Build & Retest",
+        "evaluation_pointer": "Verify whether resolution details, fix build, retest outcome and closure date are recorded"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Status Discipline",
+        "evaluation_pointer": "Verify whether statuses follow a defined lifecycle with nothing left stale or ambiguous"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Defect Ageing",
+        "evaluation_pointer": "Check whether defect ageing is tracked against the agreed resolution times"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Defect Trend Analysis",
+        "evaluation_pointer": "Check whether defects are grouped by type and analysed for recurring patterns"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Defect Leakage",
+        "evaluation_pointer": "Check whether defects found late or after go-live are traced back to the phase that should have caught them"
+    },
+    {
+        "framework": "DEX",
+        "document": "Defect Log/Incident Tracker",
+        "project_phase": "Testing",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Defect Summary View",
+        "evaluation_pointer": "Check whether a summary by severity, status and module is available"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Business Scenario Coverage",
+        "evaluation_pointer": "Verify whether scenarios cover every critical business process, KPI, report and user journey in scope"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Written in Business Language",
+        "evaluation_pointer": "Verify whether scenarios are written the way a business user works rather than as technical steps"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Pre-conditions & Role",
+        "evaluation_pointer": "Verify whether pre-conditions, user role, access setup and data period are specified"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Step-by-step Instructions",
+        "evaluation_pointer": "Verify whether the steps are numbered and clear enough for a business user to run unaided"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Acceptance Criteria",
+        "evaluation_pointer": "Verify whether each scenario says precisely what a pass looks like"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Expected vs Actual",
+        "evaluation_pointer": "Verify whether expected results, actual results and status are recorded per scenario"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Access Scenarios Tested",
+        "evaluation_pointer": "Verify whether scenarios test that users see only the data their role permits"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Defect Link & Retest",
+        "evaluation_pointer": "Verify whether failed scenarios link to a defect and show a retest outcome"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Tester & Date",
+        "evaluation_pointer": "Verify whether the client tester's name and the execution date are captured"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Grouped by Business Area",
+        "evaluation_pointer": "Check whether scenarios are grouped by business area, module or user role"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Test Case Document / Expected Results",
+        "project_phase": "UAT",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Edge Scenarios",
+        "evaluation_pointer": "Check whether unusual or exception business scenarios are included"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "UAT Session Conducted",
+        "evaluation_pointer": "Verify whether the UAT walkthrough session was held, with the date and participants recorded"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Entry Criteria Confirmed",
+        "evaluation_pointer": "Verify whether the deck confirms SIT completion, environment readiness and test data availability before UAT began"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Demo & Walkthrough Coverage",
+        "evaluation_pointer": "Verify whether the deck evidences a walkthrough of every dashboard, report or module in scope"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Defect Summary Presented",
+        "evaluation_pointer": "Verify whether open defects with their severity and status were presented to the business"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Exit Criteria Defined",
+        "evaluation_pointer": "Verify whether the deck states the UAT exit criteria and the route to formal sign-off"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "UAT Scope & Period",
+        "evaluation_pointer": "Verify whether the register states what was tested, in which environment and over what data period"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Execution Summary",
+        "evaluation_pointer": "Verify whether the register summarises scenarios executed, passed, failed and deferred"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Open Defects at Sign-off",
+        "evaluation_pointer": "Verify whether every defect still open at sign-off is listed with its severity and agreed disposition"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Deferred Items Agreed",
+        "evaluation_pointer": "Verify whether deferred items carry an owner, a target release and explicit business acceptance"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Approver Authority",
+        "evaluation_pointer": "Verify whether the person signing holds the authority to accept on behalf of the business"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Written Sign-off",
+        "evaluation_pointer": "Verify whether sign-off is documented with name, role and date"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Conditions of Acceptance",
+        "evaluation_pointer": "Verify whether any conditions attached to the acceptance are stated"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Go-live Readiness",
+        "evaluation_pointer": "Verify whether the register confirms readiness to proceed to deployment"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Training & Enablement Covered",
+        "evaluation_pointer": "Check whether user training, navigation guidance or enablement material is included"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Feedback & Follow-up Actions",
+        "evaluation_pointer": "Check whether business feedback raised during UAT is listed with owners and target dates"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Sign-off by Business Area",
+        "evaluation_pointer": "Check whether sign-off is recorded separately for each business area or module"
+    },
+    {
+        "framework": "DEX",
+        "document": "UAT Deck",
+        "project_phase": "UAT",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Residual Risk Accepted",
+        "evaluation_pointer": "Check whether residual risks accepted by the business are acknowledged"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Scope Delivered vs Committed",
+        "evaluation_pointer": "Verify whether the deck shows what was committed at the start against what was actually delivered, with any variance explained"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Deliverable Handover Status",
+        "evaluation_pointer": "Verify whether every deliverable is listed with its final status and confirmation that it has been handed over to the client"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Milestone & Timeline Summary",
+        "evaluation_pointer": "Verify whether planned against actual dates are shown for the key milestones, with reasons for any slippage"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Success Criteria Achievement",
+        "evaluation_pointer": "Verify whether the success criteria agreed at initiation are restated and evidenced as met, partially met or not met"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Open Items & Deferred Scope",
+        "evaluation_pointer": "Verify whether items still open or deferred at closure are listed with an owner, a target and explicit client agreement"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Defect Status at Closure",
+        "evaluation_pointer": "Verify whether outstanding defects are shown with severity and the agreed disposition for each"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Support Transition & Ownership",
+        "evaluation_pointer": "Verify whether the deck states who supports the solution after closure, from when, and how issues should be raised"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Formal Closure Sign-off",
+        "evaluation_pointer": "Verify whether the deck carries formal client acceptance of project closure with an approver name, role and date"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "End-to-End Traceability",
+        "evaluation_pointer": "Verify whether a single requirement can be followed through design, build, test case and UAT to closure"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Requirement ID Discipline",
+        "evaluation_pointer": "Verify whether each requirement carries a unique ID used consistently across every downstream document"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Two-way Traceability",
+        "evaluation_pointer": "Verify whether every requirement maps to a test case and every test case maps back to a requirement"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Coverage Gaps Visible",
+        "evaluation_pointer": "Verify whether requirements with no design, build or test coverage stand out rather than blending in"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "CRs Added to Matrix",
+        "evaluation_pointer": "Verify whether approved change requests are added to the matrix with the same traceability as original requirements"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Requirement Status Tracking",
+        "evaluation_pointer": "Verify whether each requirement is tracked through to accepted"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Effort & Budget Summary",
+        "evaluation_pointer": "Check whether final effort and budget against plan are summarised for the client"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Lessons Learned Shared",
+        "evaluation_pointer": "Check whether key lessons from the engagement are shared rather than kept internal"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Client Feedback Captured",
+        "evaluation_pointer": "Check whether client feedback or a satisfaction input was requested and recorded at closure"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Next Phase & Enhancement Outlook",
+        "evaluation_pointer": "Check whether known enhancements, Phase 2 scope or roadmap items are outlined"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Priority Tagging",
+        "evaluation_pointer": "Check whether requirements are tagged by priority so critical coverage can be confirmed first"
+    },
+    {
+        "framework": "DEX",
+        "document": "Project Closure Deck / RTM",
+        "project_phase": "All Phases",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Descoped Items Visible",
+        "evaluation_pointer": "Check whether descoped or deferred requirements remain visible with the rationale and decision owner"
     }
 ]

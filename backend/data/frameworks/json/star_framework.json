@@ -166,5 +166,93 @@
         "evaluation_category": "Good to Have",
         "evaluation_metric": "Compliance, Confidentiality & Legal Governance",
         "evaluation_pointer": "Verify whether confidentiality clauses, compliance obligations, IP ownership, and legal governance expectations are documented"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Current Template & Rate Card",
+        "evaluation_pointer": "Verify whether the estimate uses the current pricing template and the rate card version named on the rate card tab"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Project Dates & Duration",
+        "evaluation_pointer": "Verify whether project name, start date and end date are filled in and agree with the SOW"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Resource Plan Completeness",
+        "evaluation_pointer": "Verify whether every resource line carries a location, position and domain, since that combination drives the rate lookup"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Week-wise Effort Phasing",
+        "evaluation_pointer": "Verify whether hours are phased week by week, with nothing planned outside the project start and end dates"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Rate Card Integrity",
+        "evaluation_pointer": "Verify whether billing and cost rates come from the locked rate card, with no manual overrides"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Gross Margin Threshold",
+        "evaluation_pointer": "Verify whether the proposed gross margin clears 40 percent, and if not, whether a written commercial justification exists"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Discount Threshold",
+        "evaluation_pointer": "Verify whether the discount stays within 10 percent, and if it does not, whether the prior Partner approval is on file"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "High-Value Approval Routing",
+        "evaluation_pointer": "Verify whether high-value deals with margin below the benchmark went for pricing review and Partner approval before the proposal left"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Must Have",
+        "evaluation_metric": "Blended Rate Sanity Check",
+        "evaluation_pointer": "Verify whether the blended billing rate is calculated correctly and looks sensible against comparable engagements"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "Onshore-Offshore Mix",
+        "evaluation_pointer": "Verify whether the offshore share and the seniority pyramid are realistic for the work being priced"
+    },
+    {
+        "framework": "STAR",
+        "document": "Pricing Tool / Finance Document (Cost Estimator/WLBU)",
+        "project_phase": "Project Initiation",
+        "evaluation_category": "Good to Have",
+        "evaluation_metric": "SOW Commercial Alignment",
+        "evaluation_pointer": "Verify whether duration, resourcing, discount and estimate all match the executed SOW"
     }
 ]
