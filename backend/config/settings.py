@@ -16,12 +16,10 @@ class Settings(BaseSettings):
 
 
     #------SharePoint Details---------
-    SHAREPOINT_LIST_URL: str
     SHAREPOINT_SITE_ID:str
     SHAREPOINT_LIST_ID : str
     SHAREPOINT_SITE_URL : str
     SHAREPOINT_LIST_TITLE : str
-    SHAREPOINT_RESOURCE : str
     SHAREPOINT_TENANT_URL : str
     SHAREPOINT_REPORT_LIBRARY_NAME : str
     #--------Sharepoint REST API----------------
@@ -31,8 +29,6 @@ class Settings(BaseSettings):
     #-------Azure Open AI---------------
     AZURE_OPENAI_API_KEY : str
     AZURE_OPENAI_ENDPOINT : str
-    # AZURE_OPENAI_API_VERSION : str
-    # AZURE_OPENAI_DEPLOYMENT : str
     AZURE_OPENAI_MODEL : str
     OPENROUTER_API_KEY : str
 
@@ -48,7 +44,6 @@ class Settings(BaseSettings):
 
     #--------JWT - our application tokens------
     JWT_SECRET_KEY : str
-    JWT_ALGORITHM : str
 
     FRONTEND_ORIGIN : str
 
