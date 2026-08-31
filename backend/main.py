@@ -9,7 +9,7 @@ from db.database import engine, Base
 from auth.auth import router as auth_router, _get_msal_app
 from routers.audit_router import router as audit_router
 
-_executor = ThreadPoolExecutor(max_workers=32, thread_name_prefix="audit_worker")
+_executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="audit_worker")
 
 async def _prewarm_msal():
     """Build MSAL app in background thread right after server starts.
@@ -50,13 +50,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "null",
+        settings.FRONTEND_ORIGIN,
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],

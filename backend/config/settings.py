@@ -3,8 +3,6 @@
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
-
 class Settings(BaseSettings):
     #------App Registration-----------
     TENANT_ID: str
@@ -13,7 +11,6 @@ class Settings(BaseSettings):
     
     AZURE_AD_REDIRECT_URI : str
     AZURE_AD_SCOPE : str
-
 
     #------SharePoint Details---------
     SHAREPOINT_SITE_ID:str
@@ -30,7 +27,6 @@ class Settings(BaseSettings):
     AZURE_OPENAI_API_KEY : str
     AZURE_OPENAI_ENDPOINT : str
     AZURE_OPENAI_MODEL : str
-    OPENROUTER_API_KEY : str
 
     #-------Database--------------------
     DATABASE_URL : str    
@@ -48,7 +44,6 @@ class Settings(BaseSettings):
     FRONTEND_ORIGIN : str
 
     model_config = SettingsConfigDict(
-        env_file=ROOT_DIR / ".env",
         env_file_encoding="utf-8",
         extra="ignore"
     )

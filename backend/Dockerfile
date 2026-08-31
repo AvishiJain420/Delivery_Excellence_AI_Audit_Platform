@@ -14,6 +14,8 @@ WORKDIR /app
 # need OS-level libraries. Add here if a build fails asking for one.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    ca-certificates \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 #build-essential - some package contain native C/C++ components
@@ -39,5 +41,6 @@ EXPOSE 8000
 #---host 0.0.0.0 is MANDATORY (see pre-flight 1.1) - 
 #---0.0.0.0 means"Listen on all network interfaces available to this container."
 # Note: no --reload in production (that's a dev-only feature that wastes resources).
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "8"]
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "8"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
  

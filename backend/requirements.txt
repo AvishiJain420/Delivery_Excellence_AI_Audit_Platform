@@ -23,7 +23,6 @@ langchain-openai
 # OpenAI / Azure OpenAI
 openai
 tiktoken
-token-analyzer
 langfuse
 
 # Embeddings & Vector Store
