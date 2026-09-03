@@ -1,31 +1,72 @@
 'use client'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
+import Link from 'next/dist/client/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, FileSearch, History,
-  ChevronLeft, ChevronRight, Bot
+  History, ChevronLeft, ChevronRight, Bot,
+  Home, BookOpen, Newspaper, FileText, ClipboardList,
+  ChevronDown, ChevronUp, FolderOpen, Users, Lightbulb, Library,
 } from 'lucide-react'
 import { useUIStore } from '@/store'
+import { useState } from 'react'
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard',      icon: LayoutDashboard },
-  // { href: '/audit',     label: 'Live Audit',     icon: FileSearch },
-  { href: '/history',   label: 'Audit and Report History',  icon: History },
-  // { href: '/reports',   label: 'Reports',        icon: BarChart3 },
-] as const
+type NavLeaf  = { href: string; label: string; icon: React.ElementType }
+type NavGroup = { groupLabel: string; icon: React.ElementType; href?: string; children: NavLeaf[] }
+type NavItem  = NavLeaf | NavGroup
 
-// const AGENT_ITEMS = [
-//   { label: 'Document Audit',    icon: FileSearch, active: true },
-//   { label: 'Code Audit',        icon: Code2,      active: false },
-//   { label: 'Compliance Review', icon: Shield,     active: false },
-//   { label: 'AI Assistant',      icon: Sparkles,   active: false },
-//   { label: 'Knowledge Base',    icon: BookOpen,   active: false },
-// ]
+const isGroup = (i: NavItem): i is NavGroup => 'groupLabel' in i
+
+const NAV: NavItem[] = [
+  { href: '/home', label: 'Home', icon: Home },
+
+  // Knowledge Library — expandable group with dedicated page
+  {
+    groupLabel: 'Knowledge Library',
+    icon: BookOpen,
+    href: '/knowledge-library',
+    children: [
+      { href: '/newsletters',      label: 'Newsletters',          icon: Newspaper },
+      { href: process.env.NEXT_PUBLIC_DEX_STAR_KNOWLEDGE_URL!,                 label: 'DEX & STAR Knowledge', icon: Library },
+      { href: process.env.NEXT_PUBLIC_LEADERSHIP_SUMMARY_URL!,                 label: 'Leadership Summary',   icon: Users },
+    ],
+  },
+
+  // DEX and STAR Documents — expandable
+  {
+    groupLabel: 'DEX & STAR Docs',
+    icon: Library,
+    href: '/dex-star',
+    children: [
+      { href: process.env.NEXT_PUBLIC_STANDARD_PRACTICES_URL!, label: 'Standard Practices', icon: Lightbulb },
+      { href: process.env.NEXT_PUBLIC_SAMPLE_DOCUMENTS_URL!, label: 'Sample Documents',   icon: FolderOpen },
+    ],
+  },
+
+  // Audit — expandable; clicking label goes to /audit
+  {
+    groupLabel: 'Audit',
+    icon: ClipboardList,
+    href: '/audit',
+    children: [
+      { href: '/audit/process',   label: 'Audit Process',         icon: FileText },
+      { href: '/ai-history',      label: 'AI Audit History',      icon: History },
+      { href: '/overall-history', label: 'Overall Audit History', icon: History },
+    ],
+  },
+]
 
 export function Sidebar() {
-  const pathname = usePathname()
+  const pathname   = usePathname()
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const [open, setOpen] = useState<Set<string>>(
+    () => new Set(['Knowledge Library', 'Audit'])
+  )
+
+  const toggle = (label: string) =>
+    setOpen(prev => { const n = new Set(prev); n.has(label) ? n.delete(label) : n.add(label); return n })
+
+  const active = (href: string) =>
+    pathname === href || (href !== '/home' && href !== '/dashboard' && pathname.startsWith(href))
 
   return (
     <aside className={cn(
@@ -35,16 +76,16 @@ export function Sidebar() {
     )}>
       {/* Logo */}
       <div className={cn(
-        'flex items-center border-b border-white/10 transition-all duration-300 h-14',
+        'flex items-center border-b border-white/10 h-14 flex-shrink-0 transition-all duration-300',
         sidebarCollapsed ? 'px-4 justify-center' : 'px-5 gap-3',
       )}>
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
           <Bot size={18} className="text-white" />
         </div>
         {!sidebarCollapsed && (
           <div className="min-w-0">
             <p className="text-white font-bold text-sm tracking-tight">Polaris</p>
-            <p className="text-blue-300/70 text-[10px]">Document Audit Platform</p>
+            <p className="text-blue-300/70 text-[10px]">Delivery Excellence</p>
           </div>
         )}
       </div>
@@ -52,61 +93,92 @@ export function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {!sidebarCollapsed && (
-          <p className="text-blue-400/60 text-[10px] font-semibold uppercase tracking-widest px-3 py-2">
-            Navigation
-          </p>
+          <p className="text-blue-400/60 text-[10px] font-semibold uppercase tracking-widest px-3 py-2">Navigation</p>
         )}
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
+
+        {NAV.map(item => {
+          if (!isGroup(item)) {
+            const isAct = active(item.href)
+            const Icon  = item.icon
+            return (
+              <Link key={item.href} href={item.href}
+                title={sidebarCollapsed ? item.label : undefined}
+                className={cn('sidebar-item', isAct ? 'active' : 'inactive', sidebarCollapsed && 'justify-center px-0')}>
+                <Icon size={17} className="flex-shrink-0" />
+                {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                {!sidebarCollapsed && isAct && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
+              </Link>
+            )
+          }
+
+          const GroupIcon = item.icon
+          const isOpened  = open.has(item.groupLabel)
+          const anyActive = item.children.some(c => active(c.href)) || (item.href ? active(item.href) : false)
+
+          if (sidebarCollapsed) {
+            return item.children.map(child => {
+              const CIcon = child.icon
+              const isAct = active(child.href)
+              return (
+                <Link key={child.href} href={child.href} title={child.label}
+                  className={cn('sidebar-item justify-center px-0', isAct ? 'active' : 'inactive')}>
+                  <CIcon size={17} className="flex-shrink-0" />
+                </Link>
+              )
+            })
+          }
+
           return (
-            <Link key={href} href={href} title={sidebarCollapsed ? label : undefined}
-              className={cn('sidebar-item', active ? 'active' : 'inactive', sidebarCollapsed && 'justify-center px-0')}>
-              <Icon size={17} className="flex-shrink-0" />
-              {!sidebarCollapsed && <span className="truncate">{label}</span>}
-              {!sidebarCollapsed && active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
-            </Link>
+            <div key={item.groupLabel}>
+              <div className="flex items-center gap-0.5">
+                {/* Clicking the label navigates if href is set */}
+                {item.href ? (
+                  <Link href={item.href}
+                    className={cn('sidebar-item flex-1', anyActive ? 'active' : 'inactive')}>
+                    <GroupIcon size={17} className="flex-shrink-0" />
+                    <span className="truncate">{item.groupLabel}</span>
+                    {anyActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                  </Link>
+                ) : (
+                  <button onClick={() => toggle(item.groupLabel)}
+                    className={cn('sidebar-item flex-1 w-full text-left', anyActive ? 'text-white' : 'inactive')}>
+                    <GroupIcon size={17} className="flex-shrink-0" />
+                    <span className="truncate flex-1">{item.groupLabel}</span>
+                  </button>
+                )}
+
+                {/* Chevron toggle */}
+                <button type="button" onClick={() => toggle(item.groupLabel)}
+                  className="p-1.5 text-blue-200/60 hover:text-white transition-colors">
+                  {isOpened
+                    ? <ChevronUp size={13} />
+                    : <ChevronDown size={13} />}
+                </button>
+              </div>
+
+              {isOpened && (
+                <div className="ml-4 mt-0.5 space-y-0.5 border-l border-white/10 pl-2">
+                  {item.children.map(child => {
+                    const CIcon = child.icon
+                    const isAct = active(child.href)
+                    return (
+                      <Link key={child.href} href={child.href}
+                        className={cn('sidebar-item text-[12px]', isAct ? 'active' : 'inactive')}>
+                        <CIcon size={14} className="flex-shrink-0" />
+                        <span className="truncate">{child.label}</span>
+                        {isAct && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )
         })}
-
-        {/* {!sidebarCollapsed && (
-          <>
-            <p className="text-blue-400/60 text-[10px] font-semibold uppercase tracking-widest px-3 pt-5 pb-2">
-              Agent Ecosystem
-            </p>
-            {AGENT_ITEMS.map(({ label, icon: Icon, active }) => (
-            <button
-              key={label}
-              disabled={!active}
-              title={!active ? 'Coming soon' : undefined}
-              className={cn(
-                'sidebar-item w-full text-left',
-                active
-                  ? 'inactive'
-                  : 'inactive opacity-80 cursor-not-allowed'
-              )}
-            >
-              <Icon
-                size={17}
-                className="flex-shrink-0 text-slate-300"
-              />
-
-              <span className="truncate text-slate-300">
-                {label}
-              </span>
-
-              {!active && (
-                <span className="ml-auto text-[9px] text-slate-400 font-medium">
-                  SOON
-                </span>
-              )}
-            </button>
-          ))}
-          </>
-        )} */}
       </nav>
 
-      {/* Collapse toggle */}
-      <div className="px-2 pb-4">
+      {/* Collapse */}
+      <div className="px-2 pb-4 flex-shrink-0">
         <button onClick={toggleSidebar}
           className="w-full flex items-center justify-center py-2 rounded-lg text-blue-300/70 hover:text-white hover:bg-white/10 transition-all">
           {sidebarCollapsed
@@ -117,3 +189,4 @@ export function Sidebar() {
     </aside>
   )
 }
+ 

@@ -168,4 +168,30 @@ class AttachmentService:
             })
  
         return results
- 
+
+
+    def upload_attachments_for_item(
+    self,
+    item_id: str,
+    files: list[tuple[str, bytes, str]],  # (filename, content_bytes, mime_type)
+    ) -> list[dict]:
+        """
+        Upload in-memory files as SharePoint list item attachments.
+        Uses the existing ACS token flow your AttachmentService already has.
+        Returns list of {"file_name", "attachment_url"} per file.
+        """
+        results = []
+        for file_name, content_bytes, mime_type in files:
+            try:
+                url = self.upload_attachment(
+                    item_id=item_id,
+                    file_name=file_name,
+                    file_content=content_bytes,
+                )
+                results.append({"file_name": file_name, "attachment_url": url})
+                print(f"[SP] Attached {file_name} to item {item_id}")
+            except Exception as exc:
+                print(f"[SP] Attachment failed for {file_name}: {exc}")
+                results.append({"file_name": file_name, "attachment_url": None})
+        return results
+    

@@ -15,7 +15,7 @@ export function RecentAuditsTable({ audits, loading }: RecentAuditsTableProps) {
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <h2 className="text-sm font-bold text-slate-800">Recent Audits</h2>
-        <Link href="/history" className="text-xs text-blue-600 font-medium flex items-center gap-1 hover:underline">
+        <Link href="/ai-history" className="text-xs text-blue-600 font-medium flex items-center gap-1 hover:underline">
           View all <ArrowRight size={11} />
         </Link>
       </div>
@@ -67,7 +67,7 @@ export function RecentAuditsTable({ audits, loading }: RecentAuditsTableProps) {
                 </td>
                 <td className="px-5 py-3.5 text-slate-400 text-xs whitespace-nowrap">{formatRelativeTime(audit.createdAt)}</td>
                 <td className="px-5 py-3.5">
-                  <Link href={`/audit?id=${audit.id}`}>
+                  <Link href={`/ai-audit?id=${audit.id}`}>
                     <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
                       <ExternalLink size={12} />
                     </button>

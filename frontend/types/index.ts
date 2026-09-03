@@ -42,7 +42,7 @@ export interface BackendUser {
   user_id: string
   user_name: string
   azure_email: string | null
-  role: 'admin' | 'user'
+  role: 'admin' | 'user' | 'auditor'
   created_at: string
 }
 

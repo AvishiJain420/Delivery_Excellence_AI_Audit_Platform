@@ -271,3 +271,51 @@ class SharePointService:
         )
 
         return upload_result
+
+
+    # Add to SharePointService class, after upload_audit_report():
+    def create_polaris_list_item(
+        self,
+        *,
+        audit_type: str,          # "STAR" or "DEX"
+        project_name: str,
+        project_code: str,
+        client_name: str,
+        project_manager: str,
+        sharepoint_link: str | None = None,  # DEX only — stored in ShrepointLink column
+    ) -> str:
+        """
+        Creates a new item in the Polaris SharePoint list.
+        Returns the SP list item ID (string) which becomes
+        sharepoint_item_id in Project and the route param for /audit?item_id=XX.
+
+        Column names match what get_audit_context() already reads:
+        ClientName, ProjectName, ProjectCode, AuditType, ShrepointLink
+        """
+        endpoint = (
+            f"https://graph.microsoft.com/v1.0/"
+            f"sites/{settings.SHAREPOINT_SITE_ID}/"
+            f"lists/{settings.SHAREPOINT_LIST_ID}/"
+            "items"
+        )
+        payload = {
+            "fields": {
+                "Title":           project_name,   # SP list "Title" = ProjectName
+                "ClientName":      client_name,
+                "ProjectCode":     project_code,
+                "AuditType":       audit_type,
+                # ProjectManager may or may not exist as a column yet — see §5 note
+                "ProjectManager":  project_manager,
+                # DEX: store the user-supplied link in the existing ShrepointLink column
+                # STAR: leave empty — attachments are added separately via AttachmentService
+                "ShrepointLink":   sharepoint_link or "",
+            }
+        }
+        result = self.graph.post(endpoint, payload)
+        item_id = result.get("id") or result.get("fields", {}).get("id")
+        if not item_id:
+            raise ValueError(
+                f"SharePoint list item creation returned no ID. Response: {result}"
+            )
+        print(f"[SP] Created list item: {item_id} ({audit_type} – {project_name})")
+        return str(item_id)

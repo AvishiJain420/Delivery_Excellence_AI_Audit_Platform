@@ -1,40 +1,44 @@
-'use client'
-import { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const COLOR_MAP = {
-  slate:   { bg: 'bg-slate-100',   icon: 'text-slate-600',   value: 'text-slate-900' },
-  emerald: { bg: 'bg-emerald-100', icon: 'text-emerald-600', value: 'text-emerald-700' },
-  blue:    { bg: 'bg-blue-100',    icon: 'text-blue-600',    value: 'text-blue-700' },
-  red:     { bg: 'bg-red-100',     icon: 'text-red-500',     value: 'text-red-700' },
-  amber:   { bg: 'bg-amber-100',   icon: 'text-amber-600',   value: 'text-amber-700' },
-}
+import type { LucideIcon } from 'lucide-react'
 
 interface StatCardProps {
   label: string
   value: number
   icon: LucideIcon
-  color?: keyof typeof COLOR_MAP
+  color: 'slate' | 'emerald' | 'blue' | 'red'
   subtitle?: string
   loading?: boolean
+  compact?: boolean   // NEW — reduces height
 }
 
-export function StatCard({ label, value, icon: Icon, color = 'slate', subtitle, loading }: StatCardProps) {
-  const c = COLOR_MAP[color]
+const colorMap = {
+  slate:   { bg: 'bg-slate-100',   text: 'text-slate-600',   val: 'text-slate-900' },
+  emerald: { bg: 'bg-emerald-100', text: 'text-emerald-600', val: 'text-emerald-700' },
+  blue:    { bg: 'bg-blue-100',    text: 'text-blue-600',    val: 'text-blue-700' },
+  red:     { bg: 'bg-red-100',     text: 'text-red-600',     val: 'text-red-700' },
+}
+
+export function StatCard({ label, value, icon: Icon, color, subtitle, loading, compact }: StatCardProps) {
+  const c = colorMap[color]
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
-        <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', c.bg)}>
-          <Icon size={16} className={c.icon} />
+    <div className={cn(
+      'bg-white rounded-xl border border-slate-200 shadow-sm',
+      compact ? 'p-3.5' : 'p-4',
+    )}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
+        <div className={cn('rounded-lg flex items-center justify-center', c.bg, compact ? 'w-7 h-7' : 'w-9 h-9')}>
+          <Icon size={compact ? 14 : 16} className={c.text} />
         </div>
       </div>
       {loading ? (
-        <div className="h-8 bg-slate-100 rounded animate-pulse w-16" />
+        <div className="h-6 w-12 bg-slate-100 rounded animate-pulse" />
       ) : (
-        <p className={cn('text-3xl font-bold tabular-nums', c.value)}>{value}</p>
+        <p className={cn('font-bold', c.val, compact ? 'text-xl' : 'text-2xl')}>{value}</p>
       )}
-      {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
+      {subtitle && !loading && (
+        <p className="text-[11px] text-slate-400 mt-0.5 truncate">{subtitle}</p>
+      )}
     </div>
   )
 }

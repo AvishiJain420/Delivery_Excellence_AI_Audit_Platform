@@ -65,7 +65,7 @@ export function useStartAudit() {
         data.audit_type ?? '',
       )
       qc.invalidateQueries({ queryKey: ['dashboard'] })
-      router.push(`/audit?id=${data.session_id}`)
+      router.push(`/ai-audit?id=${data.session_id}`)
     },
     onError: (error: any) => {
       console.error('Error starting audit:', error)
@@ -83,7 +83,7 @@ export function useStartAudit() {
         'manual',
       )
       qc.invalidateQueries({ queryKey: ['dashboard'] })
-      router.push(`/audit?id=${data.session_id}`)
+      router.push(`/ai-audit?id=${data.session_id}`)
     },
     onError: (error: any) => {
       console.error('Error starting manual audit:', error)

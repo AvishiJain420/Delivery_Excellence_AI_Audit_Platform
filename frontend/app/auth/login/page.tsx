@@ -14,7 +14,7 @@ export default function LoginPage() {
       // Pass /dashboard as return_to — the real destination
       // is saved in sessionStorage by layout AuthGuard and
       // read by callback/page.tsx after Microsoft login.
-      const url = await authApi.getLoginUrl('/dashboard')
+      const url = await authApi.getLoginUrl('/home')
       window.location.href = url
     } catch (e: any) {
       setError(e.message ?? 'Failed to connect to authentication service')

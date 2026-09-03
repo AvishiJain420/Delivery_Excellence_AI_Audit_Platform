@@ -53,7 +53,7 @@ function DashboardInner() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {config.polarisUrl && (
+          {/* {config.polarisUrl && (
             <a
               href={config.polarisUrl}
               target="_blank"
@@ -62,7 +62,7 @@ function DashboardInner() {
             >
               <Globe size={13} /> Polaris Platform
             </a>
-          )}
+          )} */}
           {/*
           <button
             onClick={() => setStartAuditModal(true)}
