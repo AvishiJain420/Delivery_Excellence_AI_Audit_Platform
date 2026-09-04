@@ -31,7 +31,7 @@ interface QueueRow {
 function AuditStatusLabel({ status }: { status: string }) {
   if (status === 'completed')    return <span className="text-emerald-600 font-semibold text-[13px]">Completed</span>
   if (status === 'under_review') return <span className="text-purple-600 font-semibold text-[13px]">Open</span>
-  if (status === 'pending')      return <span className="text-pink-600 font-semibold text-[13px]">New</span>
+  if (status === 'pending')      return <span className="text-pink-600 font-semibold text-[13px]">Pending</span>
   return null
 }
 

@@ -514,40 +514,40 @@ export const authApi = {
 // ─── Audit API ─────────────────────────────────────────────────────────────────
 
 export const auditApi = {
-  async startFromPowerApp(
-    sharepoint_item_id: string,
-  ): Promise<{
-    session_id: string
-    project_name: string
-    client_name: string
-    audit_type: string
-  }> {
-    const res = await apiFetch(
-      '/audit/sessions/powerapp',
-      {
-        method: 'POST',
+  // async startFromPowerApp(
+  //   sharepoint_item_id: string,
+  // ): Promise<{
+  //   session_id: string
+  //   project_name: string
+  //   client_name: string
+  //   audit_type: string
+  // }> {
+  //   const res = await apiFetch(
+  //     '/audit/sessions/powerapp',
+  //     {
+  //       method: 'POST',
 
-        body: JSON.stringify({
-          sharepoint_item_id,
-        }),
-      },
-    )
+  //       body: JSON.stringify({
+  //         sharepoint_item_id,
+  //       }),
+  //     },
+  //   )
 
-    if (!res.ok) {
-      let message = 'Failed to start audit'
+  //   if (!res.ok) {
+  //     let message = 'Failed to start audit'
 
-      try {
-        const err = await res.json()
+  //     try {
+  //       const err = await res.json()
 
-        message =
-          err.detail ?? message
-      } catch {}
+  //       message =
+  //         err.detail ?? message
+  //     } catch {}
 
-      throw new Error(message)
-    }
+  //     throw new Error(message)
+  //   }
 
-    return res.json()
-  },
+  //   return res.json()
+  // },
 
   async startManual(data: {
     project_name: string

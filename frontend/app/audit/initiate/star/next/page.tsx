@@ -3,23 +3,25 @@
 import { AppShell } from '@/components/layout/AppShell'
 import { useSearchParams } from 'next/navigation'
 
-export default function DexNextPage() {
+export default function StarNextPage() {
   const searchParams = useSearchParams()
-  const itemId = searchParams.get('item_id')
+  const sessionId = searchParams.get('session_id')
 
-  const reviewUrl = itemId ? `/ai-audit?item_id=${encodeURIComponent(itemId)}` : '#'
-
+  const reviewUrl = sessionId
+    ? `/ai-audit?id=${encodeURIComponent(sessionId)}`
+    : '#'
+    
   return (
     <AppShell>
       <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="text-center max-w-2xl px-6">
+        <div className="text-center max-w-2xl px-8 py-10 bg-blue-50 border border-blue-100 rounded-xl">
 
           <h1 className="text-2xl font-semibold text-slate-900 mb-4">
             Your Audit Request has been Submitted!
           </h1>
 
           <p className="text-[15px] text-slate-600 leading-7 mb-8">
-            Storing your responses will take 1-2 mins. After that click
+            Storing your responses will take 2-3 mins. After that click
             {' '}
             <span className="font-semibold text-slate-800">
               "Get AI Review"

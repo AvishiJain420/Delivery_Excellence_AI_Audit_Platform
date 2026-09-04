@@ -37,61 +37,32 @@ import {
 import Link from 'next/link'
 import { auditApi } from '@/services/api'
 import {config} from '@/lib/config'
-import { useState, useEffect, useRef } from 'react'
-
+import { useState} from 'react'
 
 function AuditPageInner() {
   const params = useSearchParams()
 
-  const [sessionId, setSessionId] = useState<string | null>(params.get("id"))
+  // session_id is the source of truth once the audit has been created.
+  const sessionId = params.get('id')
 
-  const itemId = params.get("item_id")
+  const [activeTab, setActiveTab] =
+    useState<'queue' | 'log'>('queue')
 
-  const [startError, setStartError] = useState<string | null>(null)
-  const startedRef = useRef(false)
-  const [isDownloading, setIsDownloading] = useState(false)
+  const [isDownloading, setIsDownloading] =
+    useState(false)
 
-  useEffect(() => {
-    if (startedRef.current) return
-    if (sessionId || !itemId) return
+  const {
+    session,
+    chatMessages,
+    liveLog,
+    isConnected,
+    frameworkCategories,
+  } = useAuditStore()
 
-    startedRef.current = true
-
-    const powerAppItemId = itemId
-
-    async function startPowerAppAudit() {
-      try {
-        const response = await auditApi.startFromPowerApp(powerAppItemId)
-
-        initSession(
-          response.session_id,
-          response.project_name
-            ? `${response.project_name} — ${response.audit_type ?? 'Audit'}`
-            : 'Loading audit…',
-          response.project_name ?? '',
-          response.client_name ?? '',
-          response.audit_type ?? '',
-        )
-
-        setSessionId(response.session_id)
-      } catch (error) {
-        console.error('Failed to start Power Apps audit:', error)
-        setStartError(
-          error instanceof Error
-            ? error.message
-            : 'Failed to start the audit'
-        )
-        startedRef.current = false
-      }
-    }
-
-    startPowerAppAudit()
-  }, [sessionId, itemId])
-
-  const [activeTab, setActiveTab] = useState<'queue' | 'log'>('queue')
-
-  const { session, chatMessages, liveLog, isConnected ,initSession ,frameworkCategories} = useAuditStore()
-  const { pendingValidation, handleValidationConfirm } = useAuditSession(sessionId)
+  const {
+    pendingValidation,
+    handleValidationConfirm,
+  } = useAuditSession(sessionId)
 
   const overallProgress = session?.overallProgress ?? 0
   const isDone = session?.status === 'done'
@@ -156,42 +127,31 @@ function AuditPageInner() {
   }
 
   if (!sessionId) {
-
-    if (startError) {
       return (
-        <div className="flex h-screen items-center justify-center bg-slate-50">
-          <div className="text-center">
-            <p className="text-red-600 font-semibold">
-              Failed to start audit
-            </p>
-            <p className="text-sm text-slate-500 mt-2">
-              {startError}
-            </p>
-          </div>
+        <div className="flex flex-col h-screen items-center justify-center bg-slate-50">
+          <p className="text-sm text-red-600 font-semibold">
+            No audit session specified.
+          </p>
+
+          <Link
+            href="/home"
+            className="mt-3 text-sm text-blue-600 hover:underline"
+          >
+            Return to Home
+          </Link>
         </div>
       )
     }
-
-    return (
-      <div className="flex flex-col h-screen items-center justify-center bg-slate-50">
-        <LoadingDots />
-        <p className="mt-3 text-sm text-slate-600">
-          Starting audit from Power Apps...
-        </p>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col bg-white h-full overflow-hidden">
       {/* Top bar */}
       <div className="flex-shrink-0 bg-white border-b border-slate-200 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 shadow-sm">
         <div className="flex items-center gap-3">
-          {!itemId && (
             <Link href="/home">
               <ArrowLeft size={16} />
           </Link>
-          )}
+          
           
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">

@@ -54,27 +54,10 @@ export function useStartAudit() {
   const { initSession } = useAuditStore()
   const qc = useQueryClient()
 
-  const powerAppMutation = useMutation({
-    mutationFn: auditApi.startFromPowerApp,
-    onSuccess: (data) => {
-      initSession(
-        data.session_id,
-        `${data.project_name} — ${data.audit_type ?? 'Audit'}`,
-        data.project_name,
-        data.client_name,
-        data.audit_type ?? '',
-      )
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
-      router.push(`/ai-audit?id=${data.session_id}`)
-    },
-    onError: (error: any) => {
-      console.error('Error starting audit:', error)
-    },
-  })
-
   const manualMutation = useMutation({
     mutationFn: auditApi.startManual,
-    onSuccess: (data, vars) => {
+
+    onSuccess: (data) => {
       initSession(
         data.session_id,
         `${data.project_name} — Manual Audit`,
@@ -82,15 +65,18 @@ export function useStartAudit() {
         data.client_name,
         'manual',
       )
+
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+
       router.push(`/ai-audit?id=${data.session_id}`)
     },
+
     onError: (error: any) => {
       console.error('Error starting manual audit:', error)
     },
   })
 
-  return { powerAppMutation, manualMutation }
+  return { manualMutation }
 }
 
 // ─── Main audit session hook ──────────────────────────────────────────────────

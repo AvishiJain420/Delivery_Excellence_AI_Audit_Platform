@@ -8,9 +8,9 @@ import { config } from '@/lib/config'
 import { TokenStore } from '@/services/api'
 
 // ── Shared field components ────────────────────────────────────────────────────
-function Field({
-  label, required, children,
-}: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({ label, required, children }: {
+  label: string; required?: boolean; children: React.ReactNode
+}) {
   return (
     <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: '220px', flexBasis: 'calc(50% - 15px)' }}>
       <label className="text-[13px] font-semibold text-slate-700">
@@ -31,9 +31,9 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   )
 }
 
-function Select({
-  children, ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement> & { children: React.ReactNode }) {
+function Select({children, ...props}: 
+React.SelectHTMLAttributes<HTMLSelectElement> & { 
+children: React.ReactNode }) {
   return (
     <select
       {...props}
@@ -44,14 +44,14 @@ function Select({
   )
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────────
+
 export default function InitiateStarAuditPage() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [files, setFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  // const [success, setSuccess] = useState(false)
 
   // Form state
   const [form, setForm] = useState({
@@ -121,30 +121,35 @@ export default function InitiateStarAuditPage() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.detail ?? `Error ${res.status}`)
+        throw new Error(err.detail ?? `Server error ${res.status}`)
       }
 
       const data = await res.json()
-      setSuccess(true)
-      setTimeout(() => router.push(`/audit/start/${data.session_id}`), 1500)
+            // data = { session_id, sharepoint_item_id, audit_type, project_name, client_name, ... }
+
+      // Navigate to the success/next page, passing both IDs as query params
+      router.push(
+        `/audit/initiate/star/next?session_id=${encodeURIComponent(data.session_id)}&item_id=${encodeURIComponent(data.sharepoint_item_id ?? '')}`
+      )
+
     } catch (err: any) {
       setError(err.message ?? 'Submission failed. Please try again.')
-    } finally {
+    // } finally {
       setSubmitting(false)
     }
   }
 
-  if (success) {
-    return (
-      <AppShell>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <CheckCircle2 size={52} className="text-green-500" />
-          <h2 className="text-xl font-semibold text-slate-800">Audit request submitted!</h2>
-          <p className="text-slate-500 text-sm">Redirecting to project details…</p>
-        </div>
-      </AppShell>
-    )
-  }
+  // if (success) {
+  //   return (
+  //     <AppShell>
+  //       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+  //         <CheckCircle2 size={52} className="text-green-500" />
+  //         <h2 className="text-xl font-semibold text-slate-800">Audit request submitted!</h2>
+  //         <p className="text-slate-500 text-sm">Redirecting to project details…</p>
+  //       </div>
+  //     </AppShell>
+  //   )
+  // }
 
   return (
     <AppShell>
@@ -171,7 +176,7 @@ export default function InitiateStarAuditPage() {
             Provide the project information and upload your supporting documents for a formal audit.
           </p>
 
-          {/* Form grid */}
+          
           <div className="flex flex-wrap gap-5">
             <Field label="Client Name" required>
               <Input placeholder="e.g. Sanofi" value={form.client_name} onChange={e => set('client_name', e.target.value)} />
@@ -246,7 +251,7 @@ export default function InitiateStarAuditPage() {
                 <span className="text-rose-600 mr-0.5">*</span>
                 Upload Documents{' '}
                 <span className="text-slate-400 font-normal italic text-[12px]">
-                  (Note: attach the discount approval email along with the project documents)
+                  (attach the discount approval email along with project documents)
                 </span>
               </label>
 
@@ -285,21 +290,25 @@ export default function InitiateStarAuditPage() {
             </div>
           </div>
 
-          {/* Error */}
+          
           {error && (
             <div className="mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded text-[13px] text-red-700">
               {error}
             </div>
           )}
 
-          {/* Actions */}
+          
           <div className="mt-6 flex items-center gap-3">
-            <Link
-              href="/audit/initiate/star/next"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[13.5px] font-semibold rounded transition-colors"
+                        {/* Next = submit the form */}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-[13.5px] font-semibold rounded transition-colors"
+
             >
-              Next
-            </Link>
+              {submitting ? <><Loader2 size={15} className="animate-spin" /> Submitting…</> : 'Next'}
+            </button>
+
             <Link href="/audit/initiate" className="text-[13px] text-slate-500 hover:text-slate-700">
               Cancel
             </Link>

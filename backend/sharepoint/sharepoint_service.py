@@ -298,19 +298,23 @@ class SharePointService:
             f"lists/{settings.SHAREPOINT_LIST_ID}/"
             "items"
         )
-        payload = {
-            "fields": {
-                "Title":           project_name,   # SP list "Title" = ProjectName
-                "ClientName":      client_name,
-                "ProjectCode":     project_code,
-                "AuditType":       audit_type,
-                # ProjectManager may or may not exist as a column yet — see §5 note
-                "ProjectManager":  project_manager,
-                # DEX: store the user-supplied link in the existing ShrepointLink column
-                # STAR: leave empty — attachments are added separately via AttachmentService
-                "ShrepointLink":   sharepoint_link or "",
-            }
+
+        fields = {
+            "ProjectName": project_name,
+            "ClientName": client_name,
+            "AuditType": audit_type,
+            "ProjectManager": project_manager,
+            "ShrepointLink": sharepoint_link or "",
         }
+
+        # Project Code is only applicable to DEX
+        if audit_type.upper() == "DEX" and project_code:
+            fields["ProjectCode"] = project_code
+
+        payload = {
+            "fields": fields
+        }
+
         result = self.graph.post(endpoint, payload)
         item_id = result.get("id") or result.get("fields", {}).get("id")
         if not item_id:

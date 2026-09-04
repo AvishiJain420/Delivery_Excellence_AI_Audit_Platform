@@ -3,7 +3,7 @@ import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import Link from 'next/dist/client/link'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { config } from '@/lib/config'
 import { TokenStore } from '@/services/api'
 
@@ -13,10 +13,7 @@ function Field({ label, required, fullWidth, children }: {
   return (
     <div
       className="flex flex-col gap-1.5"
-      style={{
-        minWidth: '220px',
-        flex: fullWidth ? '1 1 100%' : '1 1 calc(50% - 15px)',
-      }}
+      style={{ minWidth: '220px', flex: fullWidth ? '1 1 100%' : '1 1 calc(50% - 15px)' }}
     >
       <label className="text-[13px] font-semibold text-slate-700">
         {required && <span className="text-rose-600 mr-0.5">*</span>}
@@ -64,13 +61,19 @@ export default function InitiateDexAuditPage() {
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
+  // ── Submit: POST to backend, then navigate to /dex/next with IDs ───────────
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    const required = ['client_name', 'project_name', 'project_code', 'project_manager',
+        const required = [
+      'client_name', 'project_name', 'project_code', 'project_manager',
+
       'sow_signed_date', 'actual_project_start_date', 'estimated_project_end_date',
-      'estimated_budget', 'sharepoint_link'] as const
+            'estimated_budget', 'sharepoint_link',
+    ] as const
+
 
     const missing = required.filter(k => !form[k])
     if (missing.length > 0) {
@@ -91,12 +94,16 @@ export default function InitiateDexAuditPage() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.detail ?? `Error ${res.status}`)
+        throw new Error(err.detail ?? `Server error ${res.status}`)
       }
 
       const data = await res.json()
-      setSuccess(true)
-      setTimeout(() => router.push(`/audit/start/${data.session_id}`), 1500)
+
+      // Navigate to the success/next page, passing both IDs
+      router.push(
+        `/audit/initiate/dex/next?session_id=${encodeURIComponent(data.session_id)}&item_id=${encodeURIComponent(data.sharepoint_item_id ?? '')}`
+      )
+
     } catch (err: any) {
       setError(err.message ?? 'Submission failed. Please try again.')
     } finally {
@@ -104,17 +111,17 @@ export default function InitiateDexAuditPage() {
     }
   }
 
-  if (success) {
-    return (
-      <AppShell>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <CheckCircle2 size={52} className="text-green-500" />
-          <h2 className="text-xl font-semibold text-slate-800">DEX audit request submitted!</h2>
-          <p className="text-slate-500 text-sm">Redirecting to project details…</p>
-        </div>
-      </AppShell>
-    )
-  }
+  // if (success) {
+  //   return (
+  //     <AppShell>
+  //       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+  //         <CheckCircle2 size={52} className="text-green-500" />
+  //         <h2 className="text-xl font-semibold text-slate-800">DEX audit request submitted!</h2>
+  //         <p className="text-slate-500 text-sm">Redirecting to project details…</p>
+  //       </div>
+  //     </AppShell>
+  //   )
+  // }
 
   return (
     <AppShell>
@@ -128,16 +135,16 @@ export default function InitiateDexAuditPage() {
 
       <h1 className="text-2xl font-bold text-slate-900 mb-1">Initiate New DEX Audit</h1>
       <p className="text-[14px] text-slate-500 mb-6">
-        Upload your project documents for AI-powered review before requesting a formal audit.
+        Provide your project details and SharePoint folder link for AI-powered review before requesting a formal audit.
       </p>
 
       <form onSubmit={handleSubmit}>
         <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm max-w-5xl">
           <h2 className="text-[17px] font-semibold text-slate-800 mb-1">
-            Step 1: Project details and document upload
+            Step 1: Project details
           </h2>
           <p className="text-[13px] text-slate-500 mb-6">
-            Provide the project information and upload your supporting documents.
+            Provide the project information and your SharePoint documents folder link.
           </p>
 
           <div className="flex flex-wrap gap-5">
@@ -218,12 +225,15 @@ export default function InitiateDexAuditPage() {
           )}
 
           <div className="mt-6 flex items-center gap-3">
-            <Link
-              href="/audit/initiate/dex/next"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[13.5px] font-semibold rounded transition-colors"
+                        {/* Next = submit the form */}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-[13.5px] font-semibold rounded transition-colors"
             >
-              Next
-            </Link>
+              {submitting ? <><Loader2 size={15} className="animate-spin" /> Submitting…</> : 'Next'}
+            </button>
+
             <Link href="/audit/initiate" className="text-[13px] text-slate-500 hover:text-slate-700">
               Cancel
             </Link>

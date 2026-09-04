@@ -42,13 +42,13 @@ function AiStatusBadge({ status }: { status: string }) {
     summarising: { cls: 'bg-blue-100 text-blue-700',       label: 'Summarising' },
     exporting:   { cls: 'bg-blue-100 text-blue-700',       label: 'Exporting' },
     uploading:   { cls: 'bg-blue-100 text-blue-700',       label: 'Uploading' },
-    done:        { cls: 'bg-emerald-100 text-emerald-700', label: 'AI Complete' },
+    done:        { cls: 'bg-emerald-100 text-emerald-700', label: 'Completed' },
     failed:      { cls: 'bg-red-100 text-red-700',         label: 'Failed' },
   }
   const { cls, label } = map[status] ?? { cls: 'bg-slate-100 text-slate-500', label: status }
   const spinning = ['fetching','identifying','parsing','auditing','summarising','exporting','uploading'].includes(status)
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${cls}`}>
+    <span className={`inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${cls}`}>
       {status === 'done' && <CheckCircle2 size={10} />}
       {status === 'failed' && <AlertTriangle size={10} />}
       {spinning && <Loader2 size={10} className="animate-spin" />}
@@ -67,7 +67,7 @@ function OverallStatusBadge({ status }: { status: string }) {
   }
   const { cls, label } = map[status] ?? map.pending
   return (
-    <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${cls}`}>
+    <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${cls}`}>
       {label}
     </span>
   )
@@ -202,11 +202,11 @@ export default function OverallAuditHistoryPage() {
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-        <table className="w-full text-[13px] min-w-[1050px]">
+        <table className="w-full text-[13px] min-w-[1550px]">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/60">
               {['Client', 'Project', 'Code', 'Type', 'Submitted', 'Auditor', 'AI Status', 'AI Score', 'Manual Score', 'Status', ''].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                <th key={h} className="text-center px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
@@ -233,20 +233,20 @@ export default function OverallAuditHistoryPage() {
                   </div>
                 </td>
                 <td className="px-4 py-3.5 text-slate-600 max-w-[150px]"><span className="truncate block">{row.project_name || '—'}</span></td>
-                <td className="px-4 py-3.5 text-slate-500 text-xs">{row.project_code || '—'}</td>
-                <td className="px-4 py-3.5">
+                <td className="px-4 py-3.5 text-center text-slate-500 text-xs">{row.project_code || '—'}</td>
+                <td className="px-4 py-3.5 text-center">
                   <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${row.audit_type === 'STAR' ? 'bg-blue-100 text-blue-700' : 'bg-blue-100 text-blue-800'}`}>
                     {row.audit_type}
                   </span>
                 </td>
-                <td className="px-4 py-3.5 text-slate-400 text-xs whitespace-nowrap">
+                <td className="px-4 py-3.5 text-center text-slate-400 text-xs whitespace-nowrap">
                   {row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : '—'}
                 </td>
-                <td className="px-4 py-3.5 text-slate-500 text-xs">{row.assigned_auditor_name || '—'}</td>
-                <td className="px-4 py-3.5"><AiStatusBadge status={row.ai_audit_status} /></td>
+                <td className="px-4 py-3.5 text-center text-slate-500 text-xs">{row.assigned_auditor_name || '—'}</td>
+                <td className="px-4 py-3.5 text-center"><AiStatusBadge status={row.ai_audit_status} /></td>
                 <td className="px-4 py-3.5 text-center"><ScorePill score={row.ai_audit_score} /></td>
                 <td className="px-4 py-3.5 text-center"><ScorePill score={row.manual_score} /></td>
-                <td className="px-4 py-3.5"><OverallStatusBadge status={row.overall_status} /></td>
+                <td className="px-4 py-3.5 text-center"><OverallStatusBadge status={row.overall_status} /></td>
                 <td className="px-3 py-3.5">
                   <div className="flex items-center gap-2">
                     <Link href={`/audit/history/${row.session_id}`}

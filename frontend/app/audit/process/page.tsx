@@ -3,6 +3,7 @@
 import { AppShell } from '@/components/layout/AppShell'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
+import { docLink } from '@/lib/config'
 
 function ArticleCard({
   icon,
@@ -85,7 +86,7 @@ export default function AuditProcessPage() {
           iconColor="bg-rose-50 text-rose-700"
           title="Audit Overview & Introduction"
           description="What the DEX Audit is, why it matters, and who is involved"
-          href={process.env.NEXT_PUBLIC_AUDIT_OVERVIEW_URL!}
+          href={docLink('auditOverview')}
           btnColor="bg-rose-700 hover:bg-rose-800"
         />
 
@@ -94,7 +95,7 @@ export default function AuditProcessPage() {
           iconColor="bg-blue-50 text-blue-700"
           title="Pre-requisites Checklist"
           description="Documents and artefacts required before requesting an audit"
-          href={process.env.NEXT_PUBLIC_PREREQUISITES_URL!}
+          href={docLink('prerequisites')}
           btnColor="bg-blue-600 hover:bg-blue-700"
         />
 
@@ -103,7 +104,7 @@ export default function AuditProcessPage() {
           iconColor="bg-green-50 text-green-700"
           title="Scoring Rubric"
           description="How scores are calculated across different metrics"
-          href={process.env.NEXT_PUBLIC_SCORING_RUBRIC_URL!}
+          href={docLink('scoringRubric')}
           btnColor="bg-green-700 hover:bg-green-800"
         />
       </div>

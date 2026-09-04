@@ -10,12 +10,31 @@ import { useCurrentUser } from '@/hooks'
 
 // ── Field display component ───────────────────────────────────────────────────
 function FormField({ label, value, fullWidth }: {
-  label: string; value?: string | null; fullWidth?: boolean
+  label: string
+  value?: string | null
+  fullWidth?: boolean
 }) {
   return (
-    <div className={`flex flex-col gap-1 ${fullWidth ? 'col-span-2' : ''}`}>
-      <label className="text-[13px] font-semibold text-slate-700">{label}</label>
-      <div className="px-3 py-2.5 border border-slate-300 rounded bg-white text-[13.5px] text-slate-800 min-h-[40px]">
+    <div className={`flex flex-col gap-1 min-w-0 ${fullWidth ? 'col-span-2' : ''}`}>
+      <label className="text-[13px] font-semibold text-slate-700">
+        {label}
+      </label>
+
+      <div
+        className="
+          px-3 py-2.5
+          border border-slate-300
+          rounded
+          bg-white
+          text-[13.5px]
+          text-slate-800
+          min-h-[40px]
+          min-w-0
+          max-w-full
+          break-words
+          overflow-hidden
+        "
+      >
         {value || ''}
       </div>
     </div>
@@ -117,7 +136,32 @@ export default function ProjectDetailsPage() {
               <FormField label="Estimated Budget ($)"         value={detail.estimated_budget} />
               <FormField label="Consumed Budget ($)"          value={detail.consumed_budget} />
               <FormField label="Current Project Margin (%)"   value={detail.current_project_margin} />
-              <FormField label="SharePoint Link"              value={detail.sharepoint_link} />
+              
+              <div className="flex flex-col gap-1 min-w-0">
+                  <label className="text-[13px] font-semibold text-slate-700">
+                    SharePoint Link
+                  </label>
+
+                  <div className="px-3 py-2.5 border border-slate-300 rounded bg-white text-[13.5px] min-h-[40px] min-w-0 max-w-full overflow-hidden">
+                    {detail.sharepoint_link ? (
+                      <a
+                        href={detail.sharepoint_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={detail.sharepoint_link}
+                        className="inline-flex items-center gap-1.5 max-w-full text-blue-600 hover:text-blue-700 hover:underline"
+                      >
+                        <span className="truncate">
+                          Open SharePoint Link
+                        </span>
+                        <ExternalLink size={13} className="flex-shrink-0" />
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </div>
+                </div>
+
               <FormField label="Project Details"              value={detail.project_details} fullWidth />
             </>
           )}

@@ -104,12 +104,19 @@ async def _create_project_and_session(
     Creates Project (keyed on real SP item ID) + AuditSession.
     sharepoint_item_id must already exist in SharePoint before calling this.
     """
+    project_code_value = (
+        project_code.strip()
+        if audit_type.upper() == "DEX" and project_code
+        else None
+    )
+    
     project = Project(
         sharepoint_item_id=sharepoint_item_id,
         project_name=project_name,
         client_name=client_name,
-        project_code=project_code or "",
+        project_code=project_code_value,
     )
+
     db.add(project)
     await db.flush()
 
@@ -163,39 +170,88 @@ async def assign_auditor(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Assign auditor to a session by email.
-    - If user exists in DB as auditor: sets assigned_auditor_id too.
-    - If user doesn't exist yet (pending Azure AD): stores email+name only.
-      When they log in with the Auditor role, they'll see the session.
-    """
-    fd_result = await db.execute(
-        select(AuditFormDetail).where(AuditFormDetail.session_id == session_id)
-    )
-    fd = fd_result.scalar_one_or_none()
-    if not fd:
-        raise HTTPException(404, "Audit session not found")
+    Assign an auditor to an audit session.
 
-    # Try to find existing auditor user by email
+    The auditor does not need to already exist in the User table.
+    We store the auditor email/name on AuditFormDetail.
+
+    If AuditFormDetail does not exist for the session, create it.
+    """
+
+    # ── 1. Verify the AuditSession exists ───────────────────────────────────
+    session_result = await db.execute(
+        select(AuditSession).where(
+            AuditSession.session_id == session_id
+        )
+    )
+
+    session = session_result.scalar_one_or_none()
+
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Audit session not found"
+        )
+
+    # ── 2. Find existing AuditFormDetail ────────────────────────────────────
+    fd_result = await db.execute(
+        select(AuditFormDetail).where(
+            AuditFormDetail.session_id == session_id
+        )
+    )
+
+    fd = fd_result.scalar_one_or_none()
+
+    # ── 3. If missing, create AuditFormDetail ──────────────────────────────
+    if not fd:
+        fd = AuditFormDetail(
+            session_id=session_id,
+            audit_type=session.audit_type or "STAR",
+            assigned_auditor_email=body.auditor_email.strip().lower(),
+            assigned_auditor_name=body.auditor_name.strip(),
+        )
+
+        db.add(fd)
+
+    else:
+        # ── 4. Update existing assignment ──────────────────────────────────
+        fd.assigned_auditor_email = body.auditor_email.strip().lower()
+        fd.assigned_auditor_name = body.auditor_name.strip()
+
+    # ── 5. Try to link to an existing User ──────────────────────────────────
     user_result = await db.execute(
         select(User).where(
-            func.lower(User.azure_email) == body.auditor_email.lower(),
+            func.lower(User.azure_email) == body.auditor_email.strip().lower(),
             User.role == "auditor",
         )
     )
+
     existing_user = user_result.scalar_one_or_none()
 
-    fd.assigned_auditor_email = body.auditor_email.lower()
-    fd.assigned_auditor_name  = body.auditor_name
-    fd.assigned_auditor_id    = existing_user.user_id if existing_user else None
+    if existing_user:
+        fd.assigned_auditor_id = existing_user.user_id
+    else:
+        fd.assigned_auditor_id = None
 
+    # ── 6. Save ─────────────────────────────────────────────────────────────
     await db.commit()
 
     return {
         "session_id": session_id,
-        "assigned_auditor_name": body.auditor_name,
-        "assigned_auditor_email": body.auditor_email,
-        "status": "assigned_and_linked" if existing_user else "assigned_pending_azure_setup",
+        "assigned_auditor_name": body.auditor_name.strip(),
+        "assigned_auditor_email": body.auditor_email.strip().lower(),
+        "assigned_auditor_id": (
+            str(existing_user.user_id)
+            if existing_user
+            else None
+        ),
+        "status": (
+            "assigned_and_linked"
+            if existing_user
+            else "assigned_pending_azure_setup"
+        ),
     }
+
 
 # ─── STAR Audit ───────────────────────────────────────────────────────────────
 
@@ -395,8 +451,9 @@ async def get_audit_queue(
     RBAC:
       admin   → sees all STAR/DEX sessions
       auditor → sees only sessions where assigned_auditor_id = their user_id
-                OR assigned_auditor_email = their azure_email (pending assignment)
+                OR assigned_auditor_email = their azure_email
     """
+
     q = (
         select(AuditSession)
         .options(
@@ -407,48 +464,116 @@ async def get_audit_queue(
         .where(AuditSession.audit_type.in_(["STAR", "DEX"]))
         .order_by(desc(AuditSession.session_id))
     )
+
     sessions = (await db.execute(q)).scalars().all()
+
     ids = [s.session_id for s in sessions]
+
     if not ids:
         return []
 
-    fd_map = {d.session_id: d for d in
-              (await db.execute(select(AuditFormDetail).where(AuditFormDetail.session_id.in_(ids)))).scalars()}
-    fi_set = {f.session_id for f in
-              (await db.execute(select(ManualAuditFinding.session_id)
-                                .where(ManualAuditFinding.session_id.in_(ids)))).scalars()}
+    # ── Form details ────────────────────────────────────────────────────────
+    fd_result = await db.execute(
+        select(AuditFormDetail)
+        .where(AuditFormDetail.session_id.in_(ids))
+    )
+
+    fd_map = {
+        d.session_id: d
+        for d in fd_result.scalars().all()
+    }
+
+    # ── Findings ────────────────────────────────────────────────────────────
+    # We select ONLY session_id, therefore .scalars() already gives strings.
+    fi_result = await db.execute(
+        select(ManualAuditFinding.session_id)
+        .where(ManualAuditFinding.session_id.in_(ids))
+    )
+
+    fi_set = set(fi_result.scalars().all())
 
     user_email = (current_user.azure_email or "").lower()
 
     rows = []
+
     for s in sessions:
         fd = fd_map.get(s.session_id)
 
-        # Auditor RBAC: match by user_id OR by email
+        # ── Auditor RBAC ───────────────────────────────────────────────────
         if current_user.role == "auditor":
-            id_match    = fd and fd.assigned_auditor_id is not None and str(fd.assigned_auditor_id) == str(current_user.user_id)
-            email_match = fd and fd.assigned_auditor_email is not None and fd.assigned_auditor_email == user_email
+
+            id_match = (
+                fd is not None
+                and fd.assigned_auditor_id is not None
+                and str(fd.assigned_auditor_id) == str(current_user.user_id)
+            )
+
+            email_match = (
+                fd is not None
+                and fd.assigned_auditor_email is not None
+                and fd.assigned_auditor_email.lower() == user_email
+            )
+
             if not (id_match or email_match):
                 continue
 
-        docs_count = len(fd.source_documents or []) if fd else len(s.documents or [])
+        # ── Document count ──────────────────────────────────────────────────
+        docs_count = (
+            len(fd.source_documents or [])
+            if fd
+            else len(s.documents or [])
+        )
+
         rows.append({
             "session_id": s.session_id,
             "client_name": s.project.client_name if s.project else "",
             "project_name": s.project.project_name if s.project else "",
             "project_code": s.project.project_code if s.project else None,
-            "docs_submitted": docs_count,
-            "audit_initiation_date": fd.submitted_at.isoformat() if fd and fd.submitted_at else None,
-            "audit_type": s.audit_type or "",
-            "project_start_date": fd.project_start_date if fd else None,
-            "ai_audit_status": s.audit_status,
-            "ai_audit_report_url": s.report.sharepoint_url if s.report else None,
-            "overall_status": "completed" if s.session_id in fi_set else "pending",
-            "assigned_auditor_name": fd.assigned_auditor_name if fd else None,
-            "assigned_auditor_email": fd.assigned_auditor_email if fd else None,
-        })
-    return rows
 
+            "docs_submitted": docs_count,
+
+            "audit_initiation_date": (
+                fd.submitted_at.isoformat()
+                if fd and fd.submitted_at
+                else None
+            ),
+
+            "audit_type": s.audit_type or "",
+
+            "project_start_date": (
+                fd.project_start_date
+                if fd
+                else None
+            ),
+
+            "ai_audit_status": s.audit_status,
+
+            "ai_audit_report_url": (
+                s.report.sharepoint_url
+                if s.report
+                else None
+            ),
+
+            "overall_status": (
+                "completed"
+                if s.session_id in fi_set
+                else "pending"
+            ),
+
+            "assigned_auditor_name": (
+                fd.assigned_auditor_name
+                if fd
+                else None
+            ),
+
+            "assigned_auditor_email": (
+                fd.assigned_auditor_email
+                if fd
+                else None
+            ),
+        })
+
+    return rows
 
 # ─── Overall Audit History ────────────────────────────────────────────────────
 
@@ -494,7 +619,13 @@ async def get_overall_audit_history(
             if not (id_match or email_match):
                 continue
 
-        ai_score = float(s.summary.overall_project_score) if s.summary and s.summary.overall_project_score else None
+        ai_score = (
+            float(s.summary.overall_project_score)
+            if s.summary
+            and s.summary.overall_project_score is not None
+            else None
+        )
+        
         rows.append({
             "session_id": s.session_id,
             "client_name": s.project.client_name if s.project else "",

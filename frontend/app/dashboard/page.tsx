@@ -17,7 +17,7 @@ function DashboardInner() {
   const {data : currentUser} = useCurrentUser()
   const itemId = params.get('item_id')   // set when coming from Power Apps redirect
   const { startAuditModalOpen, setStartAuditModal } = useUIStore()
-  const { powerAppMutation } = useStartAudit()
+  const { manualMutation } = useStartAudit()
 
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useDashboardStats()
   const { data: audits, isLoading: auditsLoading, refetch: refetchAudits } = useRecentAudits()

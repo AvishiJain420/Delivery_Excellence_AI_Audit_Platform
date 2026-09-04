@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import Link from 'next/link'
-import { Loader2, CheckCircle2, ExternalLink, AlertCircle, Save } from 'lucide-react'
+import { Loader2, CheckCircle2, ExternalLink, AlertCircle, Save, FileText ,Upload } from 'lucide-react'
 import { config } from '@/lib/config'
 import { TokenStore } from '@/services/api'
 import { useCurrentUser } from '@/hooks'
@@ -130,6 +130,7 @@ export default function UploadFindingsPage() {
   const [auditorEmail, setAuditorEmail]     = useState('')
   const [overallRemarks, setOverallRemarks] = useState('')
   const [aiReportUrl, setAiReportUrl]       = useState<string | null>(null)
+  const [manualReport, setManualReport] = useState<File | null>(null)
   const [projectInfo, setProjectInfo]       = useState<{ client: string; project: string } | null>(null)
 
   const [saving, setSaving]           = useState(false)
@@ -425,6 +426,45 @@ export default function UploadFindingsPage() {
           <div className="flex items-center gap-2 text-[13px] text-slate-400">
             <span className="w-2 h-2 rounded-full bg-slate-300" />
             AI Audit Report — Not Available for this session
+          </div>
+        )}
+      </div>
+
+      {/* Manual Audit Report */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-5">
+        <h2 className="text-[15px] font-bold text-slate-800 mb-1">
+          Audit Summary Report
+        </h2>
+
+        <p className="text-[12.5px] text-slate-500 mb-4">
+          Upload the manually prepared audit report for this project.
+        </p>
+
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="manual-report-upload"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[13.5px] font-semibold rounded-lg cursor-pointer transition-colors"
+          >
+            <Upload size={15} />
+            Upload Manual Report
+          </label>
+
+          <input
+            id="manual-report-upload"
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null
+              setManualReport(file)
+            }}
+          />
+        </div>
+
+        {manualReport && (
+          <div className="mt-4 flex items-center gap-2 text-[13px] text-slate-600">
+            <FileText size={15} className="text-blue-600" />
+            <span>{manualReport.name}</span>
           </div>
         )}
       </div>

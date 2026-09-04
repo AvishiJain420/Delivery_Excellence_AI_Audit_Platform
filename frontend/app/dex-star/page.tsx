@@ -2,6 +2,7 @@
 import { AppShell } from '@/components/layout/AppShell'
 import Link from 'next/dist/client/link'
 import { FileText, FolderOpen, ChevronRight, BookMarked, Lightbulb } from 'lucide-react'
+import { docLink } from '@/lib/config'
 
 function ActionCard({ icon: Icon, iconBg, title, description, href, btnLabel }: {
   icon: React.ElementType; iconBg: string; title: string
@@ -45,7 +46,7 @@ export default function DexStarPage() {
           iconBg="bg-blue-50 text-blue-600"
           title="Standard Practices"
           description="Standardised guidelines, checklists, and process documentation for DEX and STAR audit submissions."
-          href={process.env.NEXT_PUBLIC_STANDARD_PRACTICES_URL!}
+          href={docLink('standardPractices')}
           btnLabel="View Practices"
         />
         <ActionCard
@@ -53,7 +54,7 @@ export default function DexStarPage() {
           iconBg="bg-blue-50 text-blue-700"
           title="Sample Documents"
           description="Reference documents, templates, and sample project artefacts to guide your audit preparation."
-          href={process.env.NEXT_PUBLIC_SAMPLE_DOCUMENTS_URL!}
+          href={docLink('sampleDocuments')}
           btnLabel="Browse Samples"
         />
       </div>

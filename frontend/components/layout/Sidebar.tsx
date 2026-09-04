@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useUIStore } from '@/store'
 import { useState } from 'react'
+import { docLink } from '@/lib/config'
 
 type NavLeaf  = { href: string; label: string; icon: React.ElementType }
 type NavGroup = { groupLabel: string; icon: React.ElementType; href?: string; children: NavLeaf[] }
@@ -25,9 +26,9 @@ const NAV: NavItem[] = [
     icon: BookOpen,
     href: '/knowledge-library',
     children: [
-      { href: '/newsletters',      label: 'Newsletters',          icon: Newspaper },
-      { href: process.env.NEXT_PUBLIC_DEX_STAR_KNOWLEDGE_URL!,                 label: 'DEX & STAR Knowledge', icon: Library },
-      { href: process.env.NEXT_PUBLIC_LEADERSHIP_SUMMARY_URL!,                 label: 'Leadership Summary',   icon: Users },
+      { href: '/newsletters',label: 'Newsletters',icon: Newspaper },
+      { href: docLink('dexStarKnowledge'),label: 'DEX & STAR Knowledge', icon: Library },
+      { href: docLink('leadershipSummary'),label: 'Leadership Summary', icon: Users },
     ],
   },
 
@@ -37,8 +38,8 @@ const NAV: NavItem[] = [
     icon: Library,
     href: '/dex-star',
     children: [
-      { href: process.env.NEXT_PUBLIC_STANDARD_PRACTICES_URL!, label: 'Standard Practices', icon: Lightbulb },
-      { href: process.env.NEXT_PUBLIC_SAMPLE_DOCUMENTS_URL!, label: 'Sample Documents',   icon: FolderOpen },
+      { href: docLink('standardPractices'), label: 'Standard Practices', icon: Lightbulb },
+      { href: docLink('sampleDocuments'),   label: 'Sample Documents',   icon: FolderOpen },
     ],
   },
 

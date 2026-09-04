@@ -67,23 +67,50 @@ class SessionOut(BaseModel):
 
 async def _persist_project(db: AsyncSession, overview: dict) -> None:
     item_id = overview.get("item_id")
-    if not item_id:
-        return  # skip if no item_id (manual flow without SharePoint)
 
-    result = await db.execute(select(Project).where(Project.sharepoint_item_id == item_id))
+    if not item_id:
+        return
+
+    result = await db.execute(
+        select(Project).where(
+            Project.sharepoint_item_id == item_id
+        )
+    )
+
     project = result.scalar_one_or_none()
+
+    project_name = overview.get("project_name")
+    client_name = overview.get("client_name")
+    project_code = overview.get("project_code")
+
     if project is None:
+
+        if not project_name:
+            raise ValueError(
+                f"Project Name is missing from SharePoint item {item_id}"
+            )
+
         project = Project(
             sharepoint_item_id=item_id,
-            project_name=overview.get("project_name"),
-            client_name=overview.get("client_name"),
-            project_code=overview.get("project_code"),
+            project_name=project_name,
+            client_name=client_name,
+            project_code=project_code,
         )
+
         db.add(project)
+
     else:
-        project.project_name = overview.get("project_name")
-        project.client_name  = overview.get("client_name")
-        project.project_code = overview.get("project_code")
+
+        # Never overwrite existing values with None
+        if project_name:
+            project.project_name = project_name
+
+        if client_name:
+            project.client_name = client_name
+
+        if project_code:
+            project.project_code = project_code
+
     await db.flush()
 
 

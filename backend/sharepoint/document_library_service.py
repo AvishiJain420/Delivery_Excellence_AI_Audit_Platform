@@ -54,6 +54,9 @@ class DocumentLibraryService:
         self.library_name = (
             settings.SHAREPOINT_REPORT_LIBRARY_NAME
         )
+        self.summary_library_name = (
+            settings.SHAREPOINT_SUMMARY_LIBRARY_NAME 
+            )
 
         # Cached after first lookup
         self._drive_id = None
