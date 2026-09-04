@@ -295,6 +295,19 @@ export default function AuditHistoryDetailPage() {
             View AI Doc Review Report <ExternalLink size={13} />
           </a>
         )}
+        
+        {detail.manual_report_url && (
+          <a
+            href={detail.manual_report_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[13.5px] font-semibold rounded-lg transition-colors"
+          >
+            View Summary Report <ExternalLink size={13} />
+          </a>
+        )}
+
+
         <Link
           href={`/audit/start/${sessionId}/findings`}
           className="inline-flex items-center gap-1.5 px-4 py-2.5 border border-blue-200 text-blue-600 hover:bg-blue-50 text-[13.5px] font-semibold rounded-lg transition-colors"

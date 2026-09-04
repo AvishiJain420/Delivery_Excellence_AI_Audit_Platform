@@ -131,6 +131,7 @@ export default function UploadFindingsPage() {
   const [overallRemarks, setOverallRemarks] = useState('')
   const [aiReportUrl, setAiReportUrl]       = useState<string | null>(null)
   const [manualReport, setManualReport] = useState<File | null>(null)
+  const [manualReportUrl, setManualReportUrl] = useState<string | null>(null)
   const [projectInfo, setProjectInfo]       = useState<{ client: string; project: string } | null>(null)
 
   const [saving, setSaving]           = useState(false)
@@ -162,6 +163,11 @@ export default function UploadFindingsPage() {
           const d = await detailRes.json()
           setProjectInfo({ client: d.client_name, project: d.project_name })
           setAiReportUrl(d.ai_audit_report_url ?? null)
+          setManualReportUrl(
+          d.summary_report_url ??
+          d.summary_report_link ??
+          null
+        )
         }
 
         // Load existing findings
@@ -210,37 +216,93 @@ export default function UploadFindingsPage() {
 
   const handleSave = async () => {
     setError(null)
-    if (!overallRemarks.trim()) { setError('Overall Remarks is required.'); return }
+
+    if (!overallRemarks.trim()) {
+      setError('Overall Remarks is required.')
+      return
+    }
+
     setSaving(true)
+
     try {
-      const payload = {
-        session_id: sessionId,
-        auditor_name: auditorName,
-        auditor_email: auditorEmail,
-        auditor_comments: overallRemarks,
-        overall_score: overallScore(categories),
-        categories: categories.map(c => ({
-          category: c.category,
-          remarks: c.remarks,
-          scores: c.sub_scores.map(s => ({
-            sub_category: s.sub_category,
-            manual_score: s.upload_score,
-            applicable: s.applicable,
-            ai_score: s.ai_score,
-          })),
+      // Keep your existing categories structure
+      const catsPayload = categories.map(c => ({
+        category: c.category,
+        remarks: c.remarks,
+        scores: c.sub_scores.map(s => ({
+          sub_category: s.sub_category,
+          manual_score: s.upload_score,
+          applicable: s.applicable,
+          ai_score: s.ai_score,
         })),
+      }))
+
+      // Use FormData because we may also send the manual report file
+      const fd = new FormData()
+
+      if (auditorName) {
+        fd.append('auditor_name', auditorName)
       }
 
-      const res = await fetch(`${config.apiUrl}/polaris/audit/${sessionId}/findings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TokenStore.getAccess() ?? ''}` },
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error((d as any).detail ?? `Error ${res.status}`) }
+      if (auditorEmail) {
+        fd.append('auditor_email', auditorEmail)
+      }
+
+      fd.append('auditor_comments', overallRemarks)
+
+      fd.append(
+        'overall_score',
+        String(overallScore(categories))
+      )
+
+      // Backend expects categories as a JSON string
+      fd.append(
+        'categories',
+        JSON.stringify(catsPayload)
+      )
+
+      // NEW: attach manual audit report if selected
+      if (manualReport) {
+        fd.append('manual_report', manualReport)
+      }
+
+      const res = await fetch(
+        `${config.apiUrl}/polaris/audit/${sessionId}/findings`,
+        {
+          method: 'POST',
+
+          headers: {
+            Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
+          },
+
+          // IMPORTANT:
+          // Do NOT set Content-Type manually.
+          // Browser automatically sets multipart/form-data
+          // with the required boundary.
+          body: fd,
+        }
+      )
+
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+
+        throw new Error(
+          (d as any).detail ?? `Error ${res.status}`
+        )
+      }
+
       setSaved(true)
-      setTimeout(() => router.push(`/audit/history/${sessionId}`), 1500)
-    } catch (e: any) { setError(e.message) }
-    finally { setSaving(false) }
+
+      setTimeout(
+        () => router.push(`/audit/history/${sessionId}`),
+        1500
+      )
+
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!canAccess) {
@@ -430,41 +492,82 @@ export default function UploadFindingsPage() {
         )}
       </div>
 
-      {/* Manual Audit Report */}
+      {/* Manual Audit Summary Report upload */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-5">
         <h2 className="text-[15px] font-bold text-slate-800 mb-1">
           Audit Summary Report
         </h2>
 
         <p className="text-[12.5px] text-slate-500 mb-4">
-          Upload the manually prepared audit report for this project.
+          Upload the manually prepared audit summary report. It will be stored in SharePoint under
+          <span className="font-mono text-slate-600">
+            {' '}Audit Summary / {'{'}STAR|DEX{'}'} /
+          </span>
         </p>
 
-        <div className="flex items-center gap-3">
-          <label
-            htmlFor="manual-report-upload"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[13.5px] font-semibold rounded-lg cursor-pointer transition-colors"
-          >
-            <Upload size={15} />
-            Upload Manual Report
-          </label>
+        <label
+          htmlFor="manual-report-upload"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[13.5px] font-semibold rounded-lg cursor-pointer transition-colors"
+        >
+          <Upload size={15} />
 
-          <input
-            id="manual-report-upload"
-            type="file"
-            accept=".pdf,.doc,.docx"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null
-              setManualReport(file)
-            }}
-          />
-        </div>
+          {manualReport
+            ? 'Change File'
+            : manualReportUrl
+              ? 'Replace Summary Report'
+              : 'Upload Summary Report'}
+        </label>
 
+        <input
+          id="manual-report-upload"
+          type="file"
+          accept=".pdf,.doc,.docx"
+          className="hidden"
+          onChange={e => {
+            setManualReport(e.target.files?.[0] ?? null)
+          }}
+        />
+
+        {/* Newly selected file */}
         {manualReport && (
-          <div className="mt-4 flex items-center gap-2 text-[13px] text-slate-600">
+          <div className="mt-3 flex items-center gap-2 text-[13px] text-slate-600">
             <FileText size={15} className="text-blue-600" />
-            <span>{manualReport.name}</span>
+
+            <span className="font-medium">
+              {manualReport.name}
+            </span>
+
+            <span className="text-slate-400 text-[11px]">
+              ({(manualReport.size / 1024).toFixed(0)} KB)
+            </span>
+
+            <button
+              onClick={() => setManualReport(null)}
+              className="ml-1 text-slate-400 hover:text-red-500 text-[11px] underline"
+            >
+              remove
+            </button>
+          </div>
+        )}
+
+        {/* Existing SharePoint report */}
+        {manualReportUrl && !manualReport && (
+          <div className="mt-3 flex items-center gap-3">
+            <FileText size={15} className="text-emerald-600" />
+
+            <span className="text-[13px] text-slate-600">
+              Audit Summary Report already uploaded
+            </span>
+
+            <a
+              href={manualReportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[12px] font-semibold text-blue-600 hover:text-blue-700"
+            >
+              <ExternalLink size={13} />
+              View Report
+            </a>
           </div>
         )}
       </div>

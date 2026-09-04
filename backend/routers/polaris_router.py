@@ -9,10 +9,11 @@ Changes in this version:
   • All existing RBAC rules preserved
 """
 from __future__ import annotations
-import uuid
+import uuid,json
 from datetime import datetime, timezone
 from typing import Optional, List
 
+from config.settings import settings
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from sqlalchemy import select, desc, func
@@ -23,12 +24,185 @@ from auth.auth import get_current_user
 from db.database import get_db
 from db.models import AuditSession, Project, User, CombinedSummary, AuditReport
 from db.polaris_models import AuditFormDetail, ManualAuditFinding
+from sharepoint.graph_client import GraphClient
+from sharepoint.email_service import EmailService
+from sharepoint.sharepoint_service import SharePointService
+from sharepoint.document_library_service import ( NewsletterLibraryService, SummaryLibraryService)
+
 
 router = APIRouter(prefix="/polaris", tags=["Polaris"])
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
+def _send_audit_submission_email(
+    *,
+    audit_type: str,
+    full_name: str,
+    project_name: str,
+    client_name: str,
+    project_code: str,
+    session_id: str,
+    item_id: str,
+) -> None:
+    """
+    Send notification to the DEX Steering Committee after
+    an audit has been successfully created.
+    """
+
+    body = f"""
+    <html>
+      <body>
+
+        <p>Greetings Steering Committee,</p>
+
+        <p>
+          A new <b>{audit_type}</b> project audit request has been
+          successfully submitted by <b>{full_name}</b>.
+        </p>
+
+        <table style="border-collapse: collapse;">
+          <tr>
+            <td style="padding: 5px 15px 5px 0;">
+              <b>Client</b>
+            </td>
+            <td style="padding: 5px;">
+              {client_name}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 5px 15px 5px 0;">
+              <b>Project</b>
+            </td>
+            <td style="padding: 5px;">
+              {project_name}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 5px 15px 5px 0;">
+              <b>Project Code</b>
+            </td>
+            <td style="padding: 5px;">
+              {project_code or "-"}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 5px 15px 5px 0;">
+              <b>Audit Type</b>
+            </td>
+            <td style="padding: 5px;">
+              {audit_type}
+            </td>
+          </tr>
+        </table>
+
+        <p>
+          Please find the link to review the pending audit queue
+          at your earliest convenience.
+        </p>
+
+        <p>
+          Regards,<br>
+          Polaris
+        </p>
+
+      </body>
+    </html>
+    """
+
+    try:
+        graph = GraphClient()
+        email_service = EmailService(graph)
+
+        email_service.send_email(
+            recipient="dex@procdna.com",
+            subject=f"New {audit_type} Audit Request - {project_name}",
+            body=body,
+        )
+
+        print(
+            f"[Email] {audit_type} submission notification sent "
+            f"for session {session_id}"
+        )
+
+    except Exception as exc:
+        # Do NOT fail the audit submission just because email failed.
+        print(
+            f"[Email] Failed to send {audit_type} submission "
+            f"notification for session {session_id}: {exc}"
+
+       )
+
+def _send_auditor_assignment_email(
+    *,
+    auditor_email: str,
+    auditor_name: str,
+    project_name: str,
+    client_name: str,
+    audit_type: str,
+    session_id: str,
+) -> None:
+    body = f"""
+    <html>
+      <body>
+        <p>Hello {auditor_name},</p>
+
+        <p>
+          You have been assigned as the auditor for the following
+          <b>{audit_type}</b> audit:
+        </p>
+
+        <table style="border-collapse: collapse;">
+          <tr>
+            <td style="padding: 5px 15px 5px 0;"><b>Client</b></td>
+            <td style="padding: 5px;">{client_name}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 15px 5px 0;"><b>Project</b></td>
+            <td style="padding: 5px;">{project_name}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 15px 5px 0;"><b>Audit Type</b></td>
+            <td style="padding: 5px;">{audit_type}</td>
+          </tr>
+        </table>
+
+        <p>
+          Please log in to Polaris to review and complete the audit.
+        </p>
+
+        <p>
+          Regards,<br>
+          Polaris
+        </p>
+      </body>
+    </html>
+    """
+
+    try:
+        graph = GraphClient()
+        email_service = EmailService(graph)
+
+        email_service.send_email(
+            recipient=auditor_email,
+            subject=f"You have been assigned as auditor - {project_name}",
+            body=body,
+        )
+
+        print(
+            f"[Email] Auditor assignment notification sent to "
+            f"{auditor_email} for session {session_id}"
+        )
+
+    except Exception as exc:
+        # Assignment should not fail because email failed.
+        print(
+            f"[Email] Failed to send auditor assignment notification "
+            f"for session {session_id}: {exc}"
+        )
 
 # ─── RBAC dependencies ────────────────────────────────────────────────────────
 
@@ -175,14 +349,15 @@ async def assign_auditor(
     The auditor does not need to already exist in the User table.
     We store the auditor email/name on AuditFormDetail.
 
-    If AuditFormDetail does not exist for the session, create it.
+    An assignment/reassignment email is sent to the assigned auditor
+    after the database update succeeds.
     """
 
-    # ── 1. Verify the AuditSession exists ───────────────────────────────────
+    # ── 1. Verify the AuditSession exists and load its Project ─────────────
     session_result = await db.execute(
-        select(AuditSession).where(
-            AuditSession.session_id == session_id
-        )
+        select(AuditSession)
+        .options(selectinload(AuditSession.project))
+        .where(AuditSession.session_id == session_id)
     )
 
     session = session_result.scalar_one_or_none()
@@ -193,7 +368,7 @@ async def assign_auditor(
             detail="Audit session not found"
         )
 
-    # ── 2. Find existing AuditFormDetail ────────────────────────────────────
+    # ── 2. Find existing AuditFormDetail ──────────────────────────────────
     fd_result = await db.execute(
         select(AuditFormDetail).where(
             AuditFormDetail.session_id == session_id
@@ -202,26 +377,29 @@ async def assign_auditor(
 
     fd = fd_result.scalar_one_or_none()
 
-    # ── 3. If missing, create AuditFormDetail ──────────────────────────────
+    auditor_email = body.auditor_email.strip().lower()
+    auditor_name = body.auditor_name.strip()
+
+    # ── 3. Create AuditFormDetail if missing ──────────────────────────────
     if not fd:
         fd = AuditFormDetail(
             session_id=session_id,
             audit_type=session.audit_type or "STAR",
-            assigned_auditor_email=body.auditor_email.strip().lower(),
-            assigned_auditor_name=body.auditor_name.strip(),
+            assigned_auditor_email=auditor_email,
+            assigned_auditor_name=auditor_name,
         )
 
         db.add(fd)
 
     else:
-        # ── 4. Update existing assignment ──────────────────────────────────
-        fd.assigned_auditor_email = body.auditor_email.strip().lower()
-        fd.assigned_auditor_name = body.auditor_name.strip()
+        # ── 4. Update existing assignment / reassignment ─────────────────
+        fd.assigned_auditor_email = auditor_email
+        fd.assigned_auditor_name = auditor_name
 
-    # ── 5. Try to link to an existing User ──────────────────────────────────
+    # ── 5. Try to link to an existing User ─────────────────────────────────
     user_result = await db.execute(
         select(User).where(
-            func.lower(User.azure_email) == body.auditor_email.strip().lower(),
+            func.lower(User.azure_email) == auditor_email,
             User.role == "auditor",
         )
     )
@@ -233,13 +411,31 @@ async def assign_auditor(
     else:
         fd.assigned_auditor_id = None
 
-    # ── 6. Save ─────────────────────────────────────────────────────────────
+    # ── 6. Save assignment first ──────────────────────────────────────────
     await db.commit()
+
+    # ── 7. Send assignment/reassignment email ─────────────────────────────
+    _send_auditor_assignment_email(
+        auditor_email=auditor_email,
+        auditor_name=auditor_name,
+        project_name=(
+            session.project.project_name
+            if session.project
+            else ""
+        ),
+        client_name=(
+            session.project.client_name
+            if session.project
+            else ""
+        ),
+        audit_type=session.audit_type or "STAR",
+        session_id=session.session_id,
+    )
 
     return {
         "session_id": session_id,
-        "assigned_auditor_name": body.auditor_name.strip(),
-        "assigned_auditor_email": body.auditor_email.strip().lower(),
+        "assigned_auditor_name": auditor_name,
+        "assigned_auditor_email": auditor_email,
         "assigned_auditor_id": (
             str(existing_user.user_id)
             if existing_user
@@ -251,7 +447,6 @@ async def assign_auditor(
             else "assigned_pending_azure_setup"
         ),
     }
-
 
 # ─── STAR Audit ───────────────────────────────────────────────────────────────
 
@@ -358,9 +553,20 @@ async def initiate_star_audit(
     db.add(detail)
     await db.commit()
 
+    # Send submission notification
+    _send_audit_submission_email(
+        audit_type="STAR",
+        full_name=current_user.user_name,
+        project_name=project_name,
+        client_name=client_name,
+        project_code=project_code or "",
+        session_id=session.session_id,
+        item_id=str(sp_item_id),
+    )
+
     return {
         "session_id":        session.session_id,
-        "sharepoint_item_id": sp_item_id,   # ← frontend uses this for /audit?item_id=XX
+        "sharepoint_item_id": sp_item_id,
         "audit_type":        "STAR",
         "project_name":      project_name,
         "client_name":       client_name,
@@ -431,9 +637,20 @@ async def initiate_dex_audit(
     db.add(detail)
     await db.commit()
 
+    # Send submission notification
+    _send_audit_submission_email(
+        audit_type="DEX",
+        full_name=current_user.user_name,
+        project_name=body.project_name,
+        client_name=body.client_name,
+        project_code=body.project_code or "",
+        session_id=session.session_id,
+        item_id=str(sp_item_id),
+    )
+
     return {
         "session_id":        session.session_id,
-        "sharepoint_item_id": sp_item_id,   # ← frontend uses this for /audit?item_id=XX
+        "sharepoint_item_id": sp_item_id,
         "audit_type":        "DEX",
         "project_name":      body.project_name,
         "client_name":       body.client_name,
@@ -518,11 +735,7 @@ async def get_audit_queue(
                 continue
 
         # ── Document count ──────────────────────────────────────────────────
-        docs_count = (
-            len(fd.source_documents or [])
-            if fd
-            else len(s.documents or [])
-        )
+        docs_count = len(s.documents or [])
 
         rows.append({
             "session_id": s.session_id,
@@ -625,7 +838,7 @@ async def get_overall_audit_history(
             and s.summary.overall_project_score is not None
             else None
         )
-        
+
         rows.append({
             "session_id": s.session_id,
             "client_name": s.project.client_name if s.project else "",
@@ -684,6 +897,52 @@ async def get_audit_detail(
     ai_score   = float(session.summary.overall_project_score) if session.summary and session.summary.overall_project_score else None
     report_url = session.report.sharepoint_url if session.report else None
 
+    summary_report_url = None
+
+    if session.sharepoint_item_id:
+        try:
+            sp = SharePointService()
+
+            sp_record = sp.list_service.get_list_item(
+                settings.SHAREPOINT_SITE_ID,
+                settings.SHAREPOINT_LIST_ID,
+                str(session.sharepoint_item_id),
+            )
+
+            sp_fields = sp_record.get("fields", {})
+
+            # Resolve by display name so we do not assume the
+            # SharePoint internal field name.
+            column_endpoint = (
+                f"https://graph.microsoft.com/v1.0/"
+                f"sites/{settings.SHAREPOINT_SITE_ID}/"
+                f"lists/{settings.SHAREPOINT_LIST_ID}/"
+                "/columns"
+            )
+
+            columns_response = sp.graph.get(column_endpoint)
+
+            summary_column_name = None
+
+            for column in columns_response.get("value", []):
+                if (
+                    column.get("displayName", "").strip().lower()
+                    == "summary report link"
+                ):
+                    summary_column_name = column.get("name")
+                    break
+
+            if summary_column_name:
+                summary_report_url = sp_fields.get(
+                    summary_column_name
+                )
+
+        except Exception as exc:
+            print(
+                f"[History] Could not fetch Summary Report Link: {exc}"
+            )
+
+
     sp_docs = {d.get("file_name"): d for d in (fd.source_documents or [])} if fd else {}
     documents = []
     seen = set()
@@ -726,6 +985,7 @@ async def get_audit_detail(
         "ai_audit_status": session.audit_status,
         "ai_audit_score": ai_score,
         "ai_audit_report_url": report_url,
+        "manual_report_url": summary_report_url,
         "submitted_at": fd.submitted_at.isoformat() if fd and fd.submitted_at else None,
         "submitted_by": fd.submitted_by if fd else None,
         "assigned_auditor_name": fd.assigned_auditor_name if fd else None,
@@ -785,60 +1045,265 @@ async def get_findings(
 @router.post("/audit/{session_id}/findings", status_code=201)
 async def save_findings(
     session_id: str,
-    body: FindingsRequest,
+    auditor_name: Optional[str] = Form(None),
+    auditor_email: Optional[str] = Form(None),
+    auditor_comments: Optional[str] = Form(None),
+    overall_score: Optional[float] = Form(None),
+    categories_json: str = Form(..., alias="categories"),
+    manual_report: Optional[UploadFile] = File(None),
     current_user: User = Depends(require_auditor_or_admin),
     db: AsyncSession = Depends(get_db),
 ):
     # Auditor: can only save for assigned sessions
     if current_user.role == "auditor":
-        fd = (await db.execute(select(AuditFormDetail).where(AuditFormDetail.session_id == session_id))).scalar_one_or_none()
-        user_email  = (current_user.azure_email or "").lower()
-        id_match    = fd and fd.assigned_auditor_id is not None and str(fd.assigned_auditor_id) == str(current_user.user_id)
-        email_match = fd and fd.assigned_auditor_email is not None and fd.assigned_auditor_email == user_email
-        if not (id_match or email_match):
-            raise HTTPException(403, "You are not assigned to this audit")
+        fd = (
+            await db.execute(
+                select(AuditFormDetail).where(
+                    AuditFormDetail.session_id == session_id
+                )
+            )
+        ).scalar_one_or_none()
 
-    s = (await db.execute(select(AuditSession).where(AuditSession.session_id == session_id))).scalar_one_or_none()
+        user_email = (current_user.azure_email or "").lower()
+
+        id_match = (
+            fd
+            and fd.assigned_auditor_id is not None
+            and str(fd.assigned_auditor_id) == str(current_user.user_id)
+        )
+
+        email_match = (
+            fd
+            and fd.assigned_auditor_email is not None
+            and fd.assigned_auditor_email == user_email
+        )
+
+        if not (id_match or email_match):
+            raise HTTPException(
+                403,
+                "You are not assigned to this audit"
+            )
+
+    # ------------------------------------------------------------------
+    # Get the audit session.
+    #
+    # IMPORTANT:
+    # session.sharepoint_item_id is the REAL SharePoint List Item ID.
+    # This is the SAME item ID used for the AI report.
+    # ------------------------------------------------------------------
+
+    s = (
+        await db.execute(
+            select(AuditSession).where(
+                AuditSession.session_id == session_id
+            )
+        )
+    ).scalar_one_or_none()
+
     if not s:
         raise HTTPException(404, "Session not found")
 
+    # ------------------------------------------------------------------
+    # Parse categories sent by the frontend as JSON string
+    # inside multipart/form-data.
+    # ------------------------------------------------------------------
+
+    try:
+        categories = json.loads(categories_json)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            400,
+            "Invalid categories JSON"
+        )
+
     cats_json = [
         {
-            "category": c.category,
-            "remarks": c.remarks,
+            "category": c.get("category"),
+            "remarks": c.get("remarks"),
             "scores": [
                 {
-                    "sub_category": sc.sub_category,
-                    "manual_score": sc.manual_score,
-                    "applicable": sc.applicable,
-                    "ai_score": sc.ai_score,
-                    "remarks": sc.remarks,
+                    "sub_category": sc.get("sub_category"),
+                    "manual_score": sc.get("manual_score"),
+                    "applicable": sc.get("applicable", True),
+                    "ai_score": sc.get("ai_score"),
+                    "remarks": sc.get("remarks"),
                 }
-                for sc in c.scores
+                for sc in c.get("scores", [])
             ],
         }
-        for c in body.categories
+        for c in categories
     ]
 
-    fi = (await db.execute(select(ManualAuditFinding).where(ManualAuditFinding.session_id == session_id))).scalar_one_or_none()
+    # ------------------------------------------------------------------
+    # Upload manual audit summary report if one was selected.
+    #
+    # The uploaded file goes to:
+    #
+    # Audit Summary/
+    #     STAR/
+    #         filename.pdf
+    #
+    # or
+    #
+    # Audit Summary/
+    #     DEX/
+    #         filename.pdf
+    #
+    # Then the resulting URL is written to the SAME SharePoint
+    # List Item used by this audit.
+    # ------------------------------------------------------------------
+
+    manual_report_url: Optional[str] = None
+    manual_report_drive_item_id: Optional[str] = None
+
+    if manual_report and manual_report.filename:
+
+        file_bytes = await manual_report.read()
+
+        if not file_bytes:
+            raise HTTPException(
+                400,
+                "Manual report file is empty"
+            )
+
+        content_type = (
+            manual_report.content_type
+            or "application/octet-stream"
+        )
+
+        audit_type = (s.audit_type or "STAR").upper()
+
+        try:
+            sp = SharePointService()
+
+            summary_service = SummaryLibraryService(
+                sp.graph
+            )
+
+            upload_result = (
+                summary_service.upload_summary_report(
+                    file_name=manual_report.filename,
+                    file_content=file_bytes,
+                    audit_type=audit_type,
+                    content_type=content_type,
+                )
+            )
+
+            manual_report_url = upload_result["report_url"]
+            manual_report_drive_item_id = upload_result.get(
+                "drive_item_id"
+            )
+
+            print(
+                f"[Findings] Manual report uploaded: "
+                f"{manual_report_url}"
+            )
+
+            # ----------------------------------------------------------
+            # IMPORTANT:
+            # Use the SAME SharePoint List Item ID as the audit.
+            #
+            # DO NOT use manual_report_drive_item_id here.
+            # That ID belongs to the Document Library file.
+            # ----------------------------------------------------------
+
+            if not s.sharepoint_item_id:
+                raise ValueError(
+                    "Audit session has no SharePoint List Item ID."
+                )
+
+            sp.list_service.update_summary_report_url(
+                item_id=str(s.sharepoint_item_id),
+                report_url=manual_report_url,
+            )
+
+        except HTTPException:
+            raise
+
+        except Exception as exc:
+            print(
+                f"[Findings] Manual report upload failed: {exc}"
+            )
+
+            raise HTTPException(
+                502,
+                f"Could not upload manual audit report: {exc}"
+            )
+
+    # ------------------------------------------------------------------
+    # Save / update manual findings in Supabase
+    # ------------------------------------------------------------------
+
+    fi = (
+        await db.execute(
+            select(ManualAuditFinding).where(
+                ManualAuditFinding.session_id == session_id
+            )
+        )
+    ).scalar_one_or_none()
+
     if fi:
-        fi.auditor_name     = body.auditor_name
-        fi.auditor_email    = body.auditor_email
-        fi.auditor_comments = body.auditor_comments
-        fi.overall_score    = body.overall_score
-        fi.categories       = cats_json
-        fi.submitted_at     = _now()
+        fi.auditor_name = auditor_name
+        fi.auditor_email = auditor_email
+        fi.auditor_comments = auditor_comments
+        fi.overall_score = overall_score
+        fi.categories = cats_json
+        fi.submitted_at = _now()
+
     else:
         fi = ManualAuditFinding(
             finding_id=str(uuid.uuid4()),
             session_id=session_id,
-            auditor_name=body.auditor_name,
-            auditor_email=body.auditor_email,
-            auditor_comments=body.auditor_comments,
-            overall_score=body.overall_score,
+            auditor_name=auditor_name,
+            auditor_email=auditor_email,
+            auditor_comments=auditor_comments,
+            overall_score=overall_score,
             categories=cats_json,
             submitted_at=_now(),
         )
+
         db.add(fi)
+
     await db.commit()
-    return {"finding_id": fi.finding_id, "status": "saved"}
+
+    return {
+        "finding_id": fi.finding_id,
+        "status": "saved",
+        "manual_report_url": manual_report_url,
+        "manual_report_sp_item_id": (
+            str(s.sharepoint_item_id)
+            if s.sharepoint_item_id
+            else None
+        ),
+        "manual_report_drive_item_id": manual_report_drive_item_id,
+    }
+
+
+
+# ─── Newsletters ──────────────────────────────────────────────────────────────
+
+@router.get("/newsletters")
+async def list_newsletters(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Returns all newsletter PDFs from the SharePoint newsletters folder,
+    sorted newest-first. No DB involvement — pure SharePoint listing.
+    """
+    try:
+        svc = NewsletterLibraryService(
+            SharePointService().graph
+        )
+
+        return svc.list_newsletters()
+
+    except ValueError as exc:
+        # SHAREPOINT_NEWSLETTERS_URL not configured
+        raise HTTPException(503, str(exc))
+
+    except Exception as exc:
+        print(f"[Newsletters] Error: {exc}")
+        raise HTTPException(
+            502,
+            "Could not fetch newsletters from SharePoint"
+        )

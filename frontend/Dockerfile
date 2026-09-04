@@ -3,36 +3,59 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Install dependencies first (same caching logic as backend)
+# Install dependencies first
 COPY package.json package-lock.json ./
 RUN npm ci
-# "npm ci" (not "npm install") = clean, reproducible install from the lock file.
 
-# Copy the rest and build the production bundle
+# Copy source
 COPY . .
 
-# Public build-time variables must be present DURING the build, because Next.js
-# bakes NEXT_PUBLIC_* values into the compiled JavaScript. These are passed in
-# at build time (see Day 4). They are NOT secrets.
+# ============================================================
+# Next.js PUBLIC build-time variables
+# These are baked into the frontend during `npm run build`.
+# They are NOT secrets.
+# ============================================================
+
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_WS_URL
 ARG NEXT_PUBLIC_POLARIS_URL
+
+ARG NEXT_PUBLIC_SAMPLE_DOCUMENTS_URL
+ARG NEXT_PUBLIC_AUDIT_OVERVIEW_URL
+ARG NEXT_PUBLIC_PREREQUISITES_URL
+ARG NEXT_PUBLIC_SCORING_RUBRIC_URL
+ARG NEXT_PUBLIC_AUDIT_SCHEDULE_URL
+ARG NEXT_PUBLIC_DEX_STAR_KNOWLEDGE_URL
+ARG NEXT_PUBLIC_LEADERSHIP_SUMMARY_URL
+ARG NEXT_PUBLIC_STANDARD_PRACTICES_URL
+ARG NEXT_PUBLIC_NEWSLETTERS_URL
+
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_POLARIS_URL=$NEXT_PUBLIC_POLARIS_URL
 
+ENV NEXT_PUBLIC_SAMPLE_DOCUMENTS_URL=$NEXT_PUBLIC_SAMPLE_DOCUMENTS_URL
+ENV NEXT_PUBLIC_AUDIT_OVERVIEW_URL=$NEXT_PUBLIC_AUDIT_OVERVIEW_URL
+ENV NEXT_PUBLIC_PREREQUISITES_URL=$NEXT_PUBLIC_PREREQUISITES_URL
+ENV NEXT_PUBLIC_SCORING_RUBRIC_URL=$NEXT_PUBLIC_SCORING_RUBRIC_URL
+ENV NEXT_PUBLIC_AUDIT_SCHEDULE_URL=$NEXT_PUBLIC_AUDIT_SCHEDULE_URL
+ENV NEXT_PUBLIC_DEX_STAR_KNOWLEDGE_URL=$NEXT_PUBLIC_DEX_STAR_KNOWLEDGE_URL
+ENV NEXT_PUBLIC_LEADERSHIP_SUMMARY_URL=$NEXT_PUBLIC_LEADERSHIP_SUMMARY_URL
+ENV NEXT_PUBLIC_STANDARD_PRACTICES_URL=$NEXT_PUBLIC_STANDARD_PRACTICES_URL
+ENV NEXT_PUBLIC_NEWSLETTERS_URL=$NEXT_PUBLIC_NEWSLETTERS_URL
+
+# Build production bundle
 RUN npm run build
+
 
 # ================= STAGE 2: Run =================
 FROM node:20-slim AS runner
 
 WORKDIR /app
 
-# Run as a non-root user for security (why: if the app is ever compromised,
-# the attacker is a limited user, not the container's admin).
 ENV NODE_ENV=production
 
-# Copy only what's needed to RUN the built app, from the builder stage
+# Copy production application
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
@@ -40,5 +63,4 @@ COPY --from=builder /app/package.json ./package.json
 
 EXPOSE 3000
 
-# Next.js production start command
 CMD ["npm", "start"]

@@ -47,6 +47,7 @@ export interface AuditFormDetail {
   ai_audit_status: string         // not_started | queued | ... | done | failed
   ai_audit_score?: number | null
   ai_audit_report_url?: string | null
+  manual_report_url?: string | null
   submitted_at: string
   submitted_by?: string | null
 

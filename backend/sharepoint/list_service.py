@@ -37,7 +37,10 @@ class SharePointListService:
         return self.graph.get(endpoint)
 
     def get_drive_items(self):
-        endpoint = f"https://graph.microsoft.com/v1.0/sites/{settings.SHAREPOINT_SITE_ID}/drives"
+        endpoint = (
+            f"https://graph.microsoft.com/v1.0/"
+            f"sites/{settings.SHAREPOINT_SITE_ID}/drives"
+        )
         print(self.graph.get(endpoint))
 
     # ==========================================================
@@ -60,14 +63,14 @@ class SharePointListService:
         )
 
         print("PATCH Payload:")
-        print(json.dumps(fields, indent=2))   # ← was referencing undefined `payload`, use `fields`
+        print(json.dumps(fields, indent=2))
 
-        #-------Patch function in Power Apps is used to create, update, or merge records in a data source-----------
         self.graph.patch(endpoint, fields)
+
         print("SharePoint List updated.")
 
     # ==========================================================
-    # UPDATE REPORT URL  ← NEW
+    # UPDATE AI REPORT URL
     # ==========================================================
 
     def update_report_url(
@@ -77,7 +80,7 @@ class SharePointListService:
     ):
         """
         Stores the uploaded AI Audit Report URL
-        into the SharePoint Multiple Lines of Text column.
+        into the SharePoint AI Report Link column.
         """
 
         payload = {
@@ -97,6 +100,90 @@ class SharePointListService:
         print("AI Report Link updated successfully.")
 
     # ==========================================================
+    # RESOLVE SHAREPOINT COLUMN INTERNAL NAME
+    # ==========================================================
+
+    def _get_column_internal_name(
+        self,
+        display_name: str,
+    ) -> str:
+        """
+        Resolve a SharePoint column's internal name
+        from its display name.
+
+        Example:
+
+            Display name:
+                Summary Report Link
+
+            Internal name:
+                Summary_x0020_Report_x0020_Link
+        """
+
+        endpoint = (
+            f"https://graph.microsoft.com/v1.0/"
+            f"sites/{settings.SHAREPOINT_SITE_ID}/"
+            f"lists/{settings.SHAREPOINT_LIST_ID}/"
+            "/columns"
+        )
+
+        response = self.graph.get(endpoint)
+
+        for column in response.get("value", []):
+            if (
+                column.get("displayName", "").strip().lower()
+                == display_name.strip().lower()
+            ):
+                internal_name = column.get("name")
+
+                if internal_name:
+                    print(
+                        f"[SP] Resolved column "
+                        f"'{display_name}' -> '{internal_name}'"
+                    )
+                    return internal_name
+
+        raise ValueError(
+            f"SharePoint column '{display_name}' was not found."
+        )
+
+    # ==========================================================
+    # UPDATE MANUAL SUMMARY REPORT URL
+    # ==========================================================
+
+    def update_summary_report_url(
+        self,
+        item_id: str,
+        report_url: str,
+    ):
+        """
+        Stores the manually uploaded audit summary report URL
+        in the SharePoint List column whose display name is:
+
+            Summary Report Link
+        """
+
+        column_name = self._get_column_internal_name(
+            "Summary Report Link"
+        )
+
+        payload = {
+            column_name: report_url
+        }
+
+        print("\nUpdating Summary Report Link...")
+        print(payload)
+
+        self.update_fields(
+            settings.SHAREPOINT_SITE_ID,
+            settings.SHAREPOINT_LIST_ID,
+            item_id,
+            payload,
+        )
+
+        print("Summary Report Link updated successfully.")
+
+    # ==========================================================
     # UPDATE STATUS
     # ==========================================================
 
@@ -107,21 +194,20 @@ class SharePointListService:
     ):
         """
         Updates AuditStatus field.
-        Example values: Processing, Completed, Failed
+
+        Example values:
+            Processing
+            Completed
+            Failed
         """
-        payload = {"AuditStatus": status}
+
+        payload = {
+            "AuditStatus": status
+        }
+
         self.update_fields(
             settings.SHAREPOINT_SITE_ID,
             settings.SHAREPOINT_LIST_ID,
             item_id,
             payload,
         )
-
-    # #-------------Testing------------------
-    # def test(self):
-    #     columns = self.graph.get(
-    #     f"https://graph.microsoft.com/v1.0/sites/{settings.SHAREPOINT_SITE_ID}/lists/{settings.SHAREPOINT_LIST_ID}/columns"
-    #     )
-
-    #     for col in columns["value"]:
-    #         print(f"{col['displayName']} --> {col['name']}")

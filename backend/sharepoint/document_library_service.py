@@ -667,3 +667,222 @@ class DocumentLibraryService:
             report_name,
             content_type,
         )
+
+"""
+
+══════════════════════════════════════════════════════════════════════════════
+ 2. SummaryLibraryService  (manual audit summary reports)
+══════════════════════════════════════════════════════════════════════════════
+
+SummaryLibraryService   — uploads manually prepared audit summary reports
+   (PDF/DOCX) uploaded by auditors via the findings page.
+   Folder structure: <AuditType> / <filename>
+   Library name configured via SHAREPOINT_SUMMARY_LIBRARY_NAME env var.
+   Accepts in-memory bytes — no local file path required.
+
+"""
+class SummaryLibraryService:
+    """
+    Uploads auditor-prepared summary reports to the 'Audit Summary' library.
+
+    Folder structure (flat — no year, no project sub-folder):
+        Audit Summary/
+            STAR/
+                My_Audit_Report.pdf
+            DEX/
+                Another_Report.docx
+
+    Accepts in-memory bytes so the file never needs to touch disk.
+    """
+
+    def __init__(self, graph: GraphClient):
+        self.graph        = graph
+        self.site_id      = settings.SHAREPOINT_SITE_ID
+        self.library_name = settings.SHAREPOINT_SUMMARY_LIBRARY_NAME
+        self._drive_id    = None
+
+    # ── Drive lookup ──────────────────────────────────────────────────────────
+
+    def _get_drive_id(self) -> str:
+        if self._drive_id:
+            return self._drive_id
+        endpoint = f"https://graph.microsoft.com/v1.0/sites/{self.site_id}/drives"
+        for drive in self.graph.get(endpoint).get("value", []):
+            if drive["name"].lower() == self.library_name.lower():
+                self._drive_id = drive["id"]
+                print(f"[Summary] Found library: {self.library_name} (drive={drive['id']})")
+                return self._drive_id
+        raise Exception(
+            f"SharePoint library '{self.library_name}' not found. "
+            "Check SHAREPOINT_SUMMARY_LIBRARY_NAME env var."
+        )
+
+    # ── Folder helpers ────────────────────────────────────────────────────────
+
+    def _ensure_audit_type_folder(self, audit_type: str):
+        """Ensure STAR/ or DEX/ folder exists at library root."""
+        drive    = self._get_drive_id()
+        endpoint = f"https://graph.microsoft.com/v1.0/drives/{drive}/root:/{audit_type}"
+        try:
+            self.graph.get(endpoint)
+        except Exception:
+            # Folder does not exist — create it
+            self.graph.post(
+                f"https://graph.microsoft.com/v1.0/drives/{drive}/root/children",
+                {
+                    "name": audit_type,
+                    "folder": {},
+                    "@microsoft.graph.conflictBehavior": "fail",
+                },
+            )
+            print(f"[Summary] Created folder: {audit_type}/")
+
+    # ── Upload ────────────────────────────────────────────────────────────────
+
+    def upload_summary_report(
+        self,
+        *,
+        file_name: str,
+        file_content: bytes,
+        audit_type: str,          # "STAR" or "DEX"
+        content_type: str = "application/octet-stream",
+    ) -> dict:
+        """
+        Upload an in-memory file as a manual audit summary report.
+
+        Returns:
+            {
+                "report_name": str,
+                "report_url":  str,   # direct SP URL for display/download
+                "drive_item_id": str,
+                "size": int,
+            }
+        """
+        # Normalise audit_type to uppercase so folder is always STAR/ or DEX/
+        folder = audit_type.upper()
+        self._ensure_audit_type_folder(folder)
+
+        drive    = self._get_drive_id()
+        endpoint = (
+            f"https://graph.microsoft.com/v1.0/"
+            f"drives/{drive}/root:/{folder}/{file_name}:/content"
+        )
+
+        print(f"[Summary] Uploading: {folder}/{file_name} ({len(file_content)} bytes)")
+        graph_resp = self.graph.put_bytes(endpoint, file_content, content_type=content_type)
+
+        # Build a clean direct URL (not the _layouts redirect)
+        raw_url     = graph_resp.get("webUrl", "")
+        site_base   = settings.SHAREPOINT_SITE_URL.rstrip("/")
+        direct_url  = (
+            f"{site_base}"
+            f"/{quote(self.library_name, safe='')}"
+            f"/{quote(folder, safe='')}"
+            f"/{quote(file_name, safe='')}"
+        )
+        # Fall back to Graph's webUrl if we couldn't build the direct one
+        report_url  = direct_url if site_base else raw_url
+
+        result = {
+            "report_name":   graph_resp.get("name", file_name),
+            "report_url":    report_url,
+            "drive_item_id": graph_resp.get("id"),
+            "size":          graph_resp.get("size", len(file_content)),
+        }
+        print(f"[Summary] Uploaded: {result['report_url']}")
+        return result
+
+"""
+NewsletterLibraryService — lists all PDF files inside the newsletters
+SharePoint folder (configured via SHAREPOINT_NEWSLETTERS_URL).
+Returns [{name, web_url, download_url, last_modified}, ...] sorted newest first.
+"""
+# ══════════════════════════════════════════════════════════════════════════════
+# 3. NewsletterLibraryService  (list newsletter PDFs from SharePoint folder)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class NewsletterLibraryService:
+    """
+    Lists all PDF files in the SharePoint newsletters folder.
+
+    The folder URL is taken from SHAREPOINT_NEWSLETTERS_URL env var.
+    Files are returned sorted newest-first by lastModifiedDateTime.
+
+    Each entry:
+        {
+            "name":          str,   # file name, e.g. "Newsletter_Edition_5.pdf"
+            "web_url":       str,   # direct browser-openable URL
+            "download_url":  str,   # pre-authenticated download URL (short-lived)
+            "last_modified": str,   # ISO 8601 datetime string
+            "size":          int,   # bytes
+        }
+    """
+
+    def __init__(self, graph: GraphClient):
+        self.graph        = graph
+        self.site_id      = settings.SHAREPOINT_SITE_ID
+        self.folder_url   = settings.SHAREPOINT_NEWSLETTERS_URL
+        self._drive_id:  str | None = None
+        self._folder_id: str | None = None
+
+    # ── Resolve the folder once, cache it ─────────────────────────────────────
+
+    def _resolve_folder(self) -> tuple[str, str]:
+        """Returns (drive_id, folder_item_id)."""
+        if self._drive_id and self._folder_id:
+            return self._drive_id, self._folder_id
+
+        if not self.folder_url:
+            raise ValueError(
+                "SHAREPOINT_NEWSLETTERS_URL is not set. "
+                "Add it to your .env file."
+            )
+
+        # Use Graph's sharing-link resolver to handle any SP URL format
+        import base64
+        encoded = base64.urlsafe_b64encode(self.folder_url.encode()).rstrip(b"=").decode()
+        shares_url = f"https://graph.microsoft.com/v1.0/shares/u!{encoded}/driveItem"
+
+        folder_item     = self.graph.get(shares_url)
+        self._drive_id  = folder_item["parentReference"]["driveId"]
+        self._folder_id = folder_item["id"]
+        print(f"[Newsletters] Resolved folder: drive={self._drive_id} item={self._folder_id}")
+        return self._drive_id, self._folder_id
+
+    # ── List files ────────────────────────────────────────────────────────────
+
+    def list_newsletters(self) -> list[dict]:
+        """
+        Returns all PDF files in the newsletter folder, newest first.
+        Non-PDF files are silently skipped.
+        """
+        drive_id, folder_id = self._resolve_folder()
+
+        results = []
+        url: str | None = (
+            f"https://graph.microsoft.com/v1.0/"
+            f"drives/{drive_id}/items/{folder_id}/children"
+            "?$select=name,webUrl,file,size,lastModifiedDateTime,@microsoft.graph.downloadUrl"
+            "&$top=200"
+        )
+
+        while url:
+            page = self.graph.get(url)
+            for item in page.get("value", []):
+                # Only PDFs
+                mime = item.get("file", {}).get("mimeType", "")
+                if mime != "application/pdf" and not item["name"].lower().endswith(".pdf"):
+                    continue
+                results.append({
+                    "name":          item["name"],
+                    "web_url":       item.get("webUrl", ""),
+                    "download_url":  item.get("@microsoft.graph.downloadUrl", ""),
+                    "last_modified": item.get("lastModifiedDateTime", ""),
+                    "size":          item.get("size", 0),
+                })
+            url = page.get("@odata.nextLink")
+
+        # Sort newest first
+        results.sort(key=lambda x: x["last_modified"], reverse=True)
+        print(f"[Newsletters] Found {len(results)} newsletter(s)")
+        return results

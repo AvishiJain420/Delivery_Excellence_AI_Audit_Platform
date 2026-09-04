@@ -57,7 +57,10 @@ function AssignAuditorModal({ sessionId, clientName, projectName, onClose, onAss
 
   const handleSubmit = async () => {
     if (!email.trim() || !name.trim()) { setError('Both fields are required.'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Enter a valid email address.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Enter a valid email address.')
+      return
+    }
     setSaving(true); setError(null)
     try {
       const res = await fetch(`${config.apiUrl}/polaris/audit/${sessionId}/assign-auditor`, {
@@ -122,8 +125,8 @@ function AssignAuditorModal({ sessionId, clientName, projectName, onClose, onAss
 
           {/* Note */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-[12px] text-amber-800">
-            <strong>Note:</strong> After assigning, ensure the auditor is added to the Azure AD App Registration
-            with the <strong>Auditor</strong> role. Their dashboard will update automatically upon next login.
+            <strong>Note:</strong> The auditor will receive an email notification
+              after the assignment is successfully saved.
           </div>
         </div>
 
@@ -243,7 +246,7 @@ export default function StartAuditPage() {
                   <td className="px-4 py-4 text-center text-slate-600 text-[13px]">{row.project_code || '—'}</td>
                   {/* DOCS Submitted */}
                   <td className="px-4 py-4 text-center text-slate-600 text-[13px]">
-                    {row.docs_submitted || '—'}
+                    {row.docs_submitted != null ? row.docs_submitted : '—'}
                   </td>
                   {/* Audit Initiation Date */}
                   <td className="px-4 py-4 text-center text-slate-600 text-[13px] whitespace-nowrap">

@@ -98,58 +98,68 @@ export default function InitiateStarAuditPage() {
     setError(null)
 
     // Basic validation
-    if (!form.client_name || !form.project_name || !form.project_manager || !form.estimated_budget) {
+    if (
+      !form.client_name ||
+      !form.project_name ||
+      !form.project_manager ||
+      !form.estimated_budget
+    ) {
       setError('Please fill in all required fields.')
       return
     }
+
     if (files.length === 0) {
       setError('Please upload at least one document.')
       return
     }
 
     setSubmitting(true)
+
     try {
       const fd = new FormData()
-      Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v) })
-      files.forEach(f => fd.append('files', f))
+
+      Object.entries(form).forEach(([k, v]) => {
+        if (v) {
+          fd.append(k, v)
+        }
+      })
+
+      files.forEach(file => {
+        fd.append('files', file)
+      })
 
       const res = await fetch(`${config.apiUrl}/polaris/audit/star`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${TokenStore.getAccess() ?? ''}` },
+        headers: {
+          Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
+        },
         body: fd,
       })
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.detail ?? `Server error ${res.status}`)
+        throw new Error(
+          err.detail ?? `Server error ${res.status}`
+        )
       }
 
       const data = await res.json()
-            // data = { session_id, sharepoint_item_id, audit_type, project_name, client_name, ... }
 
-      // Navigate to the success/next page, passing both IDs as query params
       router.push(
-        `/audit/initiate/star/next?session_id=${encodeURIComponent(data.session_id)}&item_id=${encodeURIComponent(data.sharepoint_item_id ?? '')}`
+        `/audit/initiate/star/next?session_id=${encodeURIComponent(
+          data.session_id
+        )}&item_id=${encodeURIComponent(
+          data.sharepoint_item_id ?? ''
+        )}`
       )
-
     } catch (err: any) {
-      setError(err.message ?? 'Submission failed. Please try again.')
-    // } finally {
+      setError(
+        err.message ?? 'Submission failed. Please try again.'
+      )
+    } finally {
       setSubmitting(false)
     }
   }
-
-  // if (success) {
-  //   return (
-  //     <AppShell>
-  //       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-  //         <CheckCircle2 size={52} className="text-green-500" />
-  //         <h2 className="text-xl font-semibold text-slate-800">Audit request submitted!</h2>
-  //         <p className="text-slate-500 text-sm">Redirecting to project details…</p>
-  //       </div>
-  //     </AppShell>
-  //   )
-  // }
 
   return (
     <AppShell>

@@ -67,61 +67,68 @@ export default function InitiateDexAuditPage() {
     e.preventDefault()
     setError(null)
 
-        const required = [
-      'client_name', 'project_name', 'project_code', 'project_manager',
-
-      'sow_signed_date', 'actual_project_start_date', 'estimated_project_end_date',
-            'estimated_budget', 'sharepoint_link',
+    const required = [
+      'client_name',
+      'project_name',
+      'project_code',
+      'project_manager',
+      'sow_signed_date',
+      'actual_project_start_date',
+      'estimated_project_end_date',
+      'estimated_budget',
+      'sharepoint_link',
     ] as const
 
+    const missing = required.filter((k) => !form[k])
 
-    const missing = required.filter(k => !form[k])
     if (missing.length > 0) {
       setError('Please fill in all required fields.')
       return
     }
 
     setSubmitting(true)
+
     try {
-      const res = await fetch(`${config.apiUrl}/polaris/audit/dex`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
-        },
-        body: JSON.stringify(form),
-      })
+      const token = TokenStore.getAccess()
+
+      const res = await fetch(
+        `${config.apiUrl}/polaris/audit/dex`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token ?? ''}`,
+          },
+          body: JSON.stringify(form),
+        }
+      )
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.detail ?? `Server error ${res.status}`)
+        throw new Error(
+          err.detail ?? `Server error ${res.status}`
+        )
       }
 
       const data = await res.json()
-
-      // Navigate to the success/next page, passing both IDs
+      
       router.push(
-        `/audit/initiate/dex/next?session_id=${encodeURIComponent(data.session_id)}&item_id=${encodeURIComponent(data.sharepoint_item_id ?? '')}`
+        `/audit/initiate/dex/next?session_id=${encodeURIComponent(
+          data.session_id
+        )}&item_id=${encodeURIComponent(
+          data.sharepoint_item_id ?? ''
+        )}`
       )
 
     } catch (err: any) {
-      setError(err.message ?? 'Submission failed. Please try again.')
+      setError(
+        err.message ?? 'Submission failed. Please try again.'
+      )
     } finally {
       setSubmitting(false)
     }
   }
 
-  // if (success) {
-  //   return (
-  //     <AppShell>
-  //       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-  //         <CheckCircle2 size={52} className="text-green-500" />
-  //         <h2 className="text-xl font-semibold text-slate-800">DEX audit request submitted!</h2>
-  //         <p className="text-slate-500 text-sm">Redirecting to project details…</p>
-  //       </div>
-  //     </AppShell>
-  //   )
-  // }
 
   return (
     <AppShell>
