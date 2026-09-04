@@ -8,6 +8,9 @@ from config.settings import settings
 from db.database import engine, Base
 from auth.auth import router as auth_router, _get_msal_app
 from routers.audit_router import router as audit_router
+from routers.polaris_router import router as polaris_router
+
+import db.polaris_models
 
 _executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="audit_worker")
 
@@ -41,7 +44,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Delivery Excellence AI Auditor",
+    title="Polaris - AI Audit Platform",
     version="2.0.0",
     lifespan=lifespan,
     redirect_slashes=False,
@@ -60,10 +63,12 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(audit_router)
+app.include_router(polaris_router)
 
 @app.get("/", tags=["Health"])
 async def root():
-    return {"status": "ok", "version": "2.0.0"}
+    return {"status": "ok", "version": "2.0.0", "app": "Polaris"}
+
 
 # In main.py
 @app.get("/health", tags=["Health"])

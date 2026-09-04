@@ -8,7 +8,6 @@
 export const config = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000',
   wsUrl: process.env.NEXT_PUBLIC_WS_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000',
-  polarisUrl: process.env.NEXT_PUBLIC_POLARIS_URL ?? '',
   docs: {
     sampleDocuments:  process.env.NEXT_PUBLIC_SAMPLE_DOCUMENTS_URL  ?? '',
     auditOverview:    process.env.NEXT_PUBLIC_AUDIT_OVERVIEW_URL     ?? '',

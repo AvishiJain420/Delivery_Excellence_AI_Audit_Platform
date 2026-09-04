@@ -5,6 +5,14 @@
 # widely supported. Match this to whatever Python version you develop on.
 FROM python:3.11-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=8000 \
+    CURL_CA_BUNDLE="" \
+    REQUESTS_CA_BUNDLE="" \
+    SSL_CERT_FILE="" \
+    PIP_NO_VERIFY_CERTS=1
+
 # ---- Set the working folder inside the container ----
 # Everything after this happens inside /app. Think of it as "cd /app".
 WORKDIR /app
@@ -15,7 +23,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
-    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 #build-essential - some package contain native C/C++ components
@@ -26,7 +33,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # changes constantly. Copying requirements first means rebuilds only reinstall
 # packages when requirements.txt actually changes — much faster rebuilds.
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip setuptools wheel \
+ && pip config set global.cert false || true \
+ && pip config set global.trusted-host "pypi.org files.pythonhosted.org" || true \
+ && pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+ 
 #no-cache-dir because we dont need to keep download package caches in docker images like pip keeps
 
 # ---- Now copy the rest of your backend code ----
