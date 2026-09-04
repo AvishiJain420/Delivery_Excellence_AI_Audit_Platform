@@ -5,7 +5,7 @@
 /* ── CSS custom properties ──────────────────────────────────────────────────── */
 :root {
   --sidebar-width: 240px;
-  --header-height :56px;
+  --header-height: 56px;
 }
 
 /* ── Base ────────────────────────────────────────────────────────────────────── */
@@ -95,7 +95,6 @@ body {
 .animate-fade-in { animation: fadeIn 0.15s ease-out; }
 
 /* ── Responsive audit page layout fix ──────────────────────────────────────── */
-/* Ensure audit page fills screen minus sidebar + header on all screen sizes  */
 @media (max-width: 768px) {
-  :root { --sidebar-w: 64px; }
+  :root { --sidebar-width: 64px; }
 }

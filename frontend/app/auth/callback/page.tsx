@@ -33,7 +33,7 @@ export default function AuthCallbackPage() {
       window.location.replace(returnUrl)
     } else {
       console.log('[Callback] No saved URL, going to dashboard')
-      window.location.replace('/dashboard')
+      window.location.replace('/home')
     }
   }, [])
 

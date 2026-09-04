@@ -73,10 +73,6 @@ class GraphClient:
 
 
     def post(self, url: str, payload: dict) -> dict:
-        """
-        JSON POST request to Microsoft Graph.
-        Used for: Search API, writing back to list items.
-        """
         print(f"  POST {url}")
 
         headers = {
@@ -96,7 +92,11 @@ class GraphClient:
 
         response.raise_for_status()
 
-        return response.json()
+        # Microsoft Graph sendMail returns 202 with an empty body.
+        if response.text:
+            return response.json()
+
+        return {}
     
     #A PUT request is an HTTP method used to create a new resource or replace an existing resource at a specified URL
 

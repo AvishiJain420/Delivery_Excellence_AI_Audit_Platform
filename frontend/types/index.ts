@@ -39,11 +39,11 @@ export type ChatMessageType =
 
 // ─── Backend API response shapes ──────────────────────────────────────────────
 export interface BackendUser {
-  user_id: string
-  user_name: string
+  user_id:     string
+  user_name:   string
   azure_email: string | null
-  role: 'admin' | 'user'
-  created_at: string
+  role:        'admin' | 'auditor' | 'user'
+  created_at:  string
 }
 
 export interface IdentifiedDoc {

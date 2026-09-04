@@ -164,8 +164,8 @@ async def azure_callback(
     if not isinstance(entra_roles, list):
         entra_roles = []
     assigned_role = (
-        "admin"
-        if any(isinstance(r, str) and r.lower() == "admin" for r in entra_roles)
+        "admin"   if any(isinstance(r, str) and r.lower() == "admin"   for r in entra_roles)
+        else "auditor" if any(isinstance(r, str) and r.lower() == "auditor" for r in entra_roles)
         else "user"
     )
 
