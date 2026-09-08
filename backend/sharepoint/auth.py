@@ -76,7 +76,17 @@ class Authenticator:
             "jti": str(uuid.uuid4())
         }
 
-        SP_CERT_PRIVATE_KEY = settings.SP_CERT_PRIVATE_KEY.replace("\\n", "\n")
+        SP_CERT_PRIVATE_KEY = settings.SP_CERT_PRIVATE_KEY.strip()
+
+        # Remove surrounding quotes if they were included by the environment.
+        if (
+            len(SP_CERT_PRIVATE_KEY) >= 2
+            and SP_CERT_PRIVATE_KEY[0] == '"'
+            and SP_CERT_PRIVATE_KEY[-1] == '"'
+        ):
+            SP_CERT_PRIVATE_KEY = SP_CERT_PRIVATE_KEY[1:-1]
+
+        SP_CERT_PRIVATE_KEY = SP_CERT_PRIVATE_KEY.replace("\\n", "\n").strip()
         private_key = SP_CERT_PRIVATE_KEY.encode()
 
         client_assertion = pyjwt.encode(

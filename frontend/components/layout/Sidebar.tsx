@@ -51,7 +51,7 @@ const NAV: NavItem[] = [
     children: [
       { href: '/audit/process',   label: 'Audit Process',         icon: FileText },
       { href: '/ai-history',      label: 'AI Audit History',      icon: History },
-      { href: '/overall-history', label: 'Overall Audit History', icon: History },
+      { href: '/overall-history', label: 'Project Audit History', icon: History },
     ],
   },
 ]

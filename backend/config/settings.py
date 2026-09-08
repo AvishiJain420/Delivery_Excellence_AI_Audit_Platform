@@ -54,7 +54,7 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Here we will be reading all the env variables which are essential for our sharepoint code , and all the other python modules will be receiving the env variables from here only
+#Here we will be reading all the env variables which are essential for our sharepoint code , and all the other python modules will be receiving the env variables from here only
 
 # from pathlib import Path
 # from pydantic_settings import BaseSettings, SettingsConfigDict

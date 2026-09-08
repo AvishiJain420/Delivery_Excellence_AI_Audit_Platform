@@ -50,6 +50,15 @@ app = FastAPI(
     redirect_slashes=False,
 )
 
+# origins = [
+#     "http://localhost:3000", "http://127.0.0.1:3000",
+#     "http://localhost:5173", "http://127.0.0.1:5173",
+#     "http://localhost:5500", "http://127.0.0.1:5500",
+#     "null",
+# ]
+# if settings.FRONTEND_ORIGIN:
+#     origins.append(settings.FRONTEND_ORIGIN)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -60,6 +69,15 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["Content-Disposition"],
 )
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+#     allow_headers=["*"],
+#     expose_headers=["Content-Disposition"],
+# )
 
 app.include_router(auth_router)
 app.include_router(audit_router)
