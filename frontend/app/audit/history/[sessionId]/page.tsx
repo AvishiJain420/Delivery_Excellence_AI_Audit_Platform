@@ -189,21 +189,78 @@ export default function AuditHistoryDetailPage() {
         />
       </SectionCard>
 
+
       {/* Manual findings / scores */}
       {findings && (
         <SectionCard title="Auditor Findings" icon={BarChart2}>
-          {/* Bar chart */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+
+          {/* Category scores */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {findings.categories.map(cat => {
-              const avg = cat.scores.reduce((s, x) => s + x.manual_score, 0) / (cat.scores.length || 1)
-              return <ScoreBar key={cat.category} label={cat.category} score={avg} />
+              const applicableScores = cat.scores.filter(
+                (s: any) => s.applicable !== false
+              )
+
+              const avg =
+                applicableScores.length > 0
+                  ? applicableScores.reduce(
+                      (sum: number, s: any) => sum + s.manual_score,
+                      0
+                    ) / applicableScores.length
+                  : 0
+
+              return (
+                <ScoreBar
+                  key={cat.category}
+                  label={cat.category}
+                  score={avg}
+                />
+              )
             })}
           </div>
 
-          {/* Auditor comments */}
+            {/* Category-wise auditor comments — only show categories with remarks */}
+            {findings.categories.some(
+              (cat: any) => cat.remarks?.trim()
+            ) && (
+              <div className="mt-2">
+                <p className="text-[13px] font-semibold text-slate-700 mb-3">
+                  Auditor Comments by Category
+                </p>
+
+                <div className="space-y-3">
+                  {findings.categories
+                    .filter((cat: any) => cat.remarks?.trim())
+                    .map((cat: any) => (
+                      <div
+                        key={cat.category}
+                        className="border border-slate-200 rounded-lg overflow-hidden"
+                      >
+                        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
+                          <p className="text-[13px] font-semibold text-slate-800">
+                            {cat.category}
+                          </p>
+                        </div>
+
+                        <div className="px-4 py-3">
+                          <p className="text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed">
+                            {cat.remarks}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+
+          {/* Overall auditor comments */}
           {findings.auditor_comments && (
-            <div className="mt-4">
-              <p className="text-[13px] font-semibold text-slate-700 mb-1">Auditor Comments</p>
+            <div className="mt-5">
+              <p className="text-[13px] font-semibold text-slate-700 mb-1">
+                Overall Auditor Comments
+              </p>
+
               <div className="bg-slate-50 border border-slate-200 rounded p-3 text-[13px] text-slate-700 whitespace-pre-wrap">
                 {findings.auditor_comments}
               </div>
@@ -214,17 +271,29 @@ export default function AuditHistoryDetailPage() {
           {findings.auditor_name && (
             <div className="mt-3 flex items-center gap-2 text-[12.5px] text-slate-500">
               <User size={13} />
-              Reviewed by <strong className="text-slate-700">{findings.auditor_name}</strong>
+
+              Reviewed by{' '}
+              <strong className="text-slate-700">
+                {findings.auditor_name}
+              </strong>
+
               {findings.auditor_email && (
-                <span className="text-slate-400">({findings.auditor_email})</span>
+                <span className="text-slate-400">
+                  ({findings.auditor_email})
+                </span>
               )}
+
               {findings.submitted_at && (
-                <span>· {new Date(findings.submitted_at).toLocaleDateString()}</span>
+                <span>
+                  · {new Date(findings.submitted_at).toLocaleDateString()}
+                </span>
               )}
             </div>
           )}
+
         </SectionCard>
       )}
+
 
       {/* Project / form details */}
       <SectionCard title="Project Information" icon={FileText}>

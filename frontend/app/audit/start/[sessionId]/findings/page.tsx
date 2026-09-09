@@ -584,7 +584,7 @@ export default function UploadFindingsPage() {
         <button onClick={handleSave} disabled={saving}
           className="inline-flex items-center gap-2 px-6 py-3 bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white text-[14px] font-semibold rounded-lg transition-colors">
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {saving ? 'Saving…' : 'Save Findings'}
+          {saving ? 'Submitting…' : 'Submit Findings'}
         </button>
         <Link href={`/audit/start/${sessionId}`}
           className="text-[13px] text-slate-500 hover:text-slate-700 transition-colors">

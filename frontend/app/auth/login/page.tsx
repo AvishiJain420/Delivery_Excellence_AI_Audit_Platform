@@ -30,7 +30,7 @@ export default function LoginPage() {
             <Bot className="text-white w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold text-white">Polaris</h1>
-          <p className="text-blue-300/80 text-sm mt-1">AI Document Audit Platform</p>
+          <p className="text-blue-300/80 text-sm mt-1">AI Audit Platform</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">

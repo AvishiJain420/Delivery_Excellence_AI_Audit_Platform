@@ -11,7 +11,7 @@ import { useUIStore } from '@/store'
 import { useState } from 'react'
 import { docLink } from '@/lib/config'
 
-type NavLeaf  = { href: string; label: string; icon: React.ElementType }
+type NavLeaf  = { href: string; label: string; icon: React.ElementType , target?: string , rel?: string}
 type NavGroup = { groupLabel: string; icon: React.ElementType; href?: string; children: NavLeaf[] }
 type NavItem  = NavLeaf | NavGroup
 
@@ -27,8 +27,8 @@ const NAV: NavItem[] = [
     href: '/knowledge-library',
     children: [
       { href: '/newsletters',label: 'Newsletters',icon: Newspaper },
-      { href: docLink('dexStarKnowledge'),label: 'DEX & STAR Knowledge', icon: Library },
-      { href: docLink('leadershipSummary'),label: 'Leadership Summary', icon: Users },
+      { href: docLink('dexStarKnowledge'),label: 'DEX & STAR Knowledge', icon: Library ,target: '_blank', rel: 'noopener noreferrer'},
+      { href: docLink('leadershipSummary'),label: 'Leadership Summary', icon: Users , target: '_blank', rel: 'noopener noreferrer'},
     ],
   },
 
@@ -38,8 +38,8 @@ const NAV: NavItem[] = [
     icon: Library,
     href: '/dex-star',
     children: [
-      { href: docLink('standardPractices'), label: 'Standard Practices', icon: Lightbulb },
-      { href: docLink('sampleDocuments'),   label: 'Sample Documents',   icon: FolderOpen },
+      { href: docLink('standardPractices'), label: 'Standard Practices', icon: Lightbulb ,target: '_blank', rel: 'noopener noreferrer'},
+      { href: docLink('sampleDocuments'),   label: 'Sample Documents',   icon: FolderOpen ,target: '_blank', rel: 'noopener noreferrer'},
     ],
   },
 
@@ -50,7 +50,7 @@ const NAV: NavItem[] = [
     href: '/audit',
     children: [
       { href: '/audit/process',   label: 'Audit Process',         icon: FileText },
-      { href: '/ai-history',      label: 'AI Audit History',      icon: History },
+      { href: '/ai-history',      label: 'Documents Audit History',      icon: History },
       { href: '/overall-history', label: 'Project Audit History', icon: History },
     ],
   },
@@ -102,7 +102,7 @@ export function Sidebar() {
             const isAct = active(item.href)
             const Icon  = item.icon
             return (
-              <Link key={item.href} href={item.href}
+              <Link key={item.href} href={item.href} target={item.target} rel={item.rel}
                 title={sidebarCollapsed ? item.label : undefined}
                 className={cn('sidebar-item', isAct ? 'active' : 'inactive', sidebarCollapsed && 'justify-center px-0')}>
                 <Icon size={17} className="flex-shrink-0" />
@@ -121,7 +121,7 @@ export function Sidebar() {
               const CIcon = child.icon
               const isAct = active(child.href)
               return (
-                <Link key={child.href} href={child.href} title={child.label}
+                <Link key={child.href} href={child.href} title={child.label} target={child.target} rel={child.rel}
                   className={cn('sidebar-item justify-center px-0', isAct ? 'active' : 'inactive')}>
                   <CIcon size={17} className="flex-shrink-0" />
                 </Link>
@@ -134,7 +134,7 @@ export function Sidebar() {
               <div className="flex items-center gap-0.5">
                 {/* Clicking the label navigates if href is set */}
                 {item.href ? (
-                  <Link href={item.href}
+                  <Link href={item.href} 
                     className={cn('sidebar-item flex-1', anyActive ? 'active' : 'inactive')}>
                     <GroupIcon size={17} className="flex-shrink-0" />
                     <span className="truncate">{item.groupLabel}</span>
@@ -163,7 +163,7 @@ export function Sidebar() {
                     const CIcon = child.icon
                     const isAct = active(child.href)
                     return (
-                      <Link key={child.href} href={child.href}
+                      <Link key={child.href} href={child.href} target = {child.target} rel={child.rel}
                         className={cn('sidebar-item text-[12px]', isAct ? 'active' : 'inactive')}>
                         <CIcon size={14} className="flex-shrink-0" />
                         <span className="truncate">{child.label}</span>
