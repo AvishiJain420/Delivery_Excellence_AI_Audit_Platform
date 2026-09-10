@@ -80,7 +80,6 @@ export default function AuditProcessPage() {
           <p className="text-[13px] text-slate-600 leading-relaxed m-0">
             The DEX Audit is a structured review of your project's data, quality, and governance artefacts.
             All documents are first AI-reviewed for completeness, then assessed by a DEX Auditor.
-            Projects scoring above 5/10 are eligible to proceed to formal audit review.
           </p>
         </div>
       </div>
