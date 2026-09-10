@@ -27,9 +27,6 @@ async def _prewarm_msal():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Set the global executor so all run_in_executor calls use it
-    loop = asyncio.get_event_loop()
-    loop.set_default_executor(_executor)
 
     # Create DB tables
     async with engine.begin() as conn:
@@ -50,34 +47,16 @@ app = FastAPI(
     redirect_slashes=False,
 )
 
-# origins = [
-#     "http://localhost:3000", "http://127.0.0.1:3000",
-#     "http://localhost:5173", "http://127.0.0.1:5173",
-#     "http://localhost:5500", "http://127.0.0.1:5500",
-#     "null",
-# ]
-# if settings.FRONTEND_ORIGIN:
-#     origins.append(settings.FRONTEND_ORIGIN)
+frontend_origin = settings.FRONTEND_ORIGIN.strip().rstrip("/")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        settings.FRONTEND_ORIGIN,
-    ],
+    allow_origins=[frontend_origin],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"],
     allow_headers=["*"],
     expose_headers=["Content-Disposition"],
 )
-
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-#     allow_headers=["*"],
-#     expose_headers=["Content-Disposition"],
-# )
 
 app.include_router(auth_router)
 app.include_router(audit_router)

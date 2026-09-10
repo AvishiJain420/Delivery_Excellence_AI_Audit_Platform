@@ -23,6 +23,7 @@ const API_URL =
  * considering the refresh attempt failed.
  */
 const REFRESH_TIMEOUT_MS = 10_000
+const API_TIMEOUT_MS = 20_000
 
 /**
  * Shared refresh promise.
@@ -97,10 +98,32 @@ async function apiFetch(
     ...(opts.headers as Record<string, string> ?? {}),
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
-    ...opts,
-    headers,
-  })
+  const controller = new AbortController()
+
+  const timeoutId = window.setTimeout(() => {
+    controller.abort()
+  }, API_TIMEOUT_MS)
+
+  let res: Response
+
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...opts,
+      headers,
+      signal: controller.signal,
+    })
+  } catch (error) {
+    if (
+      error instanceof DOMException &&
+      error.name === 'AbortError'
+    ) {
+      throw new Error(`Request timed out: ${path}`)
+    }
+
+    throw error
+  } finally {
+    window.clearTimeout(timeoutId)
+  }
 
   /**
    * Normal successful/non-auth response.
@@ -160,10 +183,23 @@ async function apiFetch(
      * Otherwise a bad token could create an infinite 401 → refresh
      * → 401 → refresh loop.
      */
-    const retryResponse = await fetch(`${API_URL}${path}`, {
-      ...opts,
-      headers: retryHeaders,
-    })
+    const retryController = new AbortController()
+
+    const retryTimeoutId = window.setTimeout(() => {
+      retryController.abort()
+    }, API_TIMEOUT_MS)
+
+    let retryResponse: Response
+
+    try {
+      retryResponse = await fetch(`${API_URL}${path}`, {
+        ...opts,
+        headers: retryHeaders,
+        signal: retryController.signal,
+      })
+    } finally {
+      window.clearTimeout(retryTimeoutId)
+    }
 
     /**
      * If the refreshed token is still rejected, clear the local
@@ -486,9 +522,16 @@ export const authApi = {
     const res = await apiFetch('/auth/me')
 
     if (!res.ok) {
-      throw new Error(
-        'Not authenticated',
-      )
+      let message = 'Failed to load current user'
+
+      try {
+        const error = await res.json()
+        message = error?.detail ?? error?.message ?? message
+      } catch {
+        // Ignore invalid/non-JSON response
+      }
+
+      throw new Error(message)
     }
 
     return res.json()
@@ -694,10 +737,32 @@ export const auditApi = {
 
 // ─── Dashboard API ─────────────────────────────────────────────────────────────
 
+// ─── Dashboard API ─────────────────────────────────────────────────────────────
+// ─── Dashboard API ─────────────────────────────────────────────────────────────
+
 export const dashboardApi = {
-  async getStats(): Promise<DashboardStats> {
-    const sessions =
-      await auditApi.listSessions()
+
+  /**
+   * Fetch all dashboard sessions.
+   *
+   * This is intentionally the ONLY network call used by the
+   * dashboard hooks.
+   *
+   * React Query will cache this result so stats and recent
+   * audits use the same request/result.
+   */
+  async getSessions(): Promise<BackendSession[]> {
+    return auditApi.listSessions()
+  },
+
+
+  /**
+   * Build dashboard statistics from the already-fetched
+   * session list.
+   */
+  getStats(
+    sessions: BackendSession[],
+  ): DashboardStats {
 
     return {
       total: sessions.length,
@@ -714,13 +779,16 @@ export const dashboardApi = {
               'done',
               'failed',
               'pending',
+              'cancelled',
+              'error',
             ].includes(s.audit_status),
         ).length,
 
       failed:
         sessions.filter(
           s =>
-            s.audit_status === 'failed',
+            s.audit_status === 'failed' ||
+            s.audit_status === 'error',
         ).length,
 
       pending:
@@ -731,34 +799,43 @@ export const dashboardApi = {
     }
   },
 
-  async getRecentAudits(
+
+  /**
+   * Build recent audit rows from the same cached session list.
+   *
+   * Project/client information comes from the database response
+   * returned by GET /audit/sessions.
+   */
+  getRecentAudits(
+    sessions: BackendSession[],
     limit = 10,
-  ): Promise<AuditSummary[]> {
-    const sessions =
-      await auditApi.listSessions()
+  ): AuditSummary[] {
 
     return sessions
       .slice(0, limit)
       .map(s => {
+
+        /**
+         * Prefer flat DB fields if present.
+         * Fall back to the nested project object.
+         */
         const projectName =
-          (s as any).project_name ??
+          s.project_name ??
           s.project?.project_name ??
           ''
 
         const clientName =
-          (s as any).client_name ??
+          s.client_name ??
           s.project?.client_name ??
           ''
 
         return {
+
           id: s.session_id,
 
           name:
             projectName ||
-            `Session ${s.session_id.slice(
-              0,
-              8,
-            )}`,
+            `Session ${s.session_id.slice(0, 8)}`,
 
           projectName:
             projectName ||
@@ -784,9 +861,14 @@ export const dashboardApi = {
           auditType:
             s.audit_type ?? undefined,
 
+          /**
+           * Your BackendSession currently exposes completion_time.
+           *
+           * Use that rather than inventing a timestamp.
+           */
           createdAt:
             s.completion_time ??
-            new Date().toISOString(),
+            '',
 
           completedAt:
             s.completion_time ??

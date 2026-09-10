@@ -9,7 +9,7 @@ import { useState } from 'react'
 export function Header() {
   const { sidebarCollapsed } = useUIStore()
   // const { isConnected } = useAuditStore()
-  const { data: user } = useCurrentUser()
+  const {data: user,isLoading: userLoading,isError: userError} = useCurrentUser()
   const [profileOpen, setProfileOpen] = useState(false)
 
   const initials = user?.user_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() ?? '?'
@@ -33,7 +33,13 @@ export function Header() {
               {initials}
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-xs font-semibold text-slate-700 leading-tight">{user?.user_name ?? 'Loading…'}</p>
+              <p className="text-xs font-semibold text-slate-700 leading-tight">
+                {userLoading
+                  ? 'Loading…'
+                  : userError
+                    ? 'User'
+                    : user?.user_name ?? 'User'}
+              </p>
               <p className="text-[10px] text-slate-400 leading-tight">{user?.azure_email ?? ''}</p>
             </div>
             <ChevronDown size={12} className="text-slate-400" />

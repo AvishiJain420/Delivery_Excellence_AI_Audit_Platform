@@ -16,8 +16,9 @@ from config.settings import settings
 engine = create_async_engine(
     settings.DATABASE_URL,
     pool_pre_ping = True,
-    pool_size = 10,
-    max_overflow = 20,
+    pool_size = 5,
+    max_overflow = 5,
+    pool_recycle = 1800,
     echo = False,  # set it True to log SQL during dev,
     
     # Required for Supabase Transaction Pooler (PgBouncer in transaction mode)
