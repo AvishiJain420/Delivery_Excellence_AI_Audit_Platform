@@ -106,18 +106,24 @@ class UserOut(BaseModel):
 @router.get("/azure/login")
 async def azure_login(return_to: Optional[str] = "/dashboard"):
     nonce = secrets.token_urlsafe(32)
-    if not return_to or not return_to.startswith("/") or return_to.startswith("/auth"):
+
+    if (
+        not return_to
+        or not return_to.startswith("/")
+        or return_to.startswith("/auth")
+    ):
         return_to = "/dashboard"
+
     _state_store[nonce] = return_to
-    loop = asyncio.get_event_loop()
-    auth_url = await loop.run_in_executor(
-        None,
+
+    auth_url = await asyncio.to_thread(
         lambda: _get_msal_app().get_authorization_request_url(
             scopes=settings.AZURE_AD_SCOPE.split(),
             state=nonce,
             redirect_uri=settings.AZURE_AD_REDIRECT_URI,
         )
     )
+
     return {"auth_url": auth_url}
 
 @router.get("/azure/callback")
@@ -135,10 +141,7 @@ async def azure_callback(
         raise HTTPException(status_code=400, detail="Invalid state parameter.")
 
     return_to = _state_store.pop(state)
-    loop = asyncio.get_event_loop()
-
-    result = await loop.run_in_executor(
-        None,
+    result = await asyncio.to_thread(
         lambda: _get_msal_app().acquire_token_by_authorization_code(
             code=code,
             scopes=settings.AZURE_AD_SCOPE.split(),

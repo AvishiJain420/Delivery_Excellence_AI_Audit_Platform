@@ -13,6 +13,8 @@ interface AuditOption {
   description: string
   buttonText: string
   href: string
+  target?: string
+  rel?: string
   icon: React.ElementType
   // 'all' = everyone | 'admin_auditor' = admin or auditor only
   visibility: 'all' | 'admin_auditor'
@@ -21,18 +23,44 @@ interface AuditOption {
 const AUDIT_OPTIONS: AuditOption[] = [
   {
     id: 'audit-process',
-    description: 'How the process of an audit is conducted',
+    description: 'How the audit is conducted ?',
     buttonText: 'Audit Process',
     href: '/audit/process',
     icon: FileText,
     visibility: 'all',
   },
   {
+    id: 'initiate-request',
+    description: 'Fill and submit DEX or STAR form to initiate an audit request',
+    buttonText: 'Initiate Audit Request',
+    href: '/audit/initiate',
+    icon: PlusCircle,
+    visibility: 'all',
+  },
+  {
     id: 'overall-history',
-    description: 'History showing all the audits',
-    buttonText: 'Overall Audit History',
+    description: 'Review all DEX & STAR end-to-end Project Audits',
+    buttonText: 'Project Audit History',
     href: '/overall-history',
     icon: History,
+    visibility: 'all',
+  },
+  {
+    id: 'doc-ai-history',
+    description: 'Review all document audits initiated under the DEX or STAR Project Audits',
+    buttonText: 'Documents Audit History',
+    href: '/ai-history',
+    icon: FileCheck,
+    visibility: 'all',
+  },
+  {
+    id: 'audit-schedule',
+    description: 'View calendar of planned audits/events by the Polaris Team',
+    buttonText: 'Audit Schedule',
+    href: process.env.NEXT_PUBLIC_AUDIT_SCHEDULE_URL!,
+    target: '_blank',
+    rel: 'noopener noreferrer',
+    icon: Calendar,
     visibility: 'all',
   },
   {
@@ -42,30 +70,6 @@ const AUDIT_OPTIONS: AuditOption[] = [
     href: '/audit/start',
     icon: PlaySquare,
     visibility: 'admin_auditor',   // hidden from regular users
-  },
-  {
-    id: 'initiate-request',
-    description: 'Fill out the form for STAR or DEX audit',
-    buttonText: 'Initiate Audit Request',
-    href: '/audit/initiate',
-    icon: PlusCircle,
-    visibility: 'all',
-  },
-  {
-    id: 'audit-schedule',
-    description: 'Check out the calendar for schedule',
-    buttonText: 'Audit Schedule',
-    href: process.env.NEXT_PUBLIC_AUDIT_SCHEDULE_URL!,
-    icon: Calendar,
-    visibility: 'all',
-  },
-  {
-    id: 'doc-ai-history',
-    description: 'History showing the projects whose documents were reviewed by AI',
-    buttonText: 'Doc AI Audit History',
-    href: '/ai-history',
-    icon: FileCheck,
-    visibility: 'all',
   },
 ]
 
@@ -115,7 +119,9 @@ export default function AuditPage() {
                 {/* Button — fixed width so all are the same */}
                 <Link
                   href={opt.href}
-                  className="flex-shrink-0 w-52 px-4 py-2 text-[13px] font-semibold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors text-center"
+                  target={opt.target}
+                  rel={opt.rel}
+                  className="flex-shrink-0 w-52 px-4 py-2 text-[13px] font-semibold text-white border border-blue-200 rounded-lg bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors text-center"
                 >
                   {opt.buttonText}
                </Link>

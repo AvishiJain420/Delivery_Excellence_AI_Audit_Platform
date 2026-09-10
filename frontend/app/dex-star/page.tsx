@@ -4,9 +4,9 @@ import Link from 'next/dist/client/link'
 import { FileText, FolderOpen, ChevronRight, BookMarked, Lightbulb } from 'lucide-react'
 import { docLink } from '@/lib/config'
 
-function ActionCard({ icon: Icon, iconBg, title, description, href, btnLabel }: {
+function ActionCard({ icon: Icon, iconBg, title, description, href,target,rel, btnLabel }: {
   icon: React.ElementType; iconBg: string; title: string
-  description: string; href: string; btnLabel: string
+  description: string; href: string; target: string; rel: string; btnLabel: string
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-5 flex items-center gap-5 shadow-sm hover:shadow transition-shadow">
@@ -17,7 +17,7 @@ function ActionCard({ icon: Icon, iconBg, title, description, href, btnLabel }: 
         <h3 className="text-[15px] font-semibold text-slate-800">{title}</h3>
         <p className="text-[13px] text-slate-500 mt-0.5">{description}</p>
       </div>
-      <Link href={href}
+      <Link href={href} target="_blank" rel="noopener noreferrer"
         className="w-44 flex-shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold rounded-lg transition-colors">
         {btnLabel} <ChevronRight size={13} />
       </Link>
@@ -47,6 +47,8 @@ export default function DexStarPage() {
           title="Standard Practices"
           description="Standardised guidelines, checklists, and process documentation for DEX and STAR audit submissions."
           href={docLink('standardPractices')}
+          target="_blank" 
+          rel="noopener noreferrer"
           btnLabel="View Practices"
         />
         <ActionCard
@@ -55,6 +57,8 @@ export default function DexStarPage() {
           title="Sample Documents"
           description="Reference documents, templates, and sample project artefacts to guide your audit preparation."
           href={docLink('sampleDocuments')}
+          target="_blank"
+          rel="noopener noreferrer"
           btnLabel="Browse Samples"
         />
       </div>

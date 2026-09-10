@@ -25,26 +25,110 @@ export function useCurrentUser() {
     queryFn: authApi.getMe,
     retry: false,
     staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: 'always',
   })
 }
 
 // ─── Dashboard hooks ──────────────────────────────────────────────────────────
-export function useDashboardStats() {
+// ─── Dashboard hooks ──────────────────────────────────────────────────────────
+
+const DASHBOARD_SESSIONS_QUERY_KEY = [
+  'dashboard',
+  'sessions',
+] as const
+
+
+/**
+ * Single source of truth for dashboard session data.
+ *
+ * Both statistics and recent audits consume this same
+ * React Query cache entry.
+ *
+ * Result:
+ *
+ *     Dashboard
+ *          |
+ *          v
+ *     GET /audit/sessions
+ *          |
+ *          v
+ *     React Query cache
+ *        /       \
+ *       /         \
+ *    Stats     Recent Audits
+ */
+export function useDashboardSessions() {
   return useQuery({
-    queryKey: ['dashboard', 'stats'],
-    queryFn: dashboardApi.getStats,
-    refetchInterval: 30_000,
-    enabled: authApi.isLoggedIn(),
+    queryKey: DASHBOARD_SESSIONS_QUERY_KEY,
+
+    queryFn:
+      dashboardApi.getSessions,
+
+    /**
+     * Don't immediately refetch the same data every time
+     * another dashboard hook mounts.
+     */
+    staleTime: 30_000,
+
+    /**
+     * Dashboard data doesn't need to be refetched simply
+     * because the user changes browser tabs.
+     */
+    refetchOnWindowFocus: false,
+
+    enabled:
+      authApi.isLoggedIn(),
   })
 }
 
-export function useRecentAudits(limit = 10) {
-  return useQuery({
-    queryKey: ['dashboard', 'recent', limit],
-    queryFn: () => dashboardApi.getRecentAudits(limit),
-    refetchInterval: 15_000,
-    enabled: authApi.isLoggedIn(),
-  })
+
+/**
+ * Dashboard statistics.
+ *
+ * Does NOT make its own API request.
+ */
+export function useDashboardStats() {
+
+  const query =
+    useDashboardSessions()
+
+  return {
+    ...query,
+
+    data:
+      query.data
+        ? dashboardApi.getStats(
+            query.data,
+          )
+        : undefined,
+  }
+}
+
+
+/**
+ * Recent audit list.
+ *
+ * Does NOT make its own API request.
+ */
+export function useRecentAudits(
+  limit = 10,
+) {
+
+  const query =
+    useDashboardSessions()
+
+  return {
+    ...query,
+
+    data:
+      query.data
+        ? dashboardApi.getRecentAudits(
+            query.data,
+            limit,
+          )
+        : undefined,
+  }
 }
 
 

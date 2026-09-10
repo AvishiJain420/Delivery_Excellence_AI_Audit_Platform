@@ -187,7 +187,7 @@ export default function ProjectDetailsPage() {
                       View Document <ExternalLink size={13} />
                     </a>
                   ) : (
-                    <span className="text-[12px] text-slate-400 italic">No link available</span>
+                    <span className="text-[12px] text-slate-400 italic">Document Uploaded to SharePoint</span>
                   )}
                 </div>
               ))}

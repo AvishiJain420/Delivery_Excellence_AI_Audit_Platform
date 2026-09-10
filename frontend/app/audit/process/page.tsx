@@ -11,6 +11,8 @@ function ArticleCard({
   title,
   description,
   href,
+  target,
+  rel,
   btnColor,
   btnLabel = 'Read Now',
 }: {
@@ -19,6 +21,8 @@ function ArticleCard({
   title: string
   description: string
   href: string
+  target?: string
+  rel?: string
   btnColor: string
   btnLabel?: string
 }) {
@@ -40,6 +44,8 @@ function ArticleCard({
 
       <a
         href={href}
+        target={target}
+        rel={rel}
         className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded text-[13px] font-semibold text-white transition-colors self-start ${btnColor}`}
       >
         {btnLabel}
@@ -87,6 +93,8 @@ export default function AuditProcessPage() {
           title="Audit Overview & Introduction"
           description="What the DEX Audit is, why it matters, and who is involved"
           href={docLink('auditOverview')}
+          target="_blank"
+          rel="noopener noreferrer"
           btnColor="bg-rose-700 hover:bg-rose-800"
         />
 
@@ -96,6 +104,8 @@ export default function AuditProcessPage() {
           title="Pre-requisites Checklist"
           description="Documents and artefacts required before requesting an audit"
           href={docLink('prerequisites')}
+          target="_blank"
+          rel="noopener noreferrer"
           btnColor="bg-blue-600 hover:bg-blue-700"
         />
 
@@ -105,6 +115,8 @@ export default function AuditProcessPage() {
           title="Scoring Rubric"
           description="How scores are calculated across different metrics"
           href={docLink('scoringRubric')}
+          target="_blank"
+          rel="noopener noreferrer"
           btnColor="bg-green-700 hover:bg-green-800"
         />
       </div>

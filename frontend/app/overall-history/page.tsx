@@ -163,10 +163,10 @@ export default function OverallAuditHistoryPage() {
             <span>›</span>
             <Link href="/audit" className="hover:text-blue-600">Audit</Link>
             <span>›</span>
-            <span>Overall Audit History</span>
+            <span>Project Audit History</span>
           </div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900">Overall Audit History</h1>
+            <h1 className="text-xl font-bold text-slate-900">Project Audit History</h1>
             {currentUser?.role === 'admin' && (
               <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full">Admin View</span>
             )}
@@ -256,7 +256,7 @@ export default function OverallAuditHistoryPage() {
                     {row.report_url && (
                       <a href={row.report_url} target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors whitespace-nowrap">
-                        <ExternalLink size={11} /> Report
+                        <ExternalLink size={11} /> AI Report
                       </a>
                     )}
                   </div>

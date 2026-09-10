@@ -41,7 +41,7 @@ class Authenticator:
         response = requests.post(
             token_url,
             data=payload,
-            timeout=60
+            timeout=(10,20)
         ) #sending a post request to microsoft
 
         response.raise_for_status() #if request fails ,we raise an exception
@@ -108,7 +108,7 @@ class Authenticator:
         # print("PAYLOAD SCOPE:", payload.get("scope"))
         # print("PAYLOAD KEYS:", list(payload.keys()))
    
-        r = requests.post(token_url, data=payload, timeout=30)
+        r = requests.post(token_url, data=payload, timeout=(10,20))
         if not r.ok:
             print("TOKEN ERROR:", r.status_code, r.text)   # <-- add this
         r.raise_for_status()
