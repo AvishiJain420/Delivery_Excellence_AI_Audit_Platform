@@ -8,7 +8,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import Link from 'next/link'
 import {
   Loader2, Search, ChevronDown, FileText, ExternalLink,
-  CheckCircle2, AlertTriangle, Clock, Plus, Check,
+  CheckCircle2, AlertTriangle, Clock, Plus, Check, Trash2, X,
 } from 'lucide-react'
 import { useCurrentUser } from '@/hooks'
 import { config } from '@/lib/config'
@@ -130,6 +130,8 @@ export default function OverallAuditHistoryPage() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const load = () => {
     fetch(`${config.apiUrl}/polaris/audit/history`, {
@@ -139,6 +141,29 @@ export default function OverallAuditHistoryPage() {
       .then(setRows)
       .catch(e => setError(String(e)))
       .finally(() => setLoading(false))
+  }
+  const handleDelete = async (sessionId: string) => {
+    setDeletingId(sessionId)
+
+    try {
+      const response = await fetch(`${config.apiUrl}/polaris/audit/${sessionId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}`)
+      }
+
+      setRows(prev => prev.filter(row => row.session_id !== sessionId))
+      setConfirmDeleteId(null)
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   useEffect(() => { load(); const iv = setInterval(load, 30_000); return () => clearInterval(iv) }, [])
@@ -248,7 +273,8 @@ export default function OverallAuditHistoryPage() {
                 <td className="px-4 py-3.5 text-center"><ScorePill score={row.manual_score} /></td>
                 <td className="px-4 py-3.5 text-center"><OverallStatusBadge status={row.overall_status} /></td>
                 <td className="px-3 py-3.5">
-                  <div className="flex items-center gap-2">
+
+                  {/* <div className="flex items-center gap-2">
                     <Link href={`/audit/history/${row.session_id}`}
                       className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors whitespace-nowrap">
                       View
@@ -259,7 +285,57 @@ export default function OverallAuditHistoryPage() {
                         <ExternalLink size={11} /> AI Report
                       </a>
                     )}
-                  </div>
+                  </div> */}
+                  <div className="flex items-center gap-2">
+                      <Link href={`/audit/history/${row.session_id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors whitespace-nowrap">
+                        View
+                      </Link>
+
+                      {row.report_url && (
+                        <a href={row.report_url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors whitespace-nowrap">
+                          <ExternalLink size={11} /> AI Report
+                        </a>
+                      )}
+
+                      {currentUser?.role === 'admin' && (
+                        confirmDeleteId === row.session_id ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(row.session_id)}
+                              disabled={deletingId === row.session_id}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-white bg-red-600 hover:bg-red-700 rounded transition-colors whitespace-nowrap disabled:opacity-50"
+                            >
+                              {deletingId === row.session_id
+                                ? <Loader2 size={11} className="animate-spin" />
+                                : <Trash2 size={11} />}
+                              Confirm
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              disabled={deletingId === row.session_id}
+                              className="inline-flex items-center justify-center p-1.5 text-slate-500 border border-slate-200 rounded hover:bg-slate-50 transition-colors"
+                            >
+                              <X size={13} />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(row.session_id)}
+                            className="inline-flex items-center justify-center p-1.5 text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors"
+                            title="Delete audit"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )
+                      )}
+                    </div>
+                
                 </td>
               </tr>
             ))}

@@ -1,9 +1,9 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback ,useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import Link from 'next/link'
-import { Loader2, CheckCircle2, ExternalLink, AlertCircle, Save, FileText ,Upload } from 'lucide-react'
+import { Loader2, CheckCircle2, ExternalLink, AlertCircle, Save, FileText ,Upload , Lock , RefreshCw } from 'lucide-react'
 import { config } from '@/lib/config'
 import { TokenStore } from '@/services/api'
 import { useCurrentUser } from '@/hooks'
@@ -119,6 +119,52 @@ function scoreColor(s: number): string {
   return 'text-red-600'
 }
 
+// ── Lock overlay (Feature 3) ───────────────────────────────────────────────────
+function LockOverlay({ holderName, holderEmail, expiresAt, onRetry }: {
+  holderName: string; holderEmail: string; expiresAt?: string; onRetry: () => void
+}) {
+  const [retrying, setRetrying] = useState(false)
+  const handleRetry = async () => {
+    setRetrying(true)
+    await new Promise(r => setTimeout(r, 500))
+    onRetry()
+    setRetrying(false)
+  }
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md mx-4 p-6 text-center">
+        <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+          <Lock size={26} className="text-amber-600" />
+        </div>
+        <h2 className="text-[16px] font-bold text-slate-900 mb-2">Findings Currently Locked</h2>
+        <p className="text-[13.5px] text-slate-600 leading-relaxed mb-1">
+          <strong className="text-slate-800">{holderName}</strong> ({holderEmail}) is currently editing the findings for this audit.
+        </p>
+        {expiresAt && (
+          <p className="text-[12px] text-slate-400 mb-4">
+            Lock expires: {new Date(expiresAt).toLocaleTimeString()}
+          </p>
+        )}
+        <p className="text-[12.5px] text-slate-500 mb-5">
+          Please wait for them to finish or try again in a few minutes.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link href={`/audit/start`}
+            className="px-4 py-2 text-[13px] text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+            Back to Queue
+          </Link>
+          <button onClick={handleRetry} disabled={retrying}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-60">
+            {retrying ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+            Try Again
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function UploadFindingsPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
@@ -138,6 +184,18 @@ export default function UploadFindingsPage() {
   const [saved, setSaved]             = useState(false)
   const [error, setError]             = useState<string | null>(null)
   const [loadingExisting, setLoadingExisting] = useState(true)
+
+  const [lockState, setLockState] =
+  useState<'checking' | 'owned' | 'blocked' | 'error'>('checking')
+
+  const [lockHolder, setLockHolder] = useState<{
+    email: string
+    name: string
+    expiresAt?: string
+  } | null>(null)
+
+  const lockRefreshRef = useRef<NodeJS.Timeout | null>(null)
+  const lockOwnedRef = useRef(false)
 
   // RBAC guard
   const canAccess = !currentUser || currentUser.role === 'admin' || currentUser.role === 'auditor'
@@ -201,6 +259,77 @@ export default function UploadFindingsPage() {
     }
     loadAll()
   }, [sessionId])
+
+  const acquireLock = useCallback(async () => {
+    if (!sessionId) return
+
+    setLockState('checking')
+
+    try {
+      const res = await fetch(
+        `${config.apiUrl}/polaris/audit/${sessionId}/findings/lock`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
+          },
+        }
+      )
+
+      if (res.ok) {
+        setLockState('owned')
+
+        setLockHolder(null)
+
+        if (lockRefreshRef.current) {
+          clearInterval(lockRefreshRef.current)
+        }
+
+        lockRefreshRef.current = setInterval(
+          acquireLock,
+          10 * 60 * 1000
+        )
+      } else if (res.status === 409) {
+        const msg = await res.text()
+        const match = msg.match(/by (.+?) \*\*\((.+?)\*\*\)/)
+
+        setLockHolder({
+          name: match?.[1] ?? 'Another auditor',
+          email: match?.[2] ?? '',
+        })
+
+        setLockState('blocked')
+      } else {
+        setLockState('error')
+      }
+    } catch {
+      setLockState('error')
+    }
+  }, [sessionId])
+
+  useEffect(() => {
+    if (sessionId && canAccess) {
+      acquireLock()
+    }
+
+    return () => {
+      if (lockRefreshRef.current) {
+        clearInterval(lockRefreshRef.current)
+      }
+
+      if (sessionId && lockState === 'owned') {
+        fetch(
+          `${config.apiUrl}/polaris/audit/${sessionId}/findings/lock`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
+            },
+          }
+        ).catch(() => {})
+      }
+    }
+  }, [sessionId, canAccess])
 
   const updateSubScore = (catIdx: number, subIdx: number, field: 'upload_score' | 'applicable', value: any) => {
     setCategories(prev => prev.map((c, ci) =>
@@ -317,7 +446,7 @@ export default function UploadFindingsPage() {
     )
   }
 
-  if (loadingExisting) return (
+  if (loadingExisting || lockState === 'checking') return (
     <AppShell>
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 size={28} className="animate-spin text-blue-500" />

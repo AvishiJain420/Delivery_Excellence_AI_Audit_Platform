@@ -1,387 +1,739 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useState, useEffect, useCallback ,useRef } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import Link from 'next/link'
-import {
-  Loader2, CheckCircle2, AlertTriangle, Clock,
-  ExternalLink, FileText, BarChart2, User, Bot,
-} from 'lucide-react'
+import { Loader2, CheckCircle2, ExternalLink, AlertCircle, Save, FileText ,Upload , Lock , RefreshCw } from 'lucide-react'
 import { config } from '@/lib/config'
 import { TokenStore } from '@/services/api'
-import type { AuditFormDetail } from '@/types/polaris'
+import { useCurrentUser } from '@/hooks'
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
-function SectionCard({ title, icon: Icon, children }: {
-  title: string; icon: React.ElementType; children: React.ReactNode
+// ── Scoring framework (full 5 categories) ────────────────────────────────────
+const FRAMEWORK = [
+  {
+    category: 'Scope & Business Alignment',
+    subCategories: [
+      'Problem Statement Clarity',
+      'In-scope / Out-scope defined',
+      'Assumptions & Dependencies',
+    ],
+  },
+  {
+    category: 'Financials & Effort Estimation',
+    subCategories: [
+      'Work Load Buildup',
+      'Billing Rate',
+      'Contingency',
+    ],
+  },
+  {
+    category: 'Architecture Plan',
+    subCategories: [
+      'Architecture Standardization',
+      'Requirements',
+      'Architecture optimization',
+    ],
+  },
+  {
+    category: 'Delivery Plan & Execution Readiness',
+    subCategories: [
+      'Project roadmap',
+      'External dependencies',
+      'Resource Allocation',
+    ],
+  },
+  {
+    category: 'Communication & Governance',
+    subCategories: [
+      'Governance Model',
+      'Status reporting',
+      'Client communication',
+    ],
+  },
+]
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface SubScore {
+  sub_category: string
+  upload_score: number    // auditor-entered score 0–5
+  applicable: boolean     // whether this sub-category applies
+  ai_score: number | null
+}
+
+interface CategoryState {
+  category: string
+  sub_scores: SubScore[]
+  remarks: string
+}
+
+function buildInitial(): CategoryState[] {
+  return FRAMEWORK.map(f => ({
+    category: f.category,
+    remarks: '',
+    sub_scores: f.subCategories.map(sc => ({
+      sub_category: sc,
+      upload_score: 0,
+      applicable: true,
+      ai_score: null,
+    })),
+  }))
+}
+
+// ── Score input — "N / 5" style matching image 3 ──────────────────────────────
+function ScoreInput({ value, onChange, disabled }: {
+  value: number; onChange: (v: number) => void; disabled?: boolean
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-sm mb-5">
-      <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
-        <Icon size={16} className="text-blue-600" />
-        <h2 className="text-[15px] font-semibold text-slate-800">{title}</h2>
-      </div>
-      <div className="p-5">{children}</div>
+    <div className="flex items-center gap-1.5">
+      <input
+        type="number"
+        min={0} max={5} step={0.5}
+        value={value}
+        disabled={disabled}
+        onChange={e => onChange(Math.min(5, Math.max(0, parseFloat(e.target.value) || 0)))}
+        className={`w-14 px-2 py-1.5 text-center text-[13px] border rounded focus:outline-none focus:ring-2 focus:ring-blue-400
+          ${disabled ? 'bg-slate-50 text-slate-400 border-slate-200' : 'bg-white border-slate-300 text-slate-800'}`}
+      />
+      <span className="text-[13px] text-slate-500">/ 5</span>
     </div>
   )
 }
 
-function Field({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">{label}</span>
-      <span className="text-[13.5px] text-slate-800">{value || '—'}</span>
-    </div>
-  )
+// ── Category auto-calculated score ────────────────────────────────────────────
+function catAutoScore(cat: CategoryState): number {
+  const applicable = cat.sub_scores.filter(s => s.applicable)
+  if (applicable.length === 0) return 0
+  return applicable.reduce((sum, s) => sum + s.upload_score, 0) / applicable.length
 }
 
-function AiStatusBlock({ status, score, reportUrl }: {
-  status: string; score?: number | null; reportUrl?: string | null
+// ── Overall score across all categories ──────────────────────────────────────
+function overallScore(cats: CategoryState[]): number {
+  if (cats.length === 0) return 0
+  return cats.reduce((sum, c) => sum + catAutoScore(c), 0) / cats.length
+}
+
+// ── Score colour ──────────────────────────────────────────────────────────────
+function scoreColor(s: number): string {
+  if (s >= 4) return 'text-emerald-600'
+  if (s >= 2.5) return 'text-amber-600'
+  return 'text-red-600'
+}
+
+// ── Lock overlay (Feature 3) ───────────────────────────────────────────────────
+function LockOverlay({ holderName, holderEmail, expiresAt, onRetry }: {
+  holderName: string; holderEmail: string; expiresAt?: string; onRetry: () => void
 }) {
-  const configs: Record<string, { icon: React.ElementType; cls: string; label: string }> = {
-    not_started:  { icon: Clock,          cls: 'text-slate-500 bg-slate-50 border-slate-200',    label: 'Not Started' },
-    pending:      { icon: Clock,          cls: 'text-slate-500 bg-slate-50 border-slate-200',    label: 'Not Started' },
-    queued:       { icon: Clock,          cls: 'text-blue-600 bg-blue-50 border-blue-200',       label: 'Queued' },
-    fetching:     { icon: Loader2,        cls: 'text-blue-600 bg-blue-50 border-blue-200',       label: 'Fetching Documents' },
-    identifying:  { icon: Loader2,        cls: 'text-blue-600 bg-blue-50 border-blue-200',       label: 'Identifying' },
-    parsing:      { icon: Loader2,        cls: 'text-blue-600 bg-blue-50 border-blue-200',       label: 'Parsing' },
-    auditing:     { icon: Loader2,        cls: 'text-amber-600 bg-amber-50 border-amber-200',    label: 'Auditing' },
-    summarising:  { icon: Loader2,        cls: 'text-amber-600 bg-amber-50 border-amber-200',    label: 'Summarising' },
-    exporting:    { icon: Loader2,        cls: 'text-amber-600 bg-amber-50 border-amber-200',    label: 'Exporting' },
-    done:         { icon: CheckCircle2,   cls: 'text-emerald-600 bg-emerald-50 border-emerald-200', label: 'Completed' },
-    failed:       { icon: AlertTriangle,  cls: 'text-red-600 bg-red-50 border-red-200',          label: 'Failed' },
+  const [retrying, setRetrying] = useState(false)
+  const handleRetry = async () => {
+    setRetrying(true)
+    await new Promise(r => setTimeout(r, 500))
+    onRetry()
+    setRetrying(false)
   }
-  const cfg = configs[status] ?? configs.not_started
-  const Icon = cfg.icon
-  const isLoading = ['fetching','identifying','parsing','auditing','summarising','exporting'].includes(status)
-
   return (
-    <div className={`flex items-start justify-between gap-4 p-4 border rounded-lg ${cfg.cls}`}>
-      <div className="flex items-center gap-3">
-        <Icon size={20} className={isLoading ? 'animate-spin' : ''} />
-        <div>
-          <p className="text-[14px] font-semibold">AI Document Audit: {cfg.label}</p>
-          {score != null && (
-            <p className="text-[12.5px] mt-0.5">
-              Score: <strong>{score.toFixed(1)} / 5</strong>
-            </p>
-          )}
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md mx-4 p-6 text-center">
+        <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+          <Lock size={26} className="text-amber-600" />
+        </div>
+        <h2 className="text-[16px] font-bold text-slate-900 mb-2">Findings Currently Locked</h2>
+        <p className="text-[13.5px] text-slate-600 leading-relaxed mb-1">
+          <strong className="text-slate-800">{holderName}</strong> ({holderEmail}) is currently editing the findings for this audit.
+        </p>
+        {expiresAt && (
+          <p className="text-[12px] text-slate-400 mb-4">
+            Lock expires: {new Date(expiresAt).toLocaleTimeString()}
+          </p>
+        )}
+        <p className="text-[12.5px] text-slate-500 mb-5">
+          Please wait for them to finish or try again in a few minutes.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link href={`/audit/start`}
+            className="px-4 py-2 text-[13px] text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+            Back to Queue
+          </Link>
+          <button onClick={handleRetry} disabled={retrying}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-60">
+            {retrying ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+            Try Again
+          </button>
         </div>
       </div>
-      {reportUrl && (
-        <a
-          href={reportUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[12.5px] font-semibold bg-white border border-current rounded hover:opacity-80 transition-opacity whitespace-nowrap flex-shrink-0"
-        >
-          AI Report <ExternalLink size={12} />
-        </a>
-      )}
     </div>
   )
 }
 
-function ScoreBar({ label, score }: { label: string; score: number }) {
-  const pct = (score / 5) * 100
-  const barColor = score >= 4 ? 'bg-emerald-500' : score >= 2.5 ? 'bg-amber-500' : 'bg-red-500'
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center justify-between text-[12px]">
-        <span className="text-slate-600">{label}</span>
-        <span className="font-semibold text-slate-700">{score.toFixed(1)}/5</span>
-      </div>
-      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  )
-}
 
-// ── Page ───────────────────────────────────────────────────────────────────────
-export default function AuditHistoryDetailPage() {
+// ── Page ──────────────────────────────────────────────────────────────────────
+export default function UploadFindingsPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
-  const [detail, setDetail] = useState<AuditFormDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+  const { data: currentUser } = useCurrentUser()
 
+  const [categories, setCategories] = useState<CategoryState[]>(buildInitial())
+  const [auditorName, setAuditorName]       = useState('')
+  const [auditorEmail, setAuditorEmail]     = useState('')
+  const [overallRemarks, setOverallRemarks] = useState('')
+  const [aiReportUrl, setAiReportUrl]       = useState<string | null>(null)
+  const [manualReport, setManualReport] = useState<File | null>(null)
+  const [manualReportUrl, setManualReportUrl] = useState<string | null>(null)
+  const [projectInfo, setProjectInfo]       = useState<{ client: string; project: string } | null>(null)
+
+  const [saving, setSaving]           = useState(false)
+  const [saved, setSaved]             = useState(false)
+  const [error, setError]             = useState<string | null>(null)
+  const [loadingExisting, setLoadingExisting] = useState(true)
+
+  const [lockState, setLockState] =
+  useState<'checking' | 'owned' | 'blocked' | 'error'>('checking')
+
+  const [lockHolder, setLockHolder] = useState<{
+    email: string
+    name: string
+    expiresAt?: string
+  } | null>(null)
+
+  const lockRefreshRef = useRef<NodeJS.Timeout | null>(null)
+  const lockOwnedRef = useRef(false)
+
+  // RBAC guard
+  const canAccess = !currentUser || currentUser.role === 'admin' || currentUser.role === 'auditor'
+
+  // Pre-fill auditor info from current user
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     setAuditorName(currentUser.name ?? '')
+  //     setAuditorEmail(currentUser.email ?? currentUser.azure_email ?? '')
+  //   }
+  // }, [currentUser])
+
+  // Load session detail (for project info + AI report URL + existing findings)
   useEffect(() => {
     if (!sessionId) return
-    const load = async () => {
+    const loadAll = async () => {
       try {
-        const res = await fetch(`${config.apiUrl}/polaris/audit/${sessionId}/details`, {
+        // Load session details
+        const detailRes = await fetch(`${config.apiUrl}/polaris/audit/${sessionId}/details`, {
           headers: { Authorization: `Bearer ${TokenStore.getAccess() ?? ''}` },
         })
-        if (!res.ok) throw new Error(`Error ${res.status}`)
-        setDetail(await res.json())
-      } catch (e: any) {
-        setError(e.message)
-      } finally {
-        setLoading(false)
-      }
+        if (detailRes.ok) {
+          const d = await detailRes.json()
+          setProjectInfo({ client: d.client_name, project: d.project_name })
+          setAiReportUrl(d.ai_audit_report_url ?? null)
+          setManualReportUrl(
+          d.summary_report_url ??
+          d.summary_report_link ??
+          null
+        )
+        }
+
+        // Load existing findings
+        const findingsRes = await fetch(`${config.apiUrl}/polaris/audit/${sessionId}/findings`, {
+          headers: { Authorization: `Bearer ${TokenStore.getAccess() ?? ''}` },
+        })
+        if (findingsRes.ok) {
+          const f = await findingsRes.json()
+          if (f?.categories?.length) {
+            // Map existing findings onto our framework shape
+            const mapped = buildInitial().map(catState => {
+              const existing = f.categories.find((c: any) => c.category === catState.category)
+              if (!existing) return catState
+              return {
+                ...catState,
+                remarks: existing.remarks ?? '',
+                sub_scores: catState.sub_scores.map(ss => {
+                  const es = existing.scores?.find((s: any) => s.sub_category === ss.sub_category)
+                  return es ? { ...ss, upload_score: es.manual_score ?? 0, applicable: es.applicable ?? true } : ss
+                }),
+              }
+            })
+            setCategories(mapped)
+            setAuditorName(f.auditor_name ?? '')
+            setAuditorEmail(f.auditor_email ?? '')
+            setOverallRemarks(f.auditor_comments ?? '')
+          }
+        }
+      } catch (_) { /* no existing findings — start fresh */ }
+      finally { setLoadingExisting(false) }
     }
-    load()
-    const interval = setInterval(load, 15_000) // poll for AI status updates
-    return () => clearInterval(interval)
+    loadAll()
   }, [sessionId])
 
-  if (loading) {
+  const acquireLock = useCallback(async () => {
+    if (!sessionId) return
+
+    setLockState('checking')
+
+    try {
+      const res = await fetch(
+        `${config.apiUrl}/polaris/audit/${sessionId}/findings/lock`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
+          },
+        }
+      )
+
+      if (res.ok) {
+        setLockState('owned')
+        lockOwnedRef.current = true
+        setLockHolder(null)
+
+        if (lockRefreshRef.current) {
+          clearInterval(lockRefreshRef.current)
+        }
+
+        lockRefreshRef.current = setInterval(
+          acquireLock,
+          10 * 60 * 1000
+        )
+      } else if (res.status === 409) {
+        const msg = await res.text()
+        const match = msg.match(/by (.+?) \*\*\((.+?)\*\*\)/)
+
+        setLockHolder({
+          name: match?.[1] ?? 'Another auditor',
+          email: match?.[2] ?? '',
+        })
+        lockOwnedRef.current = false
+        setLockState('blocked')
+      } else {
+        lockOwnedRef.current = false
+        setLockState('error')
+      }
+    } catch {
+      lockOwnedRef.current = false
+      setLockState('error')
+    }
+  }, [sessionId])
+
+  useEffect(() => {
+    if (sessionId && canAccess) {
+      acquireLock()
+    }
+
+    return () => {
+      if (lockRefreshRef.current) {
+        clearInterval(lockRefreshRef.current)
+      }
+
+      if (sessionId && lockOwnedRef.current) {
+        fetch(
+          `${config.apiUrl}/polaris/audit/${sessionId}/findings/lock`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
+            },
+          }
+        ).catch(() => {})
+      }
+    }
+  }, [sessionId, canAccess])
+
+  const updateSubScore = (catIdx: number, subIdx: number, field: 'upload_score' | 'applicable', value: any) => {
+    setCategories(prev => prev.map((c, ci) =>
+      ci === catIdx
+        ? { ...c, sub_scores: c.sub_scores.map((s, si) => si === subIdx ? { ...s, [field]: value } : s) }
+        : c
+    ))
+  }
+
+  const updateRemarks = (catIdx: number, remarks: string) => {
+    setCategories(prev => prev.map((c, ci) => ci === catIdx ? { ...c, remarks } : c))
+  }
+
+  const handleSave = async () => {
+    setError(null)
+
+    if (!overallRemarks.trim()) {
+      setError('Overall Remarks is required.')
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      // Keep your existing categories structure
+      const catsPayload = categories.map(c => ({
+        category: c.category,
+        remarks: c.remarks,
+        scores: c.sub_scores.map(s => ({
+          sub_category: s.sub_category,
+          manual_score: s.upload_score,
+          applicable: s.applicable,
+          ai_score: s.ai_score,
+        })),
+      }))
+
+      // Use FormData because we may also send the manual report file
+      const fd = new FormData()
+
+      if (auditorName) {
+        fd.append('auditor_name', auditorName)
+      }
+
+      if (auditorEmail) {
+        fd.append('auditor_email', auditorEmail)
+      }
+
+      fd.append('auditor_comments', overallRemarks)
+
+      fd.append(
+        'overall_score',
+        String(overallScore(categories))
+      )
+
+      // Backend expects categories as a JSON string
+      fd.append(
+        'categories',
+        JSON.stringify(catsPayload)
+      )
+
+      // NEW: attach manual audit report if selected
+      if (manualReport) {
+        fd.append('manual_report', manualReport)
+      }
+
+      const res = await fetch(
+        `${config.apiUrl}/polaris/audit/${sessionId}/findings`,
+        {
+          method: 'POST',
+
+          headers: {
+            Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
+          },
+
+          // IMPORTANT:
+          // Do NOT set Content-Type manually.
+          // Browser automatically sets multipart/form-data
+          // with the required boundary.
+          body: fd,
+        }
+      )
+
+      if (!res.ok) {
+          const d = await res.json().catch(() => ({}))
+
+          throw new Error(
+            (d as any).detail ?? `Error ${res.status}`
+          )
+        }
+
+        if (lockRefreshRef.current) {
+          clearInterval(lockRefreshRef.current)
+        }
+
+        lockOwnedRef.current = false
+
+        setSaved(true)
+
+      setTimeout(
+        () => router.push(`/audit/history/${sessionId}`),
+        1500
+      )
+
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!canAccess) {
     return (
       <AppShell>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 size={28} className="animate-spin text-blue-500" />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-center">
+          <AlertCircle size={40} className="text-slate-300" />
+          <h2 className="text-lg font-semibold text-slate-700">Access Restricted</h2>
+          <p className="text-slate-500 text-sm">This page is only accessible to administrators and auditors.</p>
         </div>
       </AppShell>
     )
   }
 
-  if (error || !detail) {
-    return (
-      <AppShell>
-        <div className="p-6 text-red-600">{error ?? 'Audit not found.'}</div>
-      </AppShell>
-    )
-  }
+  if (loadingExisting || lockState === 'checking') return (
+    <AppShell>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 size={28} className="animate-spin text-blue-500" />
+      </div>
+    </AppShell>
+  )
 
-  const findings = detail.findings
-  const overallManualScore = findings?.overall_score ?? null
+  if (saved) return (
+    <AppShell>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <CheckCircle2 size={52} className="text-emerald-500" />
+        <h2 className="text-xl font-semibold text-slate-800">Findings saved successfully!</h2>
+        <p className="text-slate-500 text-sm">Redirecting to audit detail…</p>
+      </div>
+    </AppShell>
+  )
+
+  const total = overallScore(categories)
 
   return (
     <AppShell>
+        {lockState === 'blocked' && lockHolder && (
+            <LockOverlay
+              holderName={lockHolder.name}
+              holderEmail={lockHolder.email}
+              expiresAt={lockHolder.expiresAt}
+              onRetry={acquireLock}
+            />
+          )}
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-[12px] text-slate-400 mb-4">
         <Link href="/home" className="hover:text-blue-600">Home</Link>
         <span>›</span>
-        <Link href="/audit/start" className="hover:text-blue-600">Audit History</Link>
+        <Link href="/audit/start" className="hover:text-blue-600">Start Audit</Link>
+        {projectInfo && <><span>›</span><Link href={`/audit/start/${sessionId}`} className="hover:text-blue-600">{projectInfo.client}</Link></>}
         <span>›</span>
-        <span className="text-slate-600">{detail.client_name}</span>
+        <span className="text-slate-600">Upload Audit Findings</span>
       </div>
 
-      {/* Header */}
+      {/* Title row + overall score badge — matches image 3 */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{detail.client_name}</h1>
-          <p className="text-[14px] text-slate-500">{detail.project_name}</p>
+          <h1 className="text-2xl font-bold text-slate-900">Upload Audit Findings</h1>
+          <p className="text-[14px] text-slate-500 mt-0.5">Everything you need to understand and prepare for an audit</p>
         </div>
-        {/* Overall score badge */}
-        <div className="flex-shrink-0 bg-white border border-slate-200 rounded-lg px-5 py-3 text-center shadow-sm">
-          <div className="text-2xl font-bold text-slate-900">
-            {overallManualScore != null
-              ? overallManualScore.toFixed(1)
-              : detail.ai_audit_score != null
-                ? detail.ai_audit_score.toFixed(1)
-                : '—'}{' '}
-            <small className="text-[14px] text-slate-400 font-normal">/ 5</small>
+        {/* Overall score — top right badge matching image 3 */}
+        <div className="flex-shrink-0 bg-white border-2 border-slate-200 rounded-xl px-5 py-3 text-center shadow-sm min-w-[110px]">
+          <div className={`text-2xl font-bold tabular-nums ${scoreColor(total)}`}>
+            {total.toFixed(1)}
+            <span className="text-[15px] text-slate-400 font-normal"> / 5</span>
           </div>
-          <div className="text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Overall Score</div>
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mt-0.5">Overall Score</div>
         </div>
       </div>
 
-      {/* AI Document Audit status */}
-      <SectionCard title="AI Document Audit" icon={Bot}>
-        <AiStatusBlock
-          status={detail.ai_audit_status}
-          score={detail.ai_audit_score}
-          reportUrl={detail.ai_audit_report_url}
-        />
-      </SectionCard>
+      {/* ── Main scoring table — matches image 3 ─────────────────────────────── */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-5">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-[13px]">
+            {/* Table header */}
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50">
+                <th className="text-left px-5 py-3 text-[12px] font-semibold text-slate-600 w-[190px]">Category</th>
+                <th className="text-left px-4 py-3 text-[12px] font-semibold text-slate-600 w-[200px]">Sub-Category</th>
+                <th className="text-center px-4 py-3 text-[12px] font-semibold text-slate-600 w-[120px]">Upload Score</th>
+                <th className="text-center px-4 py-3 text-[12px] font-semibold text-slate-600 w-[100px]">Applicable</th>
+                <th className="text-center px-4 py-3 text-[12px] font-semibold text-slate-600 w-[150px]">Auto calculated Score</th>
+                <th className="text-left px-4 py-3 text-[12px] font-semibold text-slate-600">Remarks</th>
+              </tr>
+            </thead>
 
+            <tbody>
+              {categories.map((cat, ci) => {
+                const auto = catAutoScore(cat)
+                return cat.sub_scores.map((sub, si) => (
+                  <tr key={`${cat.category}-${sub.sub_category}`}
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/40 transition-colors align-top">
 
-      {/* Manual findings / scores */}
-      {findings && (
-        <SectionCard title="Auditor Findings" icon={BarChart2}>
+                    {/* Category cell — rowspan */}
+                    {si === 0 && (
+                      <td rowSpan={cat.sub_scores.length}
+                        className="px-5 py-4 border-r border-slate-100 align-top">
+                        <span className="text-[13px] font-semibold text-slate-800 leading-snug block">
+                          {cat.category}
+                        </span>
+                      </td>
+                    )}
 
-          {/* Category scores */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {findings.categories.map(cat => {
-              const applicableScores = cat.scores.filter(
-                (s: any) => s.applicable !== false
-              )
+                    {/* Sub-category */}
+                    <td className="px-4 py-3.5">
+                      <span className={`text-[13px] ${sub.applicable ? 'text-blue-700' : 'text-slate-400 line-through'}`}>
+                        {sub.sub_category}
+                      </span>
+                    </td>
 
-              const avg =
-                applicableScores.length > 0
-                  ? applicableScores.reduce(
-                      (sum: number, s: any) => sum + s.manual_score,
-                      0
-                    ) / applicableScores.length
-                  : 0
+                    {/* Upload Score input */}
+                    <td className="px-4 py-3.5 text-center">
+                      <ScoreInput
+                        value={sub.upload_score}
+                        disabled={!sub.applicable}
+                        onChange={v => updateSubScore(ci, si, 'upload_score', v)}
+                      />
+                    </td>
 
-              return (
-                <ScoreBar
-                  key={cat.category}
-                  label={cat.category}
-                  score={avg}
-                />
-              )
-            })}
-          </div>
+                    {/* Applicable checkbox */}
+                    <td className="px-4 py-3.5 text-center">
+                      <input
+                        type="checkbox"
+                        checked={sub.applicable}
+                        onChange={e => updateSubScore(ci, si, 'applicable', e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </td>
 
-            {/* Category-wise auditor comments — only show categories with remarks */}
-            {findings.categories.some(
-              (cat: any) => cat.remarks?.trim()
-            ) && (
-              <div className="mt-2">
-                <p className="text-[13px] font-semibold text-slate-700 mb-3">
-                  Auditor Comments by Category
-                </p>
-
-                <div className="space-y-3">
-                  {findings.categories
-                    .filter((cat: any) => cat.remarks?.trim())
-                    .map((cat: any) => (
-                      <div
-                        key={cat.category}
-                        className="border border-slate-200 rounded-lg overflow-hidden"
-                      >
-                        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
-                          <p className="text-[13px] font-semibold text-slate-800">
-                            {cat.category}
-                          </p>
+                    {/* Auto Calculated Score — rowspan, shown once per category */}
+                    {si === 0 && (
+                      <td rowSpan={cat.sub_scores.length}
+                        className="px-4 py-4 text-center border-l border-slate-100 align-middle">
+                        <div className="flex items-center justify-center gap-1">
+                          <span className={`text-[15px] font-bold tabular-nums ${scoreColor(auto)}`}>
+                            {auto.toFixed(1)}
+                          </span>
+                          <span className="text-[13px] text-slate-400">/ 5</span>
                         </div>
+                      </td>
+                    )}
 
-                        <div className="px-4 py-3">
-                          <p className="text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed">
-                            {cat.remarks}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-
-          {/* Overall auditor comments */}
-          {findings.auditor_comments && (
-            <div className="mt-5">
-              <p className="text-[13px] font-semibold text-slate-700 mb-1">
-                Overall Auditor Comments
-              </p>
-
-              <div className="bg-slate-50 border border-slate-200 rounded p-3 text-[13px] text-slate-700 whitespace-pre-wrap">
-                {findings.auditor_comments}
-              </div>
-            </div>
-          )}
-
-          {/* Auditor info */}
-          {findings.auditor_name && (
-            <div className="mt-3 flex items-center gap-2 text-[12.5px] text-slate-500">
-              <User size={13} />
-
-              Reviewed by{' '}
-              <strong className="text-slate-700">
-                {findings.auditor_name}
-              </strong>
-
-              {findings.auditor_email && (
-                <span className="text-slate-400">
-                  ({findings.auditor_email})
-                </span>
-              )}
-
-              {findings.submitted_at && (
-                <span>
-                  · {new Date(findings.submitted_at).toLocaleDateString()}
-                </span>
-              )}
-            </div>
-          )}
-
-        </SectionCard>
-      )}
-
-
-      {/* Project / form details */}
-      <SectionCard title="Project Information" icon={FileText}>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-          <Field label="Client Name" value={detail.client_name} />
-          <Field label="Project Name" value={detail.project_name} />
-          <Field label="Project Code" value={detail.project_code} />
-          <Field label="Project Manager" value={detail.project_manager} />
-          <Field label="Audit Type" value={detail.audit_type} />
-          <Field label="Phase" value={detail.phase} />
-          <Field label="SOW Signed Date" value={detail.sow_signed_date} />
-          <Field label="Project Start Date" value={detail.project_start_date} />
-          <Field label="Project End Date" value={detail.project_end_date} />
-          <Field label="Actual Start Date" value={detail.actual_project_start_date} />
-          <Field label="Estimated End Date" value={detail.estimated_project_end_date} />
-          <Field label="Estimated Budget" value={detail.estimated_budget} />
-          <Field label="Submitted By" value={detail.submitted_by} />
-          <Field label="Submitted At" value={
-            detail.submitted_at ? new Date(detail.submitted_at).toLocaleString() : null
-          } />
+                    {/* Remarks — rowspan, shown once per category */}
+                    {si === 0 && (
+                      <td rowSpan={cat.sub_scores.length}
+                        className="px-4 py-4 border-l border-slate-100 align-top">
+                        <textarea
+                          value={cat.remarks}
+                          onChange={e => updateRemarks(ci, e.target.value)}
+                          rows={Math.max(2, cat.sub_scores.length)}
+                          placeholder="Enter category remarks here..."
+                          className="w-full resize-none px-3 py-2 text-[12.5px] text-slate-600 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-slate-300 font-[inherit] min-w-[160px]"
+                        />
+                      </td>
+                    )}
+                  </tr>
+                ))
+              })}
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        {detail.project_details && (
-          <div className="mt-4">
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Project Details</p>
-            <p className="text-[13.5px] text-slate-800">{detail.project_details}</p>
+      {/* Overall Remarks — required, matches image 3 */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-5">
+        <label className="flex items-center gap-1 text-[15px] font-bold text-slate-800 mb-3">
+          <span className="text-red-500 text-base">*</span> Overall Remarks
+        </label>
+        <textarea
+          value={overallRemarks}
+          onChange={e => setOverallRemarks(e.target.value)}
+          rows={5}
+          placeholder="Enter text"
+          className="w-full resize-y px-4 py-3 text-[13.5px] text-slate-700 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white placeholder:text-slate-400 font-[inherit]"
+        />
+      </div>
+
+      {/* AI Audit Report section — replaces file upload, matches requirement */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-5">
+        <h2 className="text-[15px] font-bold text-slate-800 mb-1">AI Audit Report</h2>
+        <p className="text-[12.5px] text-slate-500 mb-4">
+          The AI-generated audit report for this project is available below.
+          Review it alongside your manual findings before saving.
+        </p>
+        {aiReportUrl ? (
+          <a href={aiReportUrl} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[13.5px] font-semibold rounded-lg transition-colors">
+            <ExternalLink size={15} /> View AI Audit Report
+          </a>
+        ) : (
+          <div className="flex items-center gap-2 text-[13px] text-slate-400">
+            <span className="w-2 h-2 rounded-full bg-slate-300" />
+            AI Audit Report — Not Available for this session
           </div>
         )}
-      </SectionCard>
+      </div>
 
-      {/* Documents */}
-      {detail.documents.length > 0 && (
-        <SectionCard title={`Documents (${detail.documents.length})`} icon={FileText}>
-          <div className="divide-y divide-slate-100 -mx-5 -my-5">
-            {detail.documents.map(doc => (
-              <div key={doc.document_id} className="flex items-center gap-3 px-5 py-3.5">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                  <FileText size={14} className="text-blue-600" />
-                </div>
-                <span className="flex-1 text-[13.5px] text-slate-700 truncate">{doc.file_name}</span>
-                {doc.sharepoint_url ? (
-                  <a
-                    href={doc.sharepoint_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors"
-                  >
-                    View <ExternalLink size={11} />
-                  </a>
-                ) : (
-                  <span className="text-[12px] text-slate-300">No link</span>
-                )}
-              </div>
-            ))}
+      {/* Manual Audit Summary Report upload */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-5">
+        <h2 className="text-[15px] font-bold text-slate-800 mb-1">
+          Audit Summary Report
+        </h2>
+
+        <p className="text-[12.5px] text-slate-500 mb-4">
+          Upload the manually prepared audit summary report. It will be stored in SharePoint under
+          <span className="font-mono text-slate-600">
+            {' '}Audit Summary / {'{'}STAR|DEX{'}'} /
+          </span>
+        </p>
+
+        <label
+          htmlFor="manual-report-upload"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[13.5px] font-semibold rounded-lg cursor-pointer transition-colors"
+        >
+          <Upload size={15} />
+
+          {manualReport
+            ? 'Change File'
+            : manualReportUrl
+              ? 'Replace Summary Report'
+              : 'Upload Summary Report'}
+        </label>
+
+        <input
+          id="manual-report-upload"
+          type="file"
+          accept=".pdf,.doc,.docx"
+          className="hidden"
+          onChange={e => {
+            setManualReport(e.target.files?.[0] ?? null)
+          }}
+        />
+
+        {/* Newly selected file */}
+        {manualReport && (
+          <div className="mt-3 flex items-center gap-2 text-[13px] text-slate-600">
+            <FileText size={15} className="text-blue-600" />
+
+            <span className="font-medium">
+              {manualReport.name}
+            </span>
+
+            <span className="text-slate-400 text-[11px]">
+              ({(manualReport.size / 1024).toFixed(0)} KB)
+            </span>
+
+            <button
+              onClick={() => setManualReport(null)}
+              className="ml-1 text-slate-400 hover:text-red-500 text-[11px] underline"
+            >
+              remove
+            </button>
           </div>
-        </SectionCard>
+        )}
+
+        {/* Existing SharePoint report */}
+        {manualReportUrl && !manualReport && (
+          <div className="mt-3 flex items-center gap-3">
+            <FileText size={15} className="text-emerald-600" />
+
+            <span className="text-[13px] text-slate-600">
+              Audit Summary Report already uploaded
+            </span>
+
+            <a
+              href={manualReportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[12px] font-semibold text-blue-600 hover:text-blue-700"
+            >
+              <ExternalLink size={13} />
+              View Report
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-[13px] text-red-700">
+          <AlertCircle size={15} className="flex-shrink-0" /> {error}
+        </div>
       )}
 
-      {/* Action buttons */}
-      <div className="flex items-center gap-3 mt-2">
-        {detail.ai_audit_report_url && (
-          <a
-            href={detail.ai_audit_report_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[13.5px] font-semibold rounded-lg transition-colors"
-          >
-            View AI Doc Review Report <ExternalLink size={13} />
-          </a>
-        )}
-        
-        {detail.manual_report_url && (
-          <a
-            href={detail.manual_report_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[13.5px] font-semibold rounded-lg transition-colors"
-          >
-            View Summary Report <ExternalLink size={13} />
-          </a>
-        )}
-
-
-        <Link
-          href={`/audit/start/${sessionId}/findings`}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 border border-blue-200 text-blue-600 hover:bg-blue-50 text-[13.5px] font-semibold rounded-lg transition-colors"
-        >
-          {findings ? 'Edit Findings' : 'Upload Findings'}
+      {/* Save button */}
+      <div className="flex items-center gap-3">
+        <button onClick={handleSave} disabled={saving || lockState !== 'owned'}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white text-[14px] font-semibold rounded-lg transition-colors">
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {saving ? 'Submitting…' : 'Submit Findings'}
+        </button>
+        <Link href={`/audit/start/${sessionId}`}
+          className="text-[13px] text-slate-500 hover:text-slate-700 transition-colors">
+          ← Back to project
         </Link>
       </div>
     </AppShell>

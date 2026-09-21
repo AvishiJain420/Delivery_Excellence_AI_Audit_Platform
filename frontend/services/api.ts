@@ -657,6 +657,38 @@ export const auditApi = {
     return res.json()
   },
 
+  async stopPipeline(
+    sessionId: string,
+  ): Promise<{
+    status: 'stop_signal_sent' | 'no_active_pipeline'
+  }> {
+    const res = await apiFetch(
+      `/audit/sessions/${sessionId}/stop`,
+      {
+        method: 'POST',
+      },
+    )
+
+    if (!res.ok) {
+      let message = 'Failed to stop audit pipeline'
+
+      try {
+        const error = await res.json()
+
+        message =
+          error.detail ??
+          error.message ??
+          message
+      } catch {
+        // Ignore invalid/non-JSON response
+      }
+
+      throw new Error(message)
+    }
+
+    return res.json()
+  },
+
   async downloadReport(
     sessionId: string,
   ): Promise<{

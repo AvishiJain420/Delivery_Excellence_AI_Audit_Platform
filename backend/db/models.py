@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
  
-from sqlalchemy import Column, String, Float, ForeignKey, DateTime, Text, Integer
+from sqlalchemy import Column, String, Float, ForeignKey, DateTime, Text, Integer,Boolean
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
  
@@ -68,7 +68,10 @@ class AuditSession(Base):
     audit_status       = Column(String, default="pending")
     completion_time    = Column(DateTime(timezone=True), nullable=True)
     error_message      = Column(Text, nullable=True)
-
+    # Soft delete
+    is_deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by = Column(UUID(as_uuid=True), nullable=True)
     token_usage        = Column(JSONB, default=dict)
 
     # ===== Langfuse Audit Totals =====

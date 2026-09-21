@@ -28,11 +28,11 @@ import { ValidationModal } from '@/components/audit/ValidationModal'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { LoadingDots } from '@/components/ui/Spinner'
 import { useAuditStore } from '@/store'
-import { useAuditSession } from '@/hooks'
+import { useAuditSession,useCurrentUser } from '@/hooks'
 import { formatRelativeTime } from '@/lib/utils'
 import {
   FileText, AlertTriangle, Clock, ArrowLeft, Download,
-  CheckCircle2, ExternalLink,LayoutDashboard , Globe
+  CheckCircle2, ExternalLink,LayoutDashboard ,Square,Globe
 } from 'lucide-react'
 import Link from 'next/link'
 import { auditApi } from '@/services/api'
@@ -41,6 +41,8 @@ import { useState} from 'react'
 
 function AuditPageInner() {
   const params = useSearchParams()
+  const { data: currentUser } = useCurrentUser()
+  const [isStopping, setIsStopping] = useState(false)
 
   // session_id is the source of truth once the audit has been created.
   const sessionId = params.get('id')
@@ -67,6 +69,37 @@ function AuditPageInner() {
   const overallProgress = session?.overallProgress ?? 0
   const isDone = session?.status === 'done'
   const isFailed = session?.status === 'failed'
+
+  const handleStop = async () => {
+    if (!sessionId || isStopping) return
+
+    if (
+      !confirm(
+        'Are you sure you want to stop this audit pipeline? This cannot be undone.',
+      )
+    ) {
+      return
+    }
+
+    setIsStopping(true)
+
+    try {
+      await auditApi.stopPipeline(sessionId)
+    } catch (error) {
+      console.error(
+        'Failed to stop audit pipeline:',
+        error,
+      )
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Failed to stop the pipeline. Please try again.',
+      )
+    } finally {
+      setIsStopping(false)
+    }
+  }
 
   const handleExportReport = async () => {
     if (!sessionId || isDownloading) {
@@ -195,6 +228,22 @@ function AuditPageInner() {
 
           {/* Right side of top bar */}
           <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+            {currentUser?.role === 'admin' &&
+                  !isDone &&
+                  !isFailed && (
+                    <button
+                      type="button"
+                      onClick={handleStop}
+                      disabled={isStopping}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-60"
+                      title="Stop pipeline (admin only)"
+                    >
+                      <Square size={11} />
+                      {isStopping
+                        ? 'Stopping…'
+                        : 'Stop Pipeline'}
+                    </button>
+                  )}
             <div className="hidden md:flex items-center gap-2">
               <span className="text-xs text-slate-500 whitespace-nowrap">
                 {session?.documents.filter(d => d.status === 'completed').length ?? 0}

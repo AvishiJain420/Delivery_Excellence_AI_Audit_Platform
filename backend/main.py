@@ -3,6 +3,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Response
 
 from config.settings import settings
 from db.database import engine, Base
@@ -13,6 +14,27 @@ from routers.polaris_router import router as polaris_router
 import db.polaris_models
 
 _executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="audit_worker")
+
+_app_ready = False
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _app_ready
+
+    # Create DB tables — must complete before we're ready
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # Fire MSAL warm-up in background (non-blocking)
+    asyncio.create_task(_prewarm_msal())
+
+    _app_ready = True   # ← signal readiness only after DB is done
+    yield
+
+    _app_ready = False
+    await engine.dispose()
+    _executor.shutdown(wait=False)
+
 
 async def _prewarm_msal():
     """Build MSAL app in background thread right after server starts.
@@ -40,12 +62,6 @@ async def lifespan(app: FastAPI):
     _executor.shutdown(wait=False)
 
 
-app = FastAPI(
-    title="Polaris - AI Audit Platform",
-    version="2.0.0",
-    lifespan=lifespan,
-    redirect_slashes=False,
-)
 
 frontend_origin = settings.FRONTEND_ORIGIN.strip().rstrip("/")
 
@@ -70,4 +86,6 @@ async def root():
 # In main.py
 @app.get("/health", tags=["Health"])
 async def health():
+    if not _app_ready:
+        return Response(status_code=503, content="starting")
     return {"status": "healthy"}
