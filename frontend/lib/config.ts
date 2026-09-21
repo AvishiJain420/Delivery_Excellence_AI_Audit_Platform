@@ -20,6 +20,7 @@ export const config = {
     dexStarKnowledge: process.env.NEXT_PUBLIC_DEX_STAR_KNOWLEDGE_URL ?? '',
     leadershipSummary: process.env.NEXT_PUBLIC_LEADERSHIP_SUMMARY_URL ?? '',
     standardPractices: process.env.NEXT_PUBLIC_STANDARD_PRACTICES_URL ?? '',
+    docChecklist:      process.env.NEXT_PUBLIC_DOC_CHECKLIST_URL ?? '',
   },
 } as const
 
