@@ -46,23 +46,7 @@ async def _prewarm_msal():
     except Exception as e:
         print(f"⚠ MSAL pre-warm failed (will retry on first login): {e}")
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-
-    # Create DB tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    # Pre-warm MSAL in background — doesn't block startup
-    asyncio.create_task(_prewarm_msal())
-
-    yield
-    await engine.dispose()
-    _executor.shutdown(wait=False)
-
-
-
+app = FastAPI(lifespan=lifespan)
 frontend_origin = settings.FRONTEND_ORIGIN.strip().rstrip("/")
 
 app.add_middleware(
