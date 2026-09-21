@@ -52,6 +52,23 @@ export default function HistoryPage() {
   }, [])
 
   const { data: audits = [], isLoading, refetch } = useRecentAudits(50)
+
+  // Auto-poll every 15s while any session is still in-progress
+  // Stops automatically once all sessions reach a terminal state
+  const hasActiveSessions = audits.some(
+    a => !['done', 'failed'].includes(a.status)
+  )
+
+  useEffect(() => {
+    if (!hasActiveSessions) return
+
+    const interval = setInterval(() => {
+      refetch()
+    }, 15_000)
+
+    return () => clearInterval(interval)
+  }, [hasActiveSessions, refetch])
+  
   const qc = useQueryClient()
 
   const filtered = audits.filter(a => {

@@ -37,7 +37,7 @@ import {
 import Link from 'next/link'
 import { auditApi } from '@/services/api'
 import {config} from '@/lib/config'
-import { useState} from 'react'
+import { useState,useEffect,useRef} from 'react'
 
 function AuditPageInner() {
   const params = useSearchParams()
@@ -59,6 +59,7 @@ function AuditPageInner() {
     liveLog,
     isConnected,
     frameworkCategories,
+    setSessionFromRest,
   } = useAuditStore()
 
   const {
@@ -66,6 +67,33 @@ function AuditPageInner() {
     handleValidationConfirm,
   } = useAuditSession(sessionId)
 
+  // Effect 1 — Seed store from REST when opening an existing/completed session
+// Runs once on mount. Skipped if WebSocket already populated the store.
+  useEffect(() => {
+    if (!sessionId) return
+    if (session) return  // already populated (WS ran in this tab)
+
+    auditApi.getSession(sessionId)
+      .then(data => setSessionFromRest(data))
+      .catch(err => console.error('[AuditPage] Failed to load session from REST:', err))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId])  // intentionally omit session to avoid re-running when store populates
+
+  // Effect 2 — When WS pipeline finishes, do one final REST fetch to cement state
+  const prevStatusRef = useRef<string | null>(null)
+  useEffect(() => {
+    const status = session?.status
+    if (!status) return
+    if (prevStatusRef.current === status) return
+    prevStatusRef.current = status
+
+    if ((status === 'done' || status === 'failed') && sessionId) {
+      auditApi.getSession(sessionId)
+        .then(data => setSessionFromRest(data))
+        .catch(err => console.error('[AuditPage] Final REST sync failed:', err))
+    }
+  }, [session?.status, sessionId])
+  
   const overallProgress = session?.overallProgress ?? 0
   const isDone = session?.status === 'done'
   const isFailed = session?.status === 'failed'
