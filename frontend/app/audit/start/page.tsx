@@ -70,7 +70,7 @@ function ManageAuditorsModal({ sessionId, clientName, projectName, existingAudit
 
   const handleAdd = async () => {
     if (!email.trim() || !name.trim()) { setError('Both email and name are required.'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Enter a valid email address.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$$/.test(email)) { setError('Enter a valid email address.'); return }
     setAdding(true); setError(null)
     try {
       const res = await fetch(`${config.apiUrl}/polaris/audit/${sessionId}/auditors`, {

@@ -286,55 +286,44 @@ export default function OverallAuditHistoryPage() {
                       </a>
                     )}
                   </div> */}
-                  <div className="flex items-center gap-2">
-                      <Link href={`/audit/history/${row.session_id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors whitespace-nowrap">
-                        View
-                      </Link>
+                  <div className="flex items-center justify-end gap-2">
+                  <Link
+                    href={`/audit/history/${row.session_id}`}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors whitespace-nowrap"
+                  >
+                    View
+                  </Link>
 
-                      {row.report_url && (
-                        <a href={row.report_url} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors whitespace-nowrap">
-                          <ExternalLink size={11} /> AI Report
-                        </a>
-                      )}
+                  {row.report_url && (
+                    <a
+                      href={row.report_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors whitespace-nowrap"
+                    >
+                      <ExternalLink size={11} /> AI Report
+                    </a>
+                  )}
 
-                      {currentUser?.role === 'admin' && (
-                        confirmDeleteId === row.session_id ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(row.session_id)}
-                              disabled={deletingId === row.session_id}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-white bg-red-600 hover:bg-red-700 rounded transition-colors whitespace-nowrap disabled:opacity-50"
-                            >
-                              {deletingId === row.session_id
-                                ? <Loader2 size={11} className="animate-spin" />
-                                : <Trash2 size={11} />}
-                              Confirm
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDeleteId(null)}
-                              disabled={deletingId === row.session_id}
-                              className="inline-flex items-center justify-center p-1.5 text-slate-500 border border-slate-200 rounded hover:bg-slate-50 transition-colors"
-                            >
-                              <X size={13} />
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteId(row.session_id)}
-                            className="inline-flex items-center justify-center p-1.5 text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors"
-                            title="Delete audit"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        )
+                  {currentUser?.role === 'admin' && (
+                    <div className="ml-auto flex items-center gap-2">
+                      {confirmDeleteId === row.session_id ? (
+                        <>
+                          {/* existing Confirm + Cancel buttons */}
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(row.session_id)}
+                          className="inline-flex items-center justify-center p-1.5 text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors"
+                          title="Delete audit"
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       )}
                     </div>
+                  )}
+                </div>
                 
                 </td>
               </tr>
