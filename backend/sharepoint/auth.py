@@ -1,6 +1,7 @@
 # Responsible for Graph Token Generation
 
 import requests
+import msal
 from config.settings import settings
 import time
 import uuid
@@ -11,53 +12,28 @@ import jwt as pyjwt  # PyJWT, same package you already use
 #without a token, Microsoft Graph will reject every request
 class Authenticator:
 
-    def get_access_token(
-            self,
-            scope
-            ):
+    _msal_app = msal.ConfidentialClientApplication(
+        client_id=settings.CLIENT_ID,
+        authority=f"https://login.microsoftonline.com/{settings.TENANT_ID}",
+        client_credential=settings.CLIENT_SECRET,
+    )
 
-        #Microsoft OAuth endpoint - every Azure tenant has its own endpoint
-        token_url=(
-            f"https://login.microsoftonline.com/"
-            f"{settings.TENANT_ID}/oauth2/v2.0/token"
+    def get_access_token(
+        self,
+        scope="https://graph.microsoft.com/.default"
+    ):
+        result = self._msal_app.acquire_token_for_client(
+            scopes=[scope]
         )
 
-        payload = {
-            #Application id
-            "client_id" : settings.CLIENT_ID,
-            #Secret generated during App registration
-            "client_secret" : settings.CLIENT_SECRET,
+        if "access_token" not in result:
+            raise RuntimeError(
+                f"Could not acquire Graph token: "
+                f"{result.get('error')} - "
+                f"{result.get('error_description')}"
+            )
 
-            #Request permissions assigned to Graph API
-            # "scope": "https://graph.microsoft.com/.default",
-            "scope" : scope,
-
-            #Client credentials flow - no user login required -App authenticates itself
-            "grant_type" : "client_credentials"
-        }
-
-        print("Requesting Graph token from Microsoft ...")
-
-        response = requests.post(
-            token_url,
-            data=payload,
-            timeout=(10,20)
-        ) #sending a post request to microsoft
-
-        response.raise_for_status() #if request fails ,we raise an exception
-
-        print("Graph Token received")
- # Microsoft returns JSON like:
-        #
-        # {
-        #   "token_type": "Bearer",
-        #   "expires_in": 3599,
-        #   "access_token": "eyJ..."
-        # }
-        #
-        # Extract only access_token
-        print(response.status_code)
-        return response.json()["access_token"]
+        return result["access_token"]
     
 
     def get_sharepoint_token(self):
