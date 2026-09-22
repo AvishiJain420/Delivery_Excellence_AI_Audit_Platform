@@ -13,6 +13,8 @@ import uuid,json
 from datetime import datetime, timezone
 from typing import Optional, List
 
+import logging
+
 from config.settings import settings
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
@@ -31,6 +33,7 @@ from sharepoint.document_library_service import ( NewsletterLibraryService, Summ
 
 
 router = APIRouter(prefix="/polaris", tags=["Polaris"])
+logger = logging.getLogger(__name__)
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -373,7 +376,7 @@ async def list_auditors(
         for u in result.scalars().all()
     ]
 
-@router.post("/audit/{session_id}/assign-auditor")
+@router.post("/audit/{session_id}/auditors")
 async def assign_auditor(
     session_id: str,
     body: AssignAuditorRequest,
@@ -494,23 +497,29 @@ async def assign_auditor(
 
     await db.commit()
 
-    # 6. Send assignment email
-    _send_auditor_assignment_email(
-        auditor_email=auditor_email,
-        auditor_name=auditor_name,
-        project_name=(
-            session.project.project_name
-            if session.project
-            else ""
-        ),
-        client_name=(
-            session.project.client_name
-            if session.project
-            else ""
-        ),
-        audit_type=session.audit_type or "STAR",
-        session_id=session.session_id,
-    )
+    # 6. Send assignment email ONLY to the newly added auditor
+    try:
+        _send_auditor_assignment_email(
+            auditor_email=auditor_email,
+            auditor_name=auditor_name,
+            project_name=(
+                session.project.project_name
+                if session.project
+                else ""
+            ),
+            client_name=(
+                session.project.client_name
+                if session.project
+                else ""
+            ),
+            audit_type=session.audit_type or "STAR",
+            session_id=session.session_id,
+        )
+    except Exception:
+        logger.exception(
+            "Failed to send assignment email to %s",
+            auditor_email,
+        )
 
     return {
         "session_id": session_id,
@@ -527,6 +536,33 @@ async def assign_auditor(
             else "assigned_pending_azure_setup"
         ),
     }
+
+@router.delete("/audit/{session_id}/auditors/{auditor_email}", status_code=204)
+async def remove_auditor(
+    session_id: str,
+    auditor_email: str,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    auditor_email = auditor_email.strip().lower()
+
+    result = await db.execute(
+        select(AuditSessionAuditor).where(
+            AuditSessionAuditor.session_id == session_id,
+            func.lower(AuditSessionAuditor.auditor_email) == auditor_email,
+        )
+    )
+
+    assignment = result.scalar_one_or_none()
+
+    if not assignment:
+        raise HTTPException(
+            status_code=404,
+            detail="Auditor assignment not found",
+        )
+
+    await db.delete(assignment)
+    await db.commit()
 
 # ─── STAR Audit ───────────────────────────────────────────────────────────────
 
@@ -875,18 +911,15 @@ async def get_audit_queue(
                 else "pending"
             ),
 
-            "assigned_auditor_name": (
-                fd.assigned_auditor_name
-                if fd
-                else None
-            ),
-
-            "assigned_auditor_email": (
-                fd.assigned_auditor_email
-                if fd
-                else None
-            ),
-        })
+            "assigned_auditors": [
+                    {
+                        "auditor_assignment_id": str(a.auditor_assignment_id),
+                        "auditor_email": a.auditor_email,
+                        "auditor_name": a.auditor_name,
+                    }
+                    for a in assignments_by_session.get(s.session_id, [])
+                ],
+            })
 
     return rows
 
