@@ -828,7 +828,7 @@ async def get_audit_queue(
 
     for assignment in assignment_result.scalars().all():
         assignments_by_session.setdefault(
-            assignment.session_id, []
+            str(assignment.session_id), []
         ).append(assignment)
 
     # ── Findings ────────────────────────────────────────────────────────────
@@ -852,7 +852,7 @@ async def get_audit_queue(
 
             assigned = False
 
-            for assignment in assignments_by_session.get(s.session_id, []):
+            for assignment in assignments_by_session.get(str(s.session_id), []):
                 if (
                     assignment.auditor_user_id is not None
                     and str(assignment.auditor_user_id)
@@ -917,7 +917,7 @@ async def get_audit_queue(
                         "auditor_email": a.auditor_email,
                         "auditor_name": a.auditor_name,
                     }
-                    for a in assignments_by_session.get(s.session_id, [])
+                    for a in assignments_by_session.get(str(s.session_id), [])
                 ],
             })
 
@@ -983,6 +983,20 @@ async def get_overall_audit_history(
     if not ids:
         return []
 
+    # Load all auditor assignments for these sessions
+    assignment_result = await db.execute(
+        select(AuditSessionAuditor).where(
+            AuditSessionAuditor.session_id.in_(ids)
+        )
+    )
+
+    assignments_by_session: dict[str, list[AuditSessionAuditor]] = {}
+
+    for assignment in assignment_result.scalars().all():
+        assignments_by_session.setdefault(
+            str(assignment.session_id), []
+        ).append(assignment)
+
     fd_map = {d.session_id: d for d in
               (await db.execute(select(AuditFormDetail).where(AuditFormDetail.session_id.in_(ids)))).scalars()}
     fi_map = {f.session_id: f for f in
@@ -1021,7 +1035,7 @@ async def get_overall_audit_history(
         # Auditor sees only assigned sessions
         if current_user.role == "auditor":
             is_owner = _cast_str(s.user_id) == str(current_user.user_id)
-            is_assigned = s.session_id in assigned_ids
+            is_assigned = str(s.session_id) in assigned_ids
 
             if not (is_owner or is_assigned):
                 continue
@@ -1047,7 +1061,14 @@ async def get_overall_audit_history(
             "overall_status": "completed" if fi else ("under_review" if s.audit_status == "done" else "pending"),
             "has_report": bool(s.report),
             "report_url": s.report.sharepoint_url if s.report else None,
-            "assigned_auditor_name": fd.assigned_auditor_name if fd else None,
+            "assigned_auditors": [
+                {
+                    "auditor_assignment_id": str(a.auditor_assignment_id),
+                    "auditor_name": a.auditor_name,
+                    "auditor_email": a.auditor_email,
+                }
+                for a in assignments_by_session.get(str(s.session_id), [])
+            ],
         })
     return rows
 

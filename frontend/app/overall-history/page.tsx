@@ -28,7 +28,11 @@ interface OverallAuditRow {
   overall_status: string
   has_report: boolean
   report_url?: string | null
-  assigned_auditor_name?: string | null
+  assigned_auditors?: {
+  auditor_assignment_id?: string
+  auditor_name: string
+  auditor_email: string
+  }[]
 }
 
 function AiStatusBadge({ status }: { status: string }) {
@@ -230,14 +234,14 @@ export default function OverallAuditHistoryPage() {
         <table className="w-full text-[13px] min-w-[1550px]">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/60">
-              {['Client', 'Project', 'Code', 'Type', 'Submitted', 'Auditor', 'AI Status', 'AI Score', 'Manual Score', 'Status', ''].map(h => (
+              {['Client', 'Project', 'Code', 'Type', 'Submitted', 'Auditor', 'AI Status', 'AI Score', 'Manual Score', 'Status', 'View','AI Report','Delete'].map(h => (
                 <th key={h} className="text-center px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
-              <tr><td colSpan={11} className="px-4 py-12 text-center">
+              <tr><td colSpan={13} className="px-4 py-12 text-center">
                 <Loader2 size={22} className="animate-spin text-blue-500 mx-auto" />
               </td></tr>
             ) : error ? (
@@ -267,34 +271,36 @@ export default function OverallAuditHistoryPage() {
                 <td className="px-4 py-3.5 text-center text-slate-400 text-xs whitespace-nowrap">
                   {row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : '—'}
                 </td>
-                <td className="px-4 py-3.5 text-center text-slate-500 text-xs">{row.assigned_auditor_name || '—'}</td>
+                <td className="px-4 py-3.5 text-center text-slate-500 text-xs">
+                {row.assigned_auditors?.length ? (
+                  <div className="flex flex-col items-center gap-1">
+                    {row.assigned_auditors.map((auditor) => (
+                      <span key={auditor.auditor_assignment_id || auditor.auditor_email}>
+                        {auditor.auditor_name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  '—'
+                )}
+              </td>
                 <td className="px-4 py-3.5 text-center"><AiStatusBadge status={row.ai_audit_status} /></td>
                 <td className="px-4 py-3.5 text-center"><ScorePill score={row.ai_audit_score} /></td>
                 <td className="px-4 py-3.5 text-center"><ScorePill score={row.manual_score} /></td>
                 <td className="px-4 py-3.5 text-center"><OverallStatusBadge status={row.overall_status} /></td>
-                <td className="px-3 py-3.5">
-
-                  {/* <div className="flex items-center gap-2">
-                    <Link href={`/audit/history/${row.session_id}`}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors whitespace-nowrap">
-                      View
-                    </Link>
-                    {row.report_url && (
-                      <a href={row.report_url} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors whitespace-nowrap">
-                        <ExternalLink size={11} /> AI Report
-                      </a>
-                    )}
-                  </div> */}
-                  <div className="flex items-center justify-end gap-2">
+                {/* View */}
+                <td className="px-3 py-3.5 text-center">
                   <Link
                     href={`/audit/history/${row.session_id}`}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors whitespace-nowrap"
                   >
                     View
                   </Link>
+                </td>
 
-                  {row.report_url && (
+                {/* AI Report */}
+                <td className="px-3 py-3.5 text-center">
+                  {row.report_url ? (
                     <a
                       href={row.report_url}
                       target="_blank"
@@ -303,28 +309,47 @@ export default function OverallAuditHistoryPage() {
                     >
                       <ExternalLink size={11} /> AI Report
                     </a>
+                  ) : (
+                    <span className="text-slate-300 text-xs">—</span>
                   )}
+                </td>
 
+                {/* Delete */}
+                <td className="px-3 py-3.5 text-center">
                   {currentUser?.role === 'admin' && (
-                    <div className="ml-auto flex items-center gap-2">
-                      {confirmDeleteId === row.session_id ? (
-                        <>
-                          {/* existing Confirm + Cancel buttons */}
-                        </>
-                      ) : (
+                    confirmDeleteId === row.session_id ? (
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => setConfirmDeleteId(row.session_id)}
-                          className="inline-flex items-center justify-center p-1.5 text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors"
-                          title="Delete audit"
+                          onClick={() => handleDelete(row.session_id)}
+                          disabled={deletingId === row.session_id}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[12px] font-semibold text-white bg-red-500 hover:bg-red-600 rounded transition-colors disabled:opacity-50 whitespace-nowrap"
                         >
-                          <Trash2 size={13} />
+                          {deletingId === row.session_id
+                            ? <Loader2 size={11} className="animate-spin" />
+                            : <Check size={11} />}
+                          Confirm
                         </button>
-                      )}
-                    </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 border border-slate-200 rounded hover:bg-slate-50 transition-colors whitespace-nowrap"
+                        >
+                          <X size={11} /> Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(row.session_id)}
+                        className="inline-flex items-center justify-center p-1.5 text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors"
+                        title="Delete audit"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )
                   )}
-                </div>
-                
                 </td>
               </tr>
             ))}
