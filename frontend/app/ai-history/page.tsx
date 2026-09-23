@@ -387,13 +387,15 @@ export default function HistoryPage() {
                   {/* Delete - currently disabled */}
                   
                   <td className="px-4 py-3.5 text-center">
-                    <button
+                    {currentUser?.role === "admin" && (
+                      <button
                       onClick={() => handleDelete(audit.id)}
                       className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={12} />
                     </button>
+                    )}
                   </td>
                  
                 </tr>
