@@ -29,7 +29,7 @@ export default function InitiateAuditPage() {
           <li>Keep all the required documents prepared for SharePoint before the audit.</li>
           <li>Go through the AI audit once you have submitted the details form.</li>
           <li>Don't upload DEX documents for a STAR audit and vice versa or else scoring accuracy may be affected.</li>
-          <li>Upload only the documents that are present in the DEx and STAR documents checklist. <a href={docLink('docChecklist')} className="text-blue-600 hover:underline">
+          <li>Upload only the documents that are present in the DEx and STAR documents checklist. <a href={docLink('docChecklist')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
             Click here
           </a>{' '} for the same.</li>
           <li>Make sure not to upload more than 10 documents at a time for an audit.</li>
