@@ -20,15 +20,18 @@ export default function StarNextPage() {
             Your Audit Request has been Submitted!
           </h1>
 
-          <p className="text-[15px] text-slate-600 leading-7 mb-8">
-            Storing your responses will take 2-3 mins. After that click
-            {' '}
-            <span className="font-semibold text-slate-800">
-              "Get AI Review"
-            </span>
-            {' '}
-            to view your audit.
-          </p>
+          <div className="text-left text-[15px] text-slate-600 leading-7 mb-8">
+            <h2 className="font-semibold text-slate-800 mb-3">
+              Instructions
+            </h2>
+
+            <ol className="list-decimal list-inside space-y-2">
+              <li>The completion of AI review is mandatory for an audit to be considered as completed.</li>
+              <li>Make sure you validate all your documents before the AI evaluation begins since you won't be able to make changes later.</li>
+              <li>Manual audit will only start once the AI review is completed.</li>
+              <li>Do not leave the AI audit page unless the audit report is generated.</li>
+            </ol>
+          </div>
 
           <a
             //type="button"

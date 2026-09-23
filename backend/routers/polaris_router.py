@@ -13,17 +13,19 @@ import uuid,json
 from datetime import datetime, timezone
 from typing import Optional, List
 
+import logging
+
 from config.settings import settings
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
-from sqlalchemy import select, desc, func
+from sqlalchemy import select, desc, func , cast , or_, String as SAString
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from auth.auth import get_current_user
 from db.database import get_db
 from db.models import AuditSession, Project, User, CombinedSummary, AuditReport
-from db.polaris_models import AuditFormDetail, ManualAuditFinding
+from db.polaris_models import AuditFormDetail, ManualAuditFinding , AuditSessionAuditor
 from sharepoint.graph_client import GraphClient
 from sharepoint.email_service import EmailService
 from sharepoint.sharepoint_service import SharePointService
@@ -31,9 +33,48 @@ from sharepoint.document_library_service import ( NewsletterLibraryService, Summ
 
 
 router = APIRouter(prefix="/polaris", tags=["Polaris"])
+logger = logging.getLogger(__name__)
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+def _cast_str(value) -> str:
+    """Safely convert a UUID or None to string for comparison."""
+    return str(value) if value is not None else ""
+
+async def _is_auditor_assigned(
+    db: AsyncSession,
+    session_id: str,
+    current_user: User,
+) -> bool:
+    """
+    Returns True if the current auditor is assigned to this session.
+
+    Supports both:
+      - auditor_user_id
+      - auditor_email
+
+    This allows assignment to work even before the auditor has
+    a User row in the database.
+    """
+    if current_user.role != "auditor":
+        return False
+
+    user_email = (current_user.azure_email or "").strip().lower()
+
+    result = await db.execute(
+        select(AuditSessionAuditor.auditor_assignment_id)
+        .where(
+            AuditSessionAuditor.session_id == session_id,
+            or_(
+                AuditSessionAuditor.auditor_user_id == current_user.user_id,
+                func.lower(AuditSessionAuditor.auditor_email) == user_email,
+            ),
+        )
+        .limit(1)
+    )
+
+    return result.scalar_one_or_none() is not None
 
 def _send_audit_submission_email(
     *,
@@ -335,8 +376,7 @@ async def list_auditors(
         for u in result.scalars().all()
     ]
 
-
-@router.post("/audit/{session_id}/assign-auditor")
+@router.post("/audit/{session_id}/auditors")
 async def assign_auditor(
     session_id: str,
     body: AssignAuditorRequest,
@@ -346,14 +386,14 @@ async def assign_auditor(
     """
     Assign an auditor to an audit session.
 
-    The auditor does not need to already exist in the User table.
-    We store the auditor email/name on AuditFormDetail.
+    Multiple auditors can be assigned to the same session.
 
-    An assignment/reassignment email is sent to the assigned auditor
-    after the database update succeeds.
+    Assignment is stored in AuditSessionAuditor.
+    AuditFormDetail is also updated for backward compatibility
+    with existing frontend/history fields.
     """
 
-    # ── 1. Verify the AuditSession exists and load its Project ─────────────
+    # 1. Verify session exists and load project
     session_result = await db.execute(
         select(AuditSession)
         .options(selectinload(AuditSession.project))
@@ -365,10 +405,63 @@ async def assign_auditor(
     if not session:
         raise HTTPException(
             status_code=404,
-            detail="Audit session not found"
+            detail="Audit session not found",
         )
 
-    # ── 2. Find existing AuditFormDetail ──────────────────────────────────
+    auditor_email = body.auditor_email.strip().lower()
+    auditor_name = body.auditor_name.strip()
+
+    # 2. Check whether this exact assignment already exists
+    existing_assignment_result = await db.execute(
+        select(AuditSessionAuditor)
+        .where(
+            AuditSessionAuditor.session_id == session_id,
+            func.lower(AuditSessionAuditor.auditor_email) == auditor_email,
+        )
+    )
+
+    existing_assignment = (
+        existing_assignment_result.scalar_one_or_none()
+    )
+
+    if existing_assignment:
+        # Update existing assignment instead of creating duplicate
+        existing_assignment.auditor_name = auditor_name
+        existing_assignment.assigned_by_email = (
+            current_user.azure_email or current_user.user_name
+        )
+
+        assignment = existing_assignment
+
+    else:
+        # 3. Try to resolve existing User
+        user_result = await db.execute(
+            select(User).where(
+                func.lower(User.azure_email) == auditor_email,
+            )
+        )
+
+        existing_user = user_result.scalar_one_or_none()
+
+        # 4. Create new assignment
+        assignment = AuditSessionAuditor(
+            session_id=session_id,
+            auditor_email=auditor_email,
+            auditor_name=auditor_name,
+            auditor_user_id=(
+                existing_user.user_id
+                if existing_user
+                else None
+            ),
+            assigned_by_email=(
+                current_user.azure_email
+                or current_user.user_name
+            ),
+        )
+
+        db.add(assignment)
+
+    # 5. Keep AuditFormDetail updated for backward compatibility
     fd_result = await db.execute(
         select(AuditFormDetail).where(
             AuditFormDetail.session_id == session_id
@@ -377,60 +470,56 @@ async def assign_auditor(
 
     fd = fd_result.scalar_one_or_none()
 
-    auditor_email = body.auditor_email.strip().lower()
-    auditor_name = body.auditor_name.strip()
-
-    # ── 3. Create AuditFormDetail if missing ──────────────────────────────
     if not fd:
         fd = AuditFormDetail(
             session_id=session_id,
             audit_type=session.audit_type or "STAR",
-            assigned_auditor_email=auditor_email,
-            assigned_auditor_name=auditor_name,
         )
-
         db.add(fd)
 
-    else:
-        # ── 4. Update existing assignment / reassignment ─────────────────
-        fd.assigned_auditor_email = auditor_email
-        fd.assigned_auditor_name = auditor_name
+    fd.assigned_auditor_email = auditor_email
+    fd.assigned_auditor_name = auditor_name
 
-    # ── 5. Try to link to an existing User ─────────────────────────────────
+    # If user already exists, keep legacy ID populated
     user_result = await db.execute(
         select(User).where(
             func.lower(User.azure_email) == auditor_email,
-            User.role == "auditor",
         )
     )
 
     existing_user = user_result.scalar_one_or_none()
 
-    if existing_user:
-        fd.assigned_auditor_id = existing_user.user_id
-    else:
-        fd.assigned_auditor_id = None
+    fd.assigned_auditor_id = (
+        existing_user.user_id
+        if existing_user
+        else None
+    )
 
-    # ── 6. Save assignment first ──────────────────────────────────────────
     await db.commit()
 
-    # ── 7. Send assignment/reassignment email ─────────────────────────────
-    _send_auditor_assignment_email(
-        auditor_email=auditor_email,
-        auditor_name=auditor_name,
-        project_name=(
-            session.project.project_name
-            if session.project
-            else ""
-        ),
-        client_name=(
-            session.project.client_name
-            if session.project
-            else ""
-        ),
-        audit_type=session.audit_type or "STAR",
-        session_id=session.session_id,
-    )
+    # 6. Send assignment email ONLY to the newly added auditor
+    try:
+        _send_auditor_assignment_email(
+            auditor_email=auditor_email,
+            auditor_name=auditor_name,
+            project_name=(
+                session.project.project_name
+                if session.project
+                else ""
+            ),
+            client_name=(
+                session.project.client_name
+                if session.project
+                else ""
+            ),
+            audit_type=session.audit_type or "STAR",
+            session_id=session.session_id,
+        )
+    except Exception:
+        logger.exception(
+            "Failed to send assignment email to %s",
+            auditor_email,
+        )
 
     return {
         "session_id": session_id,
@@ -447,6 +536,33 @@ async def assign_auditor(
             else "assigned_pending_azure_setup"
         ),
     }
+
+@router.delete("/audit/{session_id}/auditors/{auditor_email}", status_code=204)
+async def remove_auditor(
+    session_id: str,
+    auditor_email: str,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    auditor_email = auditor_email.strip().lower()
+
+    result = await db.execute(
+        select(AuditSessionAuditor).where(
+            AuditSessionAuditor.session_id == session_id,
+            func.lower(AuditSessionAuditor.auditor_email) == auditor_email,
+        )
+    )
+
+    assignment = result.scalar_one_or_none()
+
+    if not assignment:
+        raise HTTPException(
+            status_code=404,
+            detail="Auditor assignment not found",
+        )
+
+    await db.delete(assignment)
+    await db.commit()
 
 # ─── STAR Audit ───────────────────────────────────────────────────────────────
 
@@ -678,7 +794,9 @@ async def get_audit_queue(
             selectinload(AuditSession.documents),
             selectinload(AuditSession.report),
         )
-        .where(AuditSession.audit_type.in_(["STAR", "DEX"]))
+        .where(
+            AuditSession.audit_type.in_(["STAR", "DEX"]),
+            AuditSession.is_deleted == False,)
         .order_by(desc(AuditSession.session_id))
     )
 
@@ -700,6 +818,19 @@ async def get_audit_queue(
         for d in fd_result.scalars().all()
     }
 
+    assignment_result = await db.execute(
+        select(AuditSessionAuditor).where(
+            AuditSessionAuditor.session_id.in_(ids)
+        )
+    )
+
+    assignments_by_session: dict[str, list[AuditSessionAuditor]] = {}
+
+    for assignment in assignment_result.scalars().all():
+        assignments_by_session.setdefault(
+            str(assignment.session_id), []
+        ).append(assignment)
+
     # ── Findings ────────────────────────────────────────────────────────────
     # We select ONLY session_id, therefore .scalars() already gives strings.
     fi_result = await db.execute(
@@ -719,19 +850,26 @@ async def get_audit_queue(
         # ── Auditor RBAC ───────────────────────────────────────────────────
         if current_user.role == "auditor":
 
-            id_match = (
-                fd is not None
-                and fd.assigned_auditor_id is not None
-                and str(fd.assigned_auditor_id) == str(current_user.user_id)
-            )
+            assigned = False
 
-            email_match = (
-                fd is not None
-                and fd.assigned_auditor_email is not None
-                and fd.assigned_auditor_email.lower() == user_email
-            )
+            for assignment in assignments_by_session.get(str(s.session_id), []):
+                if (
+                    assignment.auditor_user_id is not None
+                    and str(assignment.auditor_user_id)
+                    == str(current_user.user_id)
+                ):
+                    assigned = True
+                    break
 
-            if not (id_match or email_match):
+                if (
+                    assignment.auditor_email
+                    and assignment.auditor_email.strip().lower()
+                    == user_email
+                ):
+                    assigned = True
+                    break
+
+            if not assigned:
                 continue
 
         # ── Document count ──────────────────────────────────────────────────
@@ -773,20 +911,47 @@ async def get_audit_queue(
                 else "pending"
             ),
 
-            "assigned_auditor_name": (
-                fd.assigned_auditor_name
-                if fd
-                else None
-            ),
-
-            "assigned_auditor_email": (
-                fd.assigned_auditor_email
-                if fd
-                else None
-            ),
-        })
+            "assigned_auditors": [
+                    {
+                        "auditor_assignment_id": str(a.auditor_assignment_id),
+                        "auditor_email": a.auditor_email,
+                        "auditor_name": a.auditor_name,
+                    }
+                    for a in assignments_by_session.get(str(s.session_id), [])
+                ],
+            })
 
     return rows
+
+# ─── Delete Audit Session (Admins only) ─────────────────────────────────────────────────────
+@router.delete("/audit/{session_id}", status_code=204)
+async def delete_polaris_audit(
+    session_id: str,
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(AuditSession).where(
+            AuditSession.session_id == session_id,
+            AuditSession.audit_type.in_(["STAR", "DEX"]),
+            AuditSession.is_deleted == False,
+        )
+    )
+
+    session = result.scalar_one_or_none()
+
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Audit session not found",
+        )
+
+    # Soft delete — keep all audit/cost/token data
+    session.is_deleted = True
+    session.deleted_at = _now()
+    session.deleted_by = current_user.user_id
+
+    await db.commit()
 
 # ─── Overall Audit History ────────────────────────────────────────────────────
 
@@ -802,34 +967,77 @@ async def get_overall_audit_history(
             selectinload(AuditSession.summary),
             selectinload(AuditSession.report),
         )
-        .where(AuditSession.audit_type.in_(["STAR", "DEX"]))
+        .where(
+            AuditSession.audit_type.in_(["STAR", "DEX"]),
+            AuditSession.is_deleted == False,
+            )
         .order_by(desc(AuditSession.session_id))
     )
     if current_user.role == "user":
-        q = q.where(AuditSession.user_id == current_user.user_id)
+        q = q.where(
+            cast(AuditSession.user_id, SAString) == str(current_user.user_id)
+        )
 
     sessions = (await db.execute(q)).scalars().all()
     ids = [s.session_id for s in sessions]
     if not ids:
         return []
 
+    # Load all auditor assignments for these sessions
+    assignment_result = await db.execute(
+        select(AuditSessionAuditor).where(
+            AuditSessionAuditor.session_id.in_(ids)
+        )
+    )
+
+    assignments_by_session: dict[str, list[AuditSessionAuditor]] = {}
+
+    for assignment in assignment_result.scalars().all():
+        assignments_by_session.setdefault(
+            str(assignment.session_id), []
+        ).append(assignment)
+
     fd_map = {d.session_id: d for d in
               (await db.execute(select(AuditFormDetail).where(AuditFormDetail.session_id.in_(ids)))).scalars()}
     fi_map = {f.session_id: f for f in
               (await db.execute(select(ManualAuditFinding).where(ManualAuditFinding.session_id.in_(ids)))).scalars()}
 
-    user_email = (current_user.azure_email or "").lower()
+    user_email = (current_user.azure_email or "").strip().lower()
+
+    assigned_ids: set[str] = set()
+
+    if current_user.role == "auditor":
+        assigned_result = await db.execute(
+            select(AuditSessionAuditor.session_id).where(
+                or_(
+                    AuditSessionAuditor.auditor_user_id == current_user.user_id,
+                    func.lower(AuditSessionAuditor.auditor_email) == user_email,
+                )
+            )
+        )
+
+        assigned_ids = {
+            str(x)
+            for x in assigned_result.scalars().all()
+        }
 
     rows = []
+    seen: set[str] = set()
     for s in sessions:
+        if str(s.session_id) in seen:
+            continue
+
+        seen.add(str(s.session_id))
+
         fd = fd_map.get(s.session_id)
         fi = fi_map.get(s.session_id)
 
         # Auditor sees only assigned sessions
         if current_user.role == "auditor":
-            id_match    = fd and fd.assigned_auditor_id is not None and str(fd.assigned_auditor_id) == str(current_user.user_id)
-            email_match = fd and fd.assigned_auditor_email is not None and fd.assigned_auditor_email == user_email
-            if not (id_match or email_match):
+            is_owner = _cast_str(s.user_id) == str(current_user.user_id)
+            is_assigned = str(s.session_id) in assigned_ids
+
+            if not (is_owner or is_assigned):
                 continue
 
         ai_score = (
@@ -853,7 +1061,14 @@ async def get_overall_audit_history(
             "overall_status": "completed" if fi else ("under_review" if s.audit_status == "done" else "pending"),
             "has_report": bool(s.report),
             "report_url": s.report.sharepoint_url if s.report else None,
-            "assigned_auditor_name": fd.assigned_auditor_name if fd else None,
+            "assigned_auditors": [
+                {
+                    "auditor_assignment_id": str(a.auditor_assignment_id),
+                    "auditor_name": a.auditor_name,
+                    "auditor_email": a.auditor_email,
+                }
+                for a in assignments_by_session.get(str(s.session_id), [])
+            ],
         })
     return rows
 
@@ -874,7 +1089,10 @@ async def get_audit_detail(
             selectinload(AuditSession.summary),
             selectinload(AuditSession.report),
         )
-        .where(AuditSession.session_id == session_id)
+        .where(
+            AuditSession.session_id == session_id,
+            AuditSession.is_deleted == False,
+        )
     )
     if current_user.role == "user":
         q = q.where(AuditSession.user_id == current_user.user_id)
@@ -888,11 +1106,23 @@ async def get_audit_detail(
 
     # Auditor RBAC
     if current_user.role == "auditor":
-        user_email  = (current_user.azure_email or "").lower()
-        id_match    = fd and fd.assigned_auditor_id is not None and str(fd.assigned_auditor_id) == str(current_user.user_id)
-        email_match = fd and fd.assigned_auditor_email is not None and fd.assigned_auditor_email == user_email
-        if not (id_match or email_match):
-            raise HTTPException(403, "You are not assigned to this audit")
+
+        is_owner = (
+            _cast_str(session.user_id)
+            == str(current_user.user_id)
+        )
+
+        is_assigned = await _is_auditor_assigned(
+            db,
+            session_id,
+            current_user,
+        )
+
+        if not (is_owner or is_assigned):
+            raise HTTPException(
+                403,
+                "You are not authorized to access this audit",
+            )
 
     ai_score   = float(session.summary.overall_project_score) if session.summary and session.summary.overall_project_score else None
     report_url = session.report.sharepoint_url if session.report else None
@@ -1027,6 +1257,40 @@ async def get_findings(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    session = (
+        await db.execute(
+            select(AuditSession).where(
+                AuditSession.session_id == session_id,
+                 AuditSession.is_deleted == False,
+            )
+        )
+    ).scalar_one_or_none()
+
+    if not session:
+        raise HTTPException(404, "Session not found")
+
+    if current_user.role == "user":
+        if _cast_str(session.user_id) != str(current_user.user_id):
+            raise HTTPException(403, "You are not authorized to access this audit")
+
+    elif current_user.role == "auditor":
+        is_owner = (
+            _cast_str(session.user_id)
+            == str(current_user.user_id)
+        )
+
+        is_assigned = await _is_auditor_assigned(
+            db,
+            session_id,
+            current_user,
+        )
+
+        if not (is_owner or is_assigned):
+            raise HTTPException(
+                403,
+                "You are not authorized to access this audit",
+            )
+        
     fi = (await db.execute(select(ManualAuditFinding).where(ManualAuditFinding.session_id == session_id))).scalar_one_or_none()
     if not fi:
         raise HTTPException(404, "No findings for this session")
@@ -1056,32 +1320,17 @@ async def save_findings(
 ):
     # Auditor: can only save for assigned sessions
     if current_user.role == "auditor":
-        fd = (
-            await db.execute(
-                select(AuditFormDetail).where(
-                    AuditFormDetail.session_id == session_id
-                )
-            )
-        ).scalar_one_or_none()
 
-        user_email = (current_user.azure_email or "").lower()
-
-        id_match = (
-            fd
-            and fd.assigned_auditor_id is not None
-            and str(fd.assigned_auditor_id) == str(current_user.user_id)
+        is_assigned = await _is_auditor_assigned(
+            db,
+            session_id,
+            current_user,
         )
 
-        email_match = (
-            fd
-            and fd.assigned_auditor_email is not None
-            and fd.assigned_auditor_email == user_email
-        )
-
-        if not (id_match or email_match):
+        if not is_assigned:
             raise HTTPException(
                 403,
-                "You are not assigned to this audit"
+                "You are not assigned to this audit",
             )
 
     # ------------------------------------------------------------------
@@ -1095,7 +1344,8 @@ async def save_findings(
     s = (
         await db.execute(
             select(AuditSession).where(
-                AuditSession.session_id == session_id
+                AuditSession.session_id == session_id,
+                AuditSession.is_deleted == False,
             )
         )
     ).scalar_one_or_none()

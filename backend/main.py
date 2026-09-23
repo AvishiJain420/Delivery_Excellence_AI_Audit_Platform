@@ -3,6 +3,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Response
 
 from config.settings import settings
 from db.database import engine, Base
@@ -14,6 +15,27 @@ import db.polaris_models
 
 _executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="audit_worker")
 
+_app_ready = False
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _app_ready
+
+    # Create DB tables — must complete before we're ready
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # Fire MSAL warm-up in background (non-blocking)
+    asyncio.create_task(_prewarm_msal())
+
+    _app_ready = True   # ← signal readiness only after DB is done
+    yield
+
+    _app_ready = False
+    await engine.dispose()
+    _executor.shutdown(wait=False)
+
+
 async def _prewarm_msal():
     """Build MSAL app in background thread right after server starts.
     This makes the first user login instant instead of slow."""
@@ -24,29 +46,7 @@ async def _prewarm_msal():
     except Exception as e:
         print(f"⚠ MSAL pre-warm failed (will retry on first login): {e}")
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-
-    # Create DB tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    # Pre-warm MSAL in background — doesn't block startup
-    asyncio.create_task(_prewarm_msal())
-
-    yield
-    await engine.dispose()
-    _executor.shutdown(wait=False)
-
-
-app = FastAPI(
-    title="Polaris - AI Audit Platform",
-    version="2.0.0",
-    lifespan=lifespan,
-    redirect_slashes=False,
-)
-
+app = FastAPI(lifespan=lifespan)
 frontend_origin = settings.FRONTEND_ORIGIN.strip().rstrip("/")
 
 app.add_middleware(
@@ -70,4 +70,6 @@ async def root():
 # In main.py
 @app.get("/health", tags=["Health"])
 async def health():
+    if not _app_ready:
+        return Response(status_code=503, content="starting")
     return {"status": "healthy"}
