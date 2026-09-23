@@ -657,6 +657,38 @@ export const auditApi = {
     return res.json()
   },
 
+  async stopPipeline(
+    sessionId: string,
+  ): Promise<{
+    status: 'stop_signal_sent' | 'no_active_pipeline'
+  }> {
+    const res = await apiFetch(
+      `/audit/sessions/${sessionId}/stop`,
+      {
+        method: 'POST',
+      },
+    )
+
+    if (!res.ok) {
+      let message = 'Failed to stop audit pipeline'
+
+      try {
+        const error = await res.json()
+
+        message =
+          error.detail ??
+          error.message ??
+          message
+      } catch {
+        // Ignore invalid/non-JSON response
+      }
+
+      throw new Error(message)
+    }
+
+    return res.json()
+  },
+
   async downloadReport(
     sessionId: string,
   ): Promise<{
@@ -1018,9 +1050,9 @@ export function mapBackendSessionToAuditSession(
         ? 100
         : 0,
 
-    createdAt:
-      s.completion_time ??
-      new Date().toISOString(),
+    createdAt: s.completion_time ?? s.audit_status === 'done'
+      ? s.completion_time ?? new Date().toISOString()
+      : new Date().toISOString(),
 
     completedAt:
       s.completion_time ??
@@ -1033,5 +1065,10 @@ export function mapBackendSessionToAuditSession(
     reportName:
       s.report?.report_name ??
       undefined,
+
+    overallScore:
+    s.overall_project_score != null
+      ? Math.round(Number(s.overall_project_score) * 20)
+      : undefined,
   }
 }

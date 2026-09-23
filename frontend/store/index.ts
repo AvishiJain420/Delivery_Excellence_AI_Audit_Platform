@@ -12,6 +12,7 @@
  * into store updates that drive the UI.
  */
 import { create } from 'zustand'
+import { mapBackendSessionToAuditSession } from '@/services/api'
 import type {
   AuditSession, AuditStep, AuditDocument, ChatMessage,ChatMessageType,
   LiveLogEntry, WSStageMessage, IdentifiedDoc, StepStatus,DocumentStatus
@@ -32,6 +33,7 @@ interface AuditState {
   setConnected: (v: boolean) => void
   confirmValidation: (approved: boolean) => void   // called by ValidationModal
   loadSession: (session: AuditSession) => void
+  setSessionFromRest : (data:any) => void
   reset: () => void
 }
 
@@ -145,6 +147,14 @@ export const useAuditStore = create<AuditState>((set, get) => ({
       pendingValidation: null,
     }))
   },
+  setSessionFromRest: (data) => set(s => {
+    // Don't overwrite if WebSocket has already populated richer state
+    if (s.chatMessages.length > 0) return {}
+
+    return {
+      session: mapBackendSessionToAuditSession(data),
+    }
+  }),
 
   /**
    * handleStage — translates every backend WS stage into store updates.

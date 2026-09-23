@@ -10,6 +10,7 @@ import {
 import { config } from '@/lib/config'
 import { TokenStore } from '@/services/api'
 import type { AuditFormDetail } from '@/types/polaris'
+import { useCurrentUser } from '@/hooks'
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 function SectionCard({ title, icon: Icon, children }: {
@@ -104,6 +105,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 // ── Page ───────────────────────────────────────────────────────────────────────
 export default function AuditHistoryDetailPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
+  const { data: currentUser } = useCurrentUser()
   const [detail, setDetail] = useState<AuditFormDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -376,13 +378,13 @@ export default function AuditHistoryDetailPage() {
           </a>
         )}
 
-
-        <Link
-          href={`/audit/start/${sessionId}/findings`}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 border border-blue-200 text-blue-600 hover:bg-blue-50 text-[13.5px] font-semibold rounded-lg transition-colors"
-        >
+        {(currentUser?.role === 'admin' || currentUser?.role === 'auditor') && (
+        <Link href={`/audit/start/${sessionId}/findings`}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 border border-blue-200 text-blue-600 hover:bg-blue-50 text-[13.5px] font-semibold rounded-lg transition-colors" >
           {findings ? 'Edit Findings' : 'Upload Findings'}
         </Link>
+        )}
+
       </div>
     </AppShell>
   )

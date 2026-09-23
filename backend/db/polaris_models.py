@@ -103,3 +103,35 @@ class ManualAuditFinding(Base):
     # }]
     categories       = Column(JSONB, default=list)
     submitted_at     = Column(DateTime(timezone=True), default=_now)
+    # Concurrency lock
+    lock_holder_email = Column(String, nullable=True)
+    lock_holder_name  = Column(String, nullable=True)
+    lock_acquired_at  = Column(DateTime(timezone=True), nullable=True)
+
+class AuditSessionAuditor(Base):
+    """
+    Multiple auditors can be assigned to one audit session.
+    """
+    __tablename__ = "audit_session_auditors"
+
+    auditor_assignment_id = Column(
+        String,
+        primary_key=True,
+        default=lambda: str(uuid.uuid4())
+    )
+
+    session_id = Column(
+        String,
+        ForeignKey("audit_sessions.session_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    auditor_email = Column(String, nullable=False)
+    auditor_name = Column(String, nullable=False)
+
+    # Filled when the auditor logs in and their user record is known.
+    auditor_user_id = Column(PG_UUID(as_uuid=True), nullable=True)
+
+    assigned_at = Column(DateTime(timezone=True), default=_now)
+    assigned_by_email = Column(String, nullable=True)

@@ -195,13 +195,17 @@ export default function ProjectDetailsPage() {
           </div>
         )}
 
-        {/* Upload findings CTA — bottom of card, matches image 2 */}
-        <div className="mt-6 pt-4 border-t border-slate-100">
-          <Link href={`/audit/start/${sessionId}/findings`}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white text-[14px] font-semibold rounded-lg transition-colors">
-            Upload findings <ChevronRight size={16} />
-          </Link>
-        </div>
+        {/* Upload findings CTA — auditors and admins only */}
+        {currentUser?.role === 'admin' || currentUser?.role === 'auditor' ? (
+          <div className="mt-6 pt-4 border-t border-slate-100">
+            <Link
+              href={`/audit/start/${sessionId}/findings`}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white text-[14px] font-semibold rounded-lg transition-colors"
+            >
+              Upload findings <ChevronRight size={16} />
+            </Link>
+          </div>
+        ) : null}
       </div>
     </AppShell>
   )
