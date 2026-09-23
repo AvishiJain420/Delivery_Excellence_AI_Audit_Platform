@@ -32,7 +32,7 @@ class Authenticator:
                 f"{result.get('error')} - "
                 f"{result.get('error_description')}"
             )
-
+        print("Test Push")
         return result["access_token"]
     
 
