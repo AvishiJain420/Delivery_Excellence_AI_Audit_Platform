@@ -385,7 +385,7 @@ export default function HistoryPage() {
                   </td>
 
                   {/* Delete - currently disabled */}
-                  {/*
+                  
                   <td className="px-4 py-3.5 text-center">
                     <button
                       onClick={() => handleDelete(audit.id)}
@@ -395,7 +395,7 @@ export default function HistoryPage() {
                       <Trash2 size={12} />
                     </button>
                   </td>
-                  */}
+                 
                 </tr>
             ))}
           </tbody>
