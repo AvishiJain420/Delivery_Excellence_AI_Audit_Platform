@@ -13,6 +13,7 @@ import {
 import { useCurrentUser } from '@/hooks'
 import { config } from '@/lib/config'
 import { TokenStore } from '@/services/api'
+import { addDeletedAuditSession, getDeletedAuditSessionIds } from '@/lib/deletedAuditSessions'
 
 interface OverallAuditRow {
   session_id: string
@@ -137,37 +138,64 @@ export default function OverallAuditHistoryPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
+  // const load = () => {
+  //   fetch(`${config.apiUrl}/polaris/audit/history`, {
+  //     headers: { Authorization: `Bearer ${TokenStore.getAccess() ?? ''}` },
+  //   })
+  //     .then(r => r.ok ? r.json() : Promise.reject(`Error ${r.status}`))
+  //     .then(setRows)
+  //     .catch(e => setError(String(e)))
+  //     .finally(() => setLoading(false))
+  // }
   const load = () => {
     fetch(`${config.apiUrl}/polaris/audit/history`, {
       headers: { Authorization: `Bearer ${TokenStore.getAccess() ?? ''}` },
     })
       .then(r => r.ok ? r.json() : Promise.reject(`Error ${r.status}`))
-      .then(setRows)
+      .then(data => {
+        const deletedIds = getDeletedAuditSessionIds()
+
+        setRows(
+          data.filter(
+            (row: { session_id: string }) =>
+              !deletedIds.includes(row.session_id)
+          )
+        )
+      })
       .catch(e => setError(String(e)))
       .finally(() => setLoading(false))
   }
-  const handleDelete = async (sessionId: string) => {
-    setDeletingId(sessionId)
+  // const handleDelete = async (sessionId: string) => {
+  //   setDeletingId(sessionId)
 
-    try {
-      const response = await fetch(`${config.apiUrl}/polaris/audit/${sessionId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
-        },
-      })
+  //   try {
+  //     const response = await fetch(`${config.apiUrl}/polaris/audit/${sessionId}`, {
+  //       method: 'DELETE',
+  //       headers: {
+  //         Authorization: `Bearer ${TokenStore.getAccess() ?? ''}`,
+  //       },
+  //     })
 
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}`)
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`Error ${response.status}`)
+  //     }
 
-      setRows(prev => prev.filter(row => row.session_id !== sessionId))
-      setConfirmDeleteId(null)
-    } catch (e) {
-      setError(String(e))
-    } finally {
-      setDeletingId(null)
-    }
+  //     setRows(prev => prev.filter(row => row.session_id !== sessionId))
+  //     setConfirmDeleteId(null)
+  //   } catch (e) {
+  //     setError(String(e))
+  //   } finally {
+  //     setDeletingId(null)
+  //   }
+  // }
+  const handleDelete = (sessionId: string) => {
+    addDeletedAuditSession(sessionId)
+
+    setRows(prev =>
+      prev.filter(row => row.session_id !== sessionId)
+    )
+
+    setConfirmDeleteId(null)
   }
 
   useEffect(() => { load(); const iv = setInterval(load, 30_000); return () => clearInterval(iv) }, [])
@@ -234,7 +262,7 @@ export default function OverallAuditHistoryPage() {
         <table className="w-full text-[13px] min-w-[1550px]">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/60">
-              {['Client', 'Project', 'Code', 'Type', 'Submitted', 'Auditor', 'AI Status', 'AI Score', 'Manual Score', 'Status', 'View','AI Report','Delete'].map(h => (
+              {['Client', 'Project', 'Code', 'Type', 'Submitted', 'Auditor', 'AI Status', 'AI Score', 'Manual Score', 'Status', 'View','AI Report',(currentUser?.role === 'admin' ? 'Delete' : null)].map(h => (
                 <th key={h} className="text-center px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
               ))}
             </tr>
