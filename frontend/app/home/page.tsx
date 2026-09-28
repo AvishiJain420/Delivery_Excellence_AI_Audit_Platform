@@ -47,7 +47,9 @@ export default function HomePage() {
     <AppShell>
       {/* Greeting */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">Hello there!</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-1">{user?.user_name
+  ? `Hello ${user.user_name.split(' ')[0]}!`
+  : 'Hello!'}</h1>
         <p className="text-[14px] text-slate-500 max-w-2xl leading-relaxed">
           Welcome to Polaris, your one-stop solution for simplifying audits, strengthening governance,
           and enabling consistent project delivery.
