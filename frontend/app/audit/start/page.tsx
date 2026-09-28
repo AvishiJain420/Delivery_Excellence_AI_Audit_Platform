@@ -15,6 +15,7 @@ import {
 import { config } from '@/lib/config'
 import { TokenStore } from '@/services/api'
 import { useCurrentUser } from '@/hooks'
+import { getDeletedAuditSessionIds } from '@/lib/deletedAuditSessions'
 
 interface Auditor {
   auditor_assignment_id?: string
@@ -221,8 +222,17 @@ export default function StartAuditPage() {
         headers: { Authorization: `Bearer ${TokenStore.getAccess() ?? ''}` },
       })
       if (!res.ok) throw new Error(`Server error ${res.status}`)
-      setRows(await res.json())
-    } catch (e: any) { setError(e.message) }
+      const data = await res.json()
+
+      const deletedIds = getDeletedAuditSessionIds()
+
+      setRows(
+        data.filter(
+          (row: any) => !deletedIds.includes(row.session_id)
+        )
+      )
+    }
+    catch (e: any) { setError(e.message) }
     finally { setLoading(false) }
   }, [])
 
