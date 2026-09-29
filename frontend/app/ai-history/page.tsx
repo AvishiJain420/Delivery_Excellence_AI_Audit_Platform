@@ -9,6 +9,7 @@ import { History, Search, ChevronDown, FileText, ExternalLink, Trash2, Check } f
 import Link from 'next/link'
 import { auditApi } from '@/services/api'
 import { useQueryClient } from '@tanstack/react-query'
+import { getDeletedAuditSessionIds } from '@/lib/deletedAuditSessions'
 
 const AUDIT_TYPE_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -70,9 +71,10 @@ export default function HistoryPage() {
   }, [hasActiveSessions, refetch])
   
   const qc = useQueryClient()
-
+  const deletedSessionIds = getDeletedAuditSessionIds()
   const filtered = audits.filter(a => {
     const query = search.toLowerCase()
+    const isDeleted = deletedSessionIds.includes(a.id)
     const matchSearch =
       !search ||
       a.name.toLowerCase().includes(query) ||
@@ -88,7 +90,7 @@ export default function HistoryPage() {
       filterAuditType === 'all' ||
       (a.auditType ?? '').toUpperCase() === filterAuditType.toUpperCase()
 
-    return matchSearch && matchStatus && matchAuditType
+    return !isDeleted && matchSearch && matchStatus && matchAuditType
   })
 
   const handleDelete = async (id: string) => {
@@ -385,17 +387,19 @@ export default function HistoryPage() {
                   </td>
 
                   {/* Delete - currently disabled */}
-                  {/*
-                  <td className="px-4 py-3.5 text-center">
-                    <button
+                  
+                  {/* <td className="px-4 py-3.5 text-center">
+                    {currentUser?.role === "admin" && (
+                      <button
                       onClick={() => handleDelete(audit.id)}
                       className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={12} />
                     </button>
-                  </td>
-                  */}
+                    )}
+                  </td> */}
+                 
                 </tr>
             ))}
           </tbody>
