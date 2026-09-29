@@ -23,7 +23,7 @@ engine = create_async_engine(
     
     # Required for Supabase Transaction Pooler (PgBouncer in transaction mode)
     # Without this, SQLAlchemy tries to use prepared statements which PgBouncer blocks
-    connect_args={"statement_cache_size": 0, "ssl" : "require"},
+    connect_args={"statement_cache_size": 0},
 )
 
 AsyncSessionLocal = async_sessionmaker(
